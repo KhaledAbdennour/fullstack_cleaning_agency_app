@@ -1,11 +1,12 @@
-import 'package:sqflite/sqflite.dart';
-import '../../databases/dbhelper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../models/cleaner_model.dart';
 import 'cleaners_repo.dart';
 
 class CleanersDB extends AbstractCleanersRepo {
   static const String tableName = 'cleaners';
 
+  // Keep SQL code for reference
   static const String sqlCode = '''
     CREATE TABLE $tableName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,14 +25,16 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<List<Cleaner>> getCleanersForAgency(int agencyId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      final maps = await db.query(
-        tableName,
-        where: 'agency_id = ? AND is_active = 1',
-        whereArgs: [agencyId],
-        orderBy: 'jobs_completed DESC',
-      );
-      return maps.map((map) => Cleaner.fromMap(map)).toList();
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .select()
+          .eq('agency_id', agencyId)
+          .eq('is_active', true)
+          .order('jobs_completed', ascending: false);
+      
+      return (response as List)
+          .map((map) => Cleaner.fromMap(Map<String, dynamic>.from(map)))
+          .toList();
     } catch (e, stacktrace) {
       print('getCleanersForAgency error: $e --> $stacktrace');
       return [];
@@ -41,14 +44,14 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<Cleaner?> getCleanerById(int cleanerId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      final maps = await db.query(
-        tableName,
-        where: 'id = ?',
-        whereArgs: [cleanerId],
-      );
-      if (maps.isEmpty) return null;
-      return Cleaner.fromMap(maps.first);
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .select()
+          .eq('id', cleanerId)
+          .maybeSingle();
+      
+      if (response == null) return null;
+      return Cleaner.fromMap(Map<String, dynamic>.from(response));
     } catch (e, stacktrace) {
       print('getCleanerById error: $e --> $stacktrace');
       return null;
@@ -58,15 +61,20 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<Cleaner> addCleaner(Cleaner cleaner) async {
     try {
-      final db = await DBHelper.getDatabase();
       final now = DateTime.now();
       final cleanerMap = cleaner.copyWith(
         createdAt: now,
         updatedAt: now,
       ).toMap();
       cleanerMap.remove('id');
-      final id = await db.insert(tableName, cleanerMap);
-      return cleaner.copyWith(id: id, createdAt: now, updatedAt: now);
+      
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .insert(cleanerMap)
+          .select()
+          .single();
+      
+      return Cleaner.fromMap(Map<String, dynamic>.from(response));
     } catch (e, stacktrace) {
       print('addCleaner error: $e --> $stacktrace');
       rethrow;
@@ -76,16 +84,15 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<Cleaner> updateCleaner(Cleaner cleaner) async {
     try {
-      final db = await DBHelper.getDatabase();
       final now = DateTime.now();
       final cleanerMap = cleaner.copyWith(updatedAt: now).toMap();
       cleanerMap.remove('id');
-      await db.update(
-        tableName,
-        cleanerMap,
-        where: 'id = ?',
-        whereArgs: [cleaner.id],
-      );
+      
+      await SupabaseConfig.client
+          .from(tableName)
+          .update(cleanerMap)
+          .eq('id', cleaner.id!);
+      
       return cleaner.copyWith(updatedAt: now);
     } catch (e, stacktrace) {
       print('updateCleaner error: $e --> $stacktrace');
@@ -96,20 +103,16 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<void> removeCleaner(int cleanerId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      await db.update(
-        tableName,
-        {
-          'is_active': 0,
-          'updated_at': DateTime.now().toIso8601String(),
-        },
-        where: 'id = ?',
-        whereArgs: [cleanerId],
-      );
+      await SupabaseConfig.client
+          .from(tableName)
+          .update({
+            'is_active': false,
+            'updated_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', cleanerId);
     } catch (e, stacktrace) {
       print('removeCleaner error: $e --> $stacktrace');
       rethrow;
     }
   }
 }
-

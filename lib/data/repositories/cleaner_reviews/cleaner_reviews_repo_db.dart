@@ -1,11 +1,12 @@
-import 'package:sqflite/sqflite.dart';
-import '../../databases/dbhelper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../models/cleaner_review.dart';
 import 'cleaner_reviews_repo.dart';
 
 class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   static const String tableName = 'cleaner_reviews';
 
+  // Keep SQL code for reference
   static const String sqlCode = '''
     CREATE TABLE $tableName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,14 +26,15 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<List<CleanerReview>> getReviewsForCleaner(int cleanerId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      final maps = await db.query(
-        tableName,
-        where: 'cleaner_id = ?',
-        whereArgs: [cleanerId],
-        orderBy: 'date DESC',
-      );
-      return maps.map((map) => CleanerReview.fromMap(map)).toList();
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .select()
+          .eq('cleaner_id', cleanerId)
+          .order('date', ascending: false);
+      
+      return (response as List)
+          .map((map) => CleanerReview.fromMap(Map<String, dynamic>.from(map)))
+          .toList();
     } catch (e, stacktrace) {
       print('getReviewsForCleaner error: $e --> $stacktrace');
       return [];
@@ -42,11 +44,16 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<CleanerReview> addReview(CleanerReview review) async {
     try {
-      final db = await DBHelper.getDatabase();
       final reviewMap = review.toMap();
       reviewMap.remove('id');
-      final id = await db.insert(tableName, reviewMap);
-      return review.copyWith(id: id);
+      
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .insert(reviewMap)
+          .select()
+          .single();
+      
+      return CleanerReview.fromMap(Map<String, dynamic>.from(response));
     } catch (e, stacktrace) {
       print('addReview error: $e --> $stacktrace');
       rethrow;
@@ -56,12 +63,10 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<void> deleteReview(int reviewId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      await db.delete(
-        tableName,
-        where: 'id = ?',
-        whereArgs: [reviewId],
-      );
+      await SupabaseConfig.client
+          .from(tableName)
+          .delete()
+          .eq('id', reviewId);
     } catch (e, stacktrace) {
       print('deleteReview error: $e --> $stacktrace');
       rethrow;
@@ -71,13 +76,21 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<double> getAverageRatingForCleaner(int cleanerId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      final result = await db.rawQuery(
-        'SELECT AVG(rating) as avg_rating FROM $tableName WHERE cleaner_id = ?',
-        [cleanerId],
-      );
-      final avgRating = result.first['avg_rating'] as num?;
-      return avgRating?.toDouble() ?? 0.0;
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .select('rating')
+          .eq('cleaner_id', cleanerId);
+      
+      if (response.isEmpty) return 0.0;
+      
+      final ratings = (response as List)
+          .map((r) => (r['rating'] as num).toDouble())
+          .toList();
+      
+      if (ratings.isEmpty) return 0.0;
+      
+      final sum = ratings.fold<double>(0.0, (a, b) => a + b);
+      return sum / ratings.length;
     } catch (e, stacktrace) {
       print('getAverageRatingForCleaner error: $e --> $stacktrace');
       return 0.0;
@@ -87,12 +100,12 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<int> getReviewCountForCleaner(int cleanerId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      final result = await db.rawQuery(
-        'SELECT COUNT(*) as count FROM $tableName WHERE cleaner_id = ?',
-        [cleanerId],
-      );
-      return Sqflite.firstIntValue(result) ?? 0;
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .select('id', const FetchOptions(count: CountOption.exact))
+          .eq('cleaner_id', cleanerId);
+      
+      return response.count ?? 0;
     } catch (e, stacktrace) {
       print('getReviewCountForCleaner error: $e --> $stacktrace');
       return 0;
@@ -125,7 +138,3 @@ extension CleanerReviewCopyWith on CleanerReview {
     );
   }
 }
-
-
-
-

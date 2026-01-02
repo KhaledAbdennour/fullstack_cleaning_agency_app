@@ -1,11 +1,12 @@
-import 'package:sqflite/sqflite.dart';
-import '../../databases/dbhelper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/config/supabase_config.dart';
 import '../../models/cleaning_history_item.dart';
 import 'cleaning_history_repo.dart';
 
 class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   static const String tableName = 'cleaning_history';
 
+  // Keep SQL code for reference
   static const String sqlCode = '''
     CREATE TABLE $tableName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,17 +24,17 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   @override
   Future<List<CleaningHistoryItem>> getCleaningHistoryForCleaner(int cleanerId, {int page = 1, int limit = 10}) async {
     try {
-      final db = await DBHelper.getDatabase();
       final offset = (page - 1) * limit;
-      final maps = await db.query(
-        tableName,
-        where: 'cleaner_id = ?',
-        whereArgs: [cleanerId],
-        orderBy: 'date DESC',
-        limit: limit,
-        offset: offset,
-      );
-      return maps.map((map) => CleaningHistoryItem.fromMap(map)).toList();
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .select()
+          .eq('cleaner_id', cleanerId)
+          .order('date', ascending: false)
+          .range(offset, offset + limit - 1);
+      
+      return (response as List)
+          .map((map) => CleaningHistoryItem.fromMap(Map<String, dynamic>.from(map)))
+          .toList();
     } catch (e, stacktrace) {
       print('getCleaningHistoryForCleaner error: $e --> $stacktrace');
       return [];
@@ -43,11 +44,16 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   @override
   Future<CleaningHistoryItem> addHistoryItem(CleaningHistoryItem item) async {
     try {
-      final db = await DBHelper.getDatabase();
       final itemMap = item.toMap();
       itemMap.remove('id');
-      final id = await db.insert(tableName, itemMap);
-      return item.copyWith(id: id);
+      
+      final response = await SupabaseConfig.client
+          .from(tableName)
+          .insert(itemMap)
+          .select()
+          .single();
+      
+      return CleaningHistoryItem.fromMap(Map<String, dynamic>.from(response));
     } catch (e, stacktrace) {
       print('addHistoryItem error: $e --> $stacktrace');
       rethrow;
@@ -57,12 +63,10 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   @override
   Future<void> deleteHistoryItem(int itemId) async {
     try {
-      final db = await DBHelper.getDatabase();
-      await db.delete(
-        tableName,
-        where: 'id = ?',
-        whereArgs: [itemId],
-      );
+      await SupabaseConfig.client
+          .from(tableName)
+          .delete()
+          .eq('id', itemId);
     } catch (e, stacktrace) {
       print('deleteHistoryItem error: $e --> $stacktrace');
       rethrow;
@@ -91,7 +95,3 @@ extension CleaningHistoryItemCopyWith on CleaningHistoryItem {
     );
   }
 }
-
-
-
-
