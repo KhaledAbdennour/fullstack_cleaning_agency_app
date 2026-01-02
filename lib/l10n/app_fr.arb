@@ -1,0 +1,121 @@
+{
+  "@@locale": "fr",
+  "appName": "CleanSpace",
+  "welcome": "Bienvenue",
+  "welcomeBack": "Bon retour!",
+  "login": "Connexion",
+  "signUp": "S'inscrire",
+  "createAccount": "Créer un compte",
+  "email": "E-mail",
+  "emailOrUsername": "E-mail ou nom d'utilisateur",
+  "password": "Mot de passe",
+  "forgotPassword": "Mot de passe oublié?",
+  "loginWithGoogle": "Se connecter avec Google",
+  "loginWithFacebook": "Se connecter avec Facebook",
+  "dontHaveAccount": "Vous n'avez pas de compte?",
+  "createOneNow": "Créez-en un maintenant",
+  "fullName": "Nom complet",
+  "phoneNumber": "Numéro de téléphone",
+  "address": "Adresse",
+  "bio": "Biographie",
+  "gender": "Genre",
+  "birthdate": "Date de naissance",
+  "male": "Homme",
+  "female": "Femme",
+  "iAmA": "Je suis...",
+  "client": "Client",
+  "agency": "Agence",
+  "individualCleaner": "Nettoyeur individuel",
+  "agencyName": "Nom de l'agence",
+  "businessId": "Numéro d'enregistrement commercial",
+  "services": "Services offerts",
+  "hourlyRate": "Tarif horaire",
+  "home": "Accueil",
+  "search": "Recherche",
+  "profile": "Profil",
+  "activeListings": "Annonces actives",
+  "pastBookings": "Réservations passées",
+  "cleanerTeam": "Équipe de nettoyeurs",
+  "jobsCompleted": "Travaux terminés",
+  "addNewJob": "Ajouter un nouveau travail",
+  "noActiveListings": "Aucune annonce active pour le moment.\nAppuyez sur le bouton + pour ajouter un nouveau travail.",
+  "noPastBookings": "Aucune réservation passée pour le moment.",
+  "noCleaners": "Aucun nettoyeur dans votre équipe pour le moment.",
+  "postedOn": "Publié le: {date}",
+  "@postedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "Modifier",
+  "pause": "Pause",
+  "activate": "Activer",
+  "delete": "Supprimer",
+  "searchMyListings": "Rechercher dans mes annonces...",
+  "filterByStatus": "Filtrer par statut",
+  "sortByDate": "Trier par date",
+  "all": "Tout",
+  "active": "Actif",
+  "paused": "En pause",
+  "booked": "Réservé",
+  "completed": "Terminé",
+  "inProgress": "En cours",
+  "newestFirst": "Plus récent en premier",
+  "oldestFirst": "Plus ancien en premier",
+  "recentListings": "Annonces récentes",
+  "topAgencies": "Meilleures agences",
+  "topCleaners": "Meilleurs nettoyeurs",
+  "viewProfile": "Voir le profil",
+  "apply": "Postuler",
+  "bookNow": "Réserver maintenant",
+  "myPosts": "Mes publications",
+  "history": "Historique",
+  "reviews": "Avis",
+  "favorites": "Favoris",
+  "logout": "Déconnexion",
+  "saveChanges": "Enregistrer les modifications",
+  "cancel": "Annuler",
+  "retry": "Réessayer",
+  "loading": "Chargement...",
+  "error": "Erreur",
+  "success": "Succès",
+  "accountCreated": "Compte créé en tant que {role}!",
+  "@accountCreated": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "invalidCredentials": "Nom d'utilisateur ou mot de passe invalide",
+  "usernameExists": "Le nom d'utilisateur existe déjà",
+  "emailExists": "L'e-mail existe déjà",
+  "phoneExists": "Le numéro de téléphone existe déjà",
+  "requiredField": "Ce champ est obligatoire",
+  "invalidEmail": "Veuillez entrer un e-mail valide",
+  "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+  "confirmDelete": "Êtes-vous sûr de vouloir supprimer \"{title}\"?",
+  "@confirmDelete": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteJob": "Supprimer le travail",
+  "jobDeleted": "Travail supprimé avec succès",
+  "jobStatusChanged": "Statut du travail mis à jour",
+  "profileUpdated": "Profil mis à jour avec succès",
+  "goToHome": "Aller à l'accueil",
+  "hello": "Bonjour {name}",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}
+

@@ -1,0 +1,121 @@
+{
+  "@@locale": "ar",
+  "appName": "كلين سبيس",
+  "welcome": "مرحبا",
+  "welcomeBack": "مرحباً بعودتك!",
+  "login": "تسجيل الدخول",
+  "signUp": "إنشاء حساب",
+  "createAccount": "إنشاء حساب",
+  "email": "البريد الإلكتروني",
+  "emailOrUsername": "البريد الإلكتروني أو اسم المستخدم",
+  "password": "كلمة المرور",
+  "forgotPassword": "نسيت كلمة المرور؟",
+  "loginWithGoogle": "تسجيل الدخول عبر Google",
+  "loginWithFacebook": "تسجيل الدخول عبر Facebook",
+  "dontHaveAccount": "ليس لديك حساب؟",
+  "createOneNow": "أنشئ واحداً الآن",
+  "fullName": "الاسم الكامل",
+  "phoneNumber": "رقم الهاتف",
+  "address": "العنوان",
+  "bio": "نبذة",
+  "gender": "الجنس",
+  "birthdate": "تاريخ الميلاد",
+  "male": "ذكر",
+  "female": "أنثى",
+  "iAmA": "أنا...",
+  "client": "عميل",
+  "agency": "وكالة",
+  "individualCleaner": "منظف فردي",
+  "agencyName": "اسم الوكالة",
+  "businessId": "رقم تسجيل الأعمال",
+  "services": "الخدمات المقدمة",
+  "hourlyRate": "السعر بالساعة",
+  "home": "الرئيسية",
+  "search": "بحث",
+  "profile": "الملف الشخصي",
+  "activeListings": "القوائم النشطة",
+  "pastBookings": "الحجوزات السابقة",
+  "cleanerTeam": "فريق المنظفين",
+  "jobsCompleted": "وظائف مكتملة",
+  "addNewJob": "إضافة وظيفة جديدة",
+  "noActiveListings": "لا توجد قوائم نشطة بعد.\nاضغط على زر + لإضافة وظيفة جديدة.",
+  "noPastBookings": "لا توجد حجوزات سابقة بعد.",
+  "noCleaners": "لا يوجد منظفون في فريقك بعد.",
+  "postedOn": "نُشر في: {date}",
+  "@postedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "edit": "تعديل",
+  "pause": "إيقاف مؤقت",
+  "activate": "تفعيل",
+  "delete": "حذف",
+  "searchMyListings": "البحث في قوائمي...",
+  "filterByStatus": "تصفية حسب الحالة",
+  "sortByDate": "ترتيب حسب التاريخ",
+  "all": "الكل",
+  "active": "نشط",
+  "paused": "متوقف مؤقتاً",
+  "booked": "محجوز",
+  "completed": "مكتمل",
+  "inProgress": "قيد التنفيذ",
+  "newestFirst": "الأحدث أولاً",
+  "oldestFirst": "الأقدم أولاً",
+  "recentListings": "القوائم الأخيرة",
+  "topAgencies": "أفضل الوكالات",
+  "topCleaners": "أفضل المنظفين",
+  "viewProfile": "عرض الملف الشخصي",
+  "apply": "تقديم",
+  "bookNow": "احجز الآن",
+  "myPosts": "منشوراتي",
+  "history": "السجل",
+  "reviews": "التقييمات",
+  "favorites": "المفضلة",
+  "logout": "تسجيل الخروج",
+  "saveChanges": "حفظ التغييرات",
+  "cancel": "إلغاء",
+  "retry": "إعادة المحاولة",
+  "loading": "جاري التحميل...",
+  "error": "خطأ",
+  "success": "نجح",
+  "accountCreated": "تم إنشاء الحساب كـ {role}!",
+  "@accountCreated": {
+    "placeholders": {
+      "role": {
+        "type": "String"
+      }
+    }
+  },
+  "invalidCredentials": "اسم المستخدم أو كلمة المرور غير صحيحة",
+  "usernameExists": "اسم المستخدم موجود بالفعل",
+  "emailExists": "البريد الإلكتروني موجود بالفعل",
+  "phoneExists": "رقم الهاتف موجود بالفعل",
+  "requiredField": "هذا الحقل مطلوب",
+  "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
+  "passwordTooShort": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+  "confirmDelete": "هل أنت متأكد من حذف \"{title}\"؟",
+  "@confirmDelete": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteJob": "حذف الوظيفة",
+  "jobDeleted": "تم حذف الوظيفة بنجاح",
+  "jobStatusChanged": "تم تحديث حالة الوظيفة",
+  "profileUpdated": "تم تحديث الملف الشخصي بنجاح",
+  "goToHome": "الذهاب إلى الرئيسية",
+  "hello": "مرحباً {name}",
+  "@hello": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
+}
+
