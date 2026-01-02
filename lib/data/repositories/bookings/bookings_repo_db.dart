@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../models/booking_model.dart';
 import '../../models/job_model.dart';
@@ -62,7 +61,7 @@ class BookingsDB extends AbstractBookingsRepo {
         final response = await SupabaseConfig.client
             .from(tableName)
             .select()
-            .in_('job_id', jobIds)
+            .inFilter('job_id', jobIds)
             .order('created_at', ascending: false);
         
         return (response as List)
@@ -150,14 +149,17 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<List<Booking>> getApplicationsForJob(int jobId) async {
     try {
+      // Get bookings for this job where provider_id is not null (applications)
       final response = await SupabaseConfig.client
           .from(tableName)
           .select()
           .eq('job_id', jobId)
-          .not_('provider_id', 'is', null)
           .order('created_at', ascending: false);
       
-      return (response as List)
+      // Filter to only include bookings where provider_id is not null (client-side filter)
+      final filteredResponse = (response as List).where((map) => map['provider_id'] != null).toList();
+      
+      return filteredResponse
           .map((map) => Booking.fromMap(Map<String, dynamic>.from(map)))
           .toList();
     } catch (e, stacktrace) {

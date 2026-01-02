@@ -234,7 +234,8 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _changeLocale(Locale locale) async {
+  // Public method for settings page to change locale
+  void changeLocale(Locale locale) async {
     setState(() {
       _locale = locale;
     });

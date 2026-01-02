@@ -101,9 +101,14 @@ whereArgs: [agencyId],
 where: 'client_id IS NULL',
 
 // NEW
-.is_('client_id', null)
-// OR
-.not_('client_id', 'is', null)  // IS NOT NULL
+.isFilter('client_id', null)  // IS NULL
+
+// For IS NOT NULL, filter client-side after fetching:
+final response = await SupabaseConfig.client
+    .from(tableName)
+    .select()
+    .eq('other_field', value);
+final filtered = (response as List).where((map) => map['client_id'] != null).toList();
 ```
 
 #### IN Clause
@@ -113,7 +118,7 @@ where: 'status IN (?, ?)',
 whereArgs: ['active', 'pending'],
 
 // NEW
-.in_('status', ['active', 'pending'])
+.inFilter('status', ['active', 'pending'])
 ```
 
 #### ORDER BY

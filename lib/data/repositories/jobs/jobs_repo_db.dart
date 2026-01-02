@@ -1,4 +1,3 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/config/supabase_config.dart';
 import '../../models/job_model.dart';
 import '../../models/booking_model.dart';
@@ -42,9 +41,9 @@ class JobsDB extends AbstractJobsRepo {
           .from(tableName)
           .select()
           .eq('agency_id', agencyId)
-          .is_('client_id', null)
+          .isFilter('client_id', null)
           .eq('is_deleted', false)
-          .in_('status', [JobStatus.active.name, JobStatus.inProgress.name])
+          .inFilter('status', [JobStatus.active.name, JobStatus.inProgress.name])
           .order('posted_date', ascending: false);
 
       // Also get jobs where agency has bookings in progress
@@ -74,7 +73,7 @@ class JobsDB extends AbstractJobsRepo {
         final bookedJobsResponse = await SupabaseConfig.client
             .from(tableName)
             .select()
-            .in_('id', bookingJobIds.toList())
+            .inFilter('id', bookingJobIds.toList())
             .eq('is_deleted', false)
             .order('posted_date', ascending: false);
 
@@ -104,7 +103,7 @@ class JobsDB extends AbstractJobsRepo {
           .from(tableName)
           .select()
           .eq('agency_id', agencyId)
-          .is_('client_id', null)
+          .isFilter('client_id', null)
           .eq('is_deleted', false)
           .order('posted_date', ascending: false);
       
@@ -124,7 +123,7 @@ class JobsDB extends AbstractJobsRepo {
           .from(tableName)
           .select()
           .eq('agency_id', agencyId)
-          .is_('client_id', null)
+          .isFilter('client_id', null)
           .eq('is_deleted', false)
           .order('posted_date', ascending: false);
       
@@ -260,17 +259,20 @@ class JobsDB extends AbstractJobsRepo {
           .map((b) => b['job_id'] as int)
           .toSet();
       
+      // Get jobs posted by clients (client_id IS NOT NULL) and not by agencies (agency_id IS NULL)
       final response = await SupabaseConfig.client
           .from(tableName)
           .select()
-          .not_('client_id', 'is', null)
-          .is_('agency_id', null)
+          .isFilter('agency_id', null)
           .eq('status', JobStatus.active.name)
           .eq('is_deleted', false)
           .order('posted_date', ascending: false);
       
+      // Filter to only include jobs where client_id is not null (client-side filter)
+      final filteredResponse = (response as List).where((map) => map['client_id'] != null).toList();
+      
       final jobs = <Job>[];
-      for (final map in response) {
+      for (final map in filteredResponse) {
         try {
           final job = Job.fromMap(Map<String, dynamic>.from(map));
           if (!appliedJobIds.contains(job.id) &&
@@ -313,16 +315,19 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<List<Job>> getRecentClientJobs({int limit = 10}) async {
     try {
+      // Get jobs posted by clients (client_id IS NOT NULL) and not by agencies (agency_id IS NULL)
       final response = await SupabaseConfig.client
           .from(tableName)
           .select()
-          .not_('client_id', 'is', null)
-          .is_('agency_id', null)
+          .isFilter('agency_id', null)
           .eq('is_deleted', false)
           .order('posted_date', ascending: false)
           .limit(limit);
       
-      return (response as List)
+      // Filter to only include jobs where client_id is not null (client-side filter)
+      final filteredResponse = (response as List).where((map) => map['client_id'] != null).toList();
+      
+      return filteredResponse
           .map((map) => Job.fromMap(Map<String, dynamic>.from(map)))
           .toList();
     } catch (e, stacktrace) {

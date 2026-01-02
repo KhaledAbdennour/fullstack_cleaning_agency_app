@@ -213,7 +213,7 @@ class _SettingsPageState extends State<SettingsPage> {
     // Find the MyApp widget and update its locale
     final appState = MyApp.of(context);
     if (appState != null) {
-      appState._changeLocale(locale);
+      appState.changeLocale(locale);
     }
   }
 
