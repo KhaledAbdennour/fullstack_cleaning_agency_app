@@ -59,7 +59,10 @@ class NotificationService {
       // Get initial token
       final token = await _messaging.getToken();
       if (token != null) {
+        print('✅ FCM TOKEN: $token');
         await _saveTokenToSupabase(token);
+      } else {
+        print('❌ FCM token is null');
       }
 
       _initialized = true;
