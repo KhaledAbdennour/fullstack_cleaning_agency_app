@@ -1,14 +1,14 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/supabase_config.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/config/firebase_config.dart';
 import '../../models/cleaning_history_item.dart';
 import 'cleaning_history_repo.dart';
 
 class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
-  static const String tableName = 'cleaning_history';
+  static const String collectionName = 'cleaning_history';
 
   // Keep SQL code for reference
   static const String sqlCode = '''
-    CREATE TABLE $tableName (
+    CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cleaner_id INTEGER NOT NULL,
       title TEXT NOT NULL,
@@ -25,16 +25,19 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   Future<List<CleaningHistoryItem>> getCleaningHistoryForCleaner(int cleanerId, {int page = 1, int limit = 10}) async {
     try {
       final offset = (page - 1) * limit;
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('cleaner_id', cleanerId)
-          .order('date', ascending: false)
-          .range(offset, offset + limit - 1);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('cleaner_id', isEqualTo: cleanerId)
+          .orderBy('date', descending: true)
+          .limit(limit)
+          .offset(offset)
+          .get();
       
-      return (response as List)
-          .map((map) => CleaningHistoryItem.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return CleaningHistoryItem.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getCleaningHistoryForCleaner error: $e --> $stacktrace');
       return [];
@@ -45,15 +48,36 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   Future<CleaningHistoryItem> addHistoryItem(CleaningHistoryItem item) async {
     try {
       final itemMap = item.toMap();
-      itemMap.remove('id');
+      final id = itemMap.remove('id');
       
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .insert(itemMap)
-          .select()
-          .single();
+      String docId;
+      if (id != null && id is int) {
+        docId = id.toString();
+      } else {
+        // Generate new ID
+        final snapshot = await FirebaseConfig.firestore
+            .collection(collectionName)
+            .orderBy('id', descending: true)
+            .limit(1)
+            .get();
+        
+        int newId = 1;
+        if (snapshot.docs.isNotEmpty) {
+          final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
+          newId = maxId + 1;
+        }
+        docId = newId.toString();
+        itemMap['id'] = newId;
+      }
       
-      return CleaningHistoryItem.fromMap(Map<String, dynamic>.from(response));
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(docId)
+          .set(itemMap);
+      
+      final data = itemMap;
+      data['id'] = int.parse(docId);
+      return CleaningHistoryItem.fromMap(data);
     } catch (e, stacktrace) {
       print('addHistoryItem error: $e --> $stacktrace');
       rethrow;
@@ -63,10 +87,10 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   @override
   Future<void> deleteHistoryItem(int itemId) async {
     try {
-      await SupabaseConfig.client
-          .from(tableName)
-          .delete()
-          .eq('id', itemId);
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(itemId.toString())
+          .delete();
     } catch (e, stacktrace) {
       print('deleteHistoryItem error: $e --> $stacktrace');
       rethrow;

@@ -1,15 +1,16 @@
-import '../../../core/config/supabase_config.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/config/firebase_config.dart';
 import '../../models/booking_model.dart';
 import '../../models/job_model.dart';
 import 'bookings_repo.dart';
 import '../jobs/jobs_repo.dart';
 
 class BookingsDB extends AbstractBookingsRepo {
-  static const String tableName = 'bookings';
+  static const String collectionName = 'bookings';
 
   // Keep SQL code for reference
   static const String sqlCode = '''
-    CREATE TABLE $tableName (
+    CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       job_id INTEGER NOT NULL,
       client_id INTEGER NOT NULL,
@@ -29,63 +30,45 @@ class BookingsDB extends AbstractBookingsRepo {
   Future<List<Booking>> getBookingsForAgency(int agencyId) async {
     try {
       // Get bookings for jobs owned by this agency
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select('*, jobs!inner(agency_id)')
-          .eq('jobs.agency_id', agencyId)
-          .order('created_at', ascending: false);
+      // First get all jobs for this agency
+      final jobsRepo = AbstractJobsRepo.getInstance();
+      final agencyJobs = await jobsRepo.getAllJobsForAgency(agencyId);
+      final jobIds = agencyJobs.map((j) => j.id).whereType<int>().toList();
       
-      // Filter and map results
-      final bookings = <Booking>[];
-      for (final item in response) {
-        try {
-          final bookingData = Map<String, dynamic>.from(item);
-          // Remove nested jobs data
-          bookingData.remove('jobs');
-          bookings.add(Booking.fromMap(bookingData));
-        } catch (e) {
-          print('Error parsing booking: $e');
-        }
-      }
-      return bookings;
+      if (jobIds.isEmpty) return [];
+      
+      // Get bookings for these jobs
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('job_id', whereIn: jobIds)
+          .orderBy('created_at', descending: true)
+          .get();
+      
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return Booking.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getBookingsForAgency error: $e --> $stacktrace');
-      // Fallback: get bookings by querying jobs first
-      try {
-        final jobsRepo = AbstractJobsRepo.getInstance();
-        final agencyJobs = await jobsRepo.getAllJobsForAgency(agencyId);
-        final jobIds = agencyJobs.map((j) => j.id).whereType<int>().toList();
-        
-        if (jobIds.isEmpty) return [];
-        
-        final response = await SupabaseConfig.client
-            .from(tableName)
-            .select()
-            .inFilter('job_id', jobIds)
-            .order('created_at', ascending: false);
-        
-        return (response as List)
-            .map((map) => Booking.fromMap(Map<String, dynamic>.from(map)))
-            .toList();
-      } catch (e2) {
-        print('Fallback query error: $e2');
-        return [];
-      }
+      return [];
     }
   }
 
   @override
   Future<List<Booking>> getBookingsForClient(int clientId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('client_id', clientId)
-          .order('created_at', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('client_id', isEqualTo: clientId)
+          .orderBy('created_at', descending: true)
+          .get();
       
-      return (response as List)
-          .map((map) => Booking.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return Booking.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getBookingsForClient error: $e --> $stacktrace');
       return [];
@@ -95,14 +78,15 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<Booking?> getBookingById(int bookingId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('id', bookingId)
-          .maybeSingle();
+      final doc = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(bookingId.toString())
+          .get();
       
-      if (response == null) return null;
-      return Booking.fromMap(Map<String, dynamic>.from(response));
+      if (!doc.exists) return null;
+      final data = doc.data()!;
+      data['id'] = bookingId;
+      return Booking.fromMap(data);
     } catch (e, stacktrace) {
       print('getBookingById error: $e --> $stacktrace');
       return null;
@@ -113,15 +97,38 @@ class BookingsDB extends AbstractBookingsRepo {
   Future<Booking> createBooking(Booking booking) async {
     try {
       final bookingMap = booking.toMap();
-      bookingMap.remove('id');
+      final id = bookingMap.remove('id');
+      bookingMap['created_at'] = FieldValue.serverTimestamp();
+      bookingMap['updated_at'] = FieldValue.serverTimestamp();
       
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .insert(bookingMap)
-          .select()
-          .single();
+      String docId;
+      if (id != null && id is int) {
+        docId = id.toString();
+      } else {
+        // Generate new ID
+        final snapshot = await FirebaseConfig.firestore
+            .collection(collectionName)
+            .orderBy('id', descending: true)
+            .limit(1)
+            .get();
+        
+        int newId = 1;
+        if (snapshot.docs.isNotEmpty) {
+          final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
+          newId = maxId + 1;
+        }
+        docId = newId.toString();
+        bookingMap['id'] = newId;
+      }
       
-      return Booking.fromMap(Map<String, dynamic>.from(response));
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(docId)
+          .set(bookingMap);
+      
+      final data = bookingMap;
+      data['id'] = int.parse(docId);
+      return Booking.fromMap(data);
     } catch (e, stacktrace) {
       print('createBooking error: $e --> $stacktrace');
       rethrow;
@@ -133,11 +140,12 @@ class BookingsDB extends AbstractBookingsRepo {
     try {
       final bookingMap = booking.toMap();
       bookingMap.remove('id');
+      bookingMap['updated_at'] = FieldValue.serverTimestamp();
       
-      await SupabaseConfig.client
-          .from(tableName)
-          .update(bookingMap)
-          .eq('id', booking.id!);
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(booking.id.toString())
+          .update(bookingMap);
       
       return booking;
     } catch (e, stacktrace) {
@@ -150,17 +158,20 @@ class BookingsDB extends AbstractBookingsRepo {
   Future<List<Booking>> getApplicationsForJob(int jobId) async {
     try {
       // Get bookings for this job where provider_id is not null (applications)
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('job_id', jobId)
-          .order('created_at', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('job_id', isEqualTo: jobId)
+          .orderBy('created_at', descending: true)
+          .get();
       
       // Filter to only include bookings where provider_id is not null (client-side filter)
-      final filteredResponse = (response as List).where((map) => map['provider_id'] != null).toList();
-      
-      return filteredResponse
-          .map((map) => Booking.fromMap(Map<String, dynamic>.from(map)))
+      return snapshot.docs
+          .where((doc) => doc.data()['provider_id'] != null)
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = int.tryParse(doc.id) ?? 0;
+            return Booking.fromMap(data);
+          })
           .toList();
     } catch (e, stacktrace) {
       print('getApplicationsForJob error: $e --> $stacktrace');
@@ -171,16 +182,18 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<List<Booking>> getAcceptedJobsForCleaner(int cleanerId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('provider_id', cleanerId)
-          .eq('status', BookingStatus.inProgress.name)
-          .order('created_at', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('provider_id', isEqualTo: cleanerId)
+          .where('status', isEqualTo: BookingStatus.inProgress.name)
+          .orderBy('created_at', descending: true)
+          .get();
       
-      return (response as List)
-          .map((map) => Booking.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return Booking.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getAcceptedJobsForCleaner error: $e --> $stacktrace');
       return [];
@@ -190,15 +203,13 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<void> acceptApplication(int bookingId) async {
     try {
-      final now = DateTime.now().toIso8601String();
-      
-      await SupabaseConfig.client
-          .from(tableName)
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(bookingId.toString())
           .update({
             'status': BookingStatus.inProgress.name,
-            'updated_at': now,
-          })
-          .eq('id', bookingId);
+            'updated_at': FieldValue.serverTimestamp(),
+          });
       
       // Update job status
       final booking = await getBookingById(bookingId);
@@ -218,15 +229,13 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<void> rejectApplication(int bookingId) async {
     try {
-      final now = DateTime.now().toIso8601String();
-      
-      await SupabaseConfig.client
-          .from(tableName)
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(bookingId.toString())
           .update({
             'status': BookingStatus.cancelled.name,
-            'updated_at': now,
-          })
-          .eq('id', bookingId);
+            'updated_at': FieldValue.serverTimestamp(),
+          });
     } catch (e, stacktrace) {
       print('rejectApplication error: $e --> $stacktrace');
       rethrow;

@@ -1,14 +1,14 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/supabase_config.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/config/firebase_config.dart';
 import '../../models/cleaner_model.dart';
 import 'cleaners_repo.dart';
 
 class CleanersDB extends AbstractCleanersRepo {
-  static const String tableName = 'cleaners';
+  static const String collectionName = 'cleaners';
 
   // Keep SQL code for reference
   static const String sqlCode = '''
-    CREATE TABLE $tableName (
+    CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       avatar_url TEXT,
@@ -25,16 +25,18 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<List<Cleaner>> getCleanersForAgency(int agencyId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('agency_id', agencyId)
-          .eq('is_active', true)
-          .order('jobs_completed', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('agency_id', isEqualTo: agencyId)
+          .where('is_active', isEqualTo: true)
+          .orderBy('jobs_completed', descending: true)
+          .get();
       
-      return (response as List)
-          .map((map) => Cleaner.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return Cleaner.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getCleanersForAgency error: $e --> $stacktrace');
       return [];
@@ -44,14 +46,15 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<Cleaner?> getCleanerById(int cleanerId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('id', cleanerId)
-          .maybeSingle();
+      final doc = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(cleanerId.toString())
+          .get();
       
-      if (response == null) return null;
-      return Cleaner.fromMap(Map<String, dynamic>.from(response));
+      if (!doc.exists) return null;
+      final data = doc.data()!;
+      data['id'] = cleanerId;
+      return Cleaner.fromMap(data);
     } catch (e, stacktrace) {
       print('getCleanerById error: $e --> $stacktrace');
       return null;
@@ -66,15 +69,38 @@ class CleanersDB extends AbstractCleanersRepo {
         createdAt: now,
         updatedAt: now,
       ).toMap();
-      cleanerMap.remove('id');
+      final id = cleanerMap.remove('id');
+      cleanerMap['created_at'] = Timestamp.fromDate(now);
+      cleanerMap['updated_at'] = Timestamp.fromDate(now);
       
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .insert(cleanerMap)
-          .select()
-          .single();
+      String docId;
+      if (id != null && id is int) {
+        docId = id.toString();
+      } else {
+        // Generate new ID
+        final snapshot = await FirebaseConfig.firestore
+            .collection(collectionName)
+            .orderBy('id', descending: true)
+            .limit(1)
+            .get();
+        
+        int newId = 1;
+        if (snapshot.docs.isNotEmpty) {
+          final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
+          newId = maxId + 1;
+        }
+        docId = newId.toString();
+        cleanerMap['id'] = newId;
+      }
       
-      return Cleaner.fromMap(Map<String, dynamic>.from(response));
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(docId)
+          .set(cleanerMap);
+      
+      final data = cleanerMap;
+      data['id'] = int.parse(docId);
+      return Cleaner.fromMap(data);
     } catch (e, stacktrace) {
       print('addCleaner error: $e --> $stacktrace');
       rethrow;
@@ -87,11 +113,12 @@ class CleanersDB extends AbstractCleanersRepo {
       final now = DateTime.now();
       final cleanerMap = cleaner.copyWith(updatedAt: now).toMap();
       cleanerMap.remove('id');
+      cleanerMap['updated_at'] = Timestamp.fromDate(now);
       
-      await SupabaseConfig.client
-          .from(tableName)
-          .update(cleanerMap)
-          .eq('id', cleaner.id!);
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(cleaner.id.toString())
+          .update(cleanerMap);
       
       return cleaner.copyWith(updatedAt: now);
     } catch (e, stacktrace) {
@@ -103,13 +130,13 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<void> removeCleaner(int cleanerId) async {
     try {
-      await SupabaseConfig.client
-          .from(tableName)
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(cleanerId.toString())
           .update({
             'is_active': false,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', cleanerId);
+            'updated_at': FieldValue.serverTimestamp(),
+          });
     } catch (e, stacktrace) {
       print('removeCleaner error: $e --> $stacktrace');
       rethrow;

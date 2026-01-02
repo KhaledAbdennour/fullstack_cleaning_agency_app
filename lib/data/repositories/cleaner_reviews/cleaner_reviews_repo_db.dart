@@ -1,14 +1,14 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/supabase_config.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/config/firebase_config.dart';
 import '../../models/cleaner_review.dart';
 import 'cleaner_reviews_repo.dart';
 
 class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
-  static const String tableName = 'cleaner_reviews';
+  static const String collectionName = 'cleaner_reviews';
 
   // Keep SQL code for reference
   static const String sqlCode = '''
-    CREATE TABLE $tableName (
+    CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cleaner_id INTEGER NOT NULL,
       reviewer_name TEXT NOT NULL,
@@ -26,15 +26,17 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<List<CleanerReview>> getReviewsForCleaner(int cleanerId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('cleaner_id', cleanerId)
-          .order('date', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('cleaner_id', isEqualTo: cleanerId)
+          .orderBy('date', descending: true)
+          .get();
       
-      return (response as List)
-          .map((map) => CleanerReview.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return CleanerReview.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getReviewsForCleaner error: $e --> $stacktrace');
       return [];
@@ -45,15 +47,36 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   Future<CleanerReview> addReview(CleanerReview review) async {
     try {
       final reviewMap = review.toMap();
-      reviewMap.remove('id');
+      final id = reviewMap.remove('id');
       
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .insert(reviewMap)
-          .select()
-          .single();
+      String docId;
+      if (id != null && id is int) {
+        docId = id.toString();
+      } else {
+        // Generate new ID
+        final snapshot = await FirebaseConfig.firestore
+            .collection(collectionName)
+            .orderBy('id', descending: true)
+            .limit(1)
+            .get();
+        
+        int newId = 1;
+        if (snapshot.docs.isNotEmpty) {
+          final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
+          newId = maxId + 1;
+        }
+        docId = newId.toString();
+        reviewMap['id'] = newId;
+      }
       
-      return CleanerReview.fromMap(Map<String, dynamic>.from(response));
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(docId)
+          .set(reviewMap);
+      
+      final data = reviewMap;
+      data['id'] = int.parse(docId);
+      return CleanerReview.fromMap(data);
     } catch (e, stacktrace) {
       print('addReview error: $e --> $stacktrace');
       rethrow;
@@ -63,10 +86,10 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<void> deleteReview(int reviewId) async {
     try {
-      await SupabaseConfig.client
-          .from(tableName)
-          .delete()
-          .eq('id', reviewId);
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(reviewId.toString())
+          .delete();
     } catch (e, stacktrace) {
       print('deleteReview error: $e --> $stacktrace');
       rethrow;
@@ -76,15 +99,16 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<double> getAverageRatingForCleaner(int cleanerId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select('rating')
-          .eq('cleaner_id', cleanerId);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('cleaner_id', isEqualTo: cleanerId)
+          .get();
       
-      if (response.isEmpty) return 0.0;
+      if (snapshot.docs.isEmpty) return 0.0;
       
-      final ratings = (response as List)
-          .map((r) => (r['rating'] as num).toDouble())
+      final ratings = snapshot.docs
+          .map((doc) => (doc.data()['rating'] as num?)?.toDouble() ?? 0.0)
+          .where((r) => r > 0)
           .toList();
       
       if (ratings.isEmpty) return 0.0;
@@ -100,12 +124,13 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<int> getReviewCountForCleaner(int cleanerId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select('id')
-          .eq('cleaner_id', cleanerId);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('cleaner_id', isEqualTo: cleanerId)
+          .count()
+          .get();
       
-      return (response as List).length;
+      return snapshot.count ?? 0;
     } catch (e, stacktrace) {
       print('getReviewCountForCleaner error: $e --> $stacktrace');
       return 0;

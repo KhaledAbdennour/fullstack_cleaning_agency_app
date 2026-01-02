@@ -1,14 +1,15 @@
-import '../../../core/config/supabase_config.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../core/config/firebase_config.dart';
 import '../../models/job_model.dart';
 import '../../models/booking_model.dart';
 import 'jobs_repo.dart';
 
 class JobsDB extends AbstractJobsRepo {
-  static const String tableName = 'jobs';
+  static const String collectionName = 'jobs';
 
   // Keep SQL code for reference
   static const String sqlCode = '''
-    CREATE TABLE $tableName (
+    CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       city TEXT NOT NULL,
@@ -37,32 +38,35 @@ class JobsDB extends AbstractJobsRepo {
   Future<List<Job>> getActiveJobsForAgency(int agencyId) async {
     try {
       // Get jobs where agency is owner and status is active/in_progress
-      final jobsResponse = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('agency_id', agencyId)
-          .isFilter('client_id', null)
-          .eq('is_deleted', false)
-          .inFilter('status', [JobStatus.active.name, JobStatus.inProgress.name])
-          .order('posted_date', ascending: false);
+      final jobsSnapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('agency_id', isEqualTo: agencyId)
+          .where('client_id', isNull: true)
+          .where('is_deleted', isEqualTo: false)
+          .where('status', whereIn: [JobStatus.active.name, JobStatus.inProgress.name])
+          .orderBy('posted_date', descending: true)
+          .get();
 
       // Also get jobs where agency has bookings in progress
-      final bookingsResponse = await SupabaseConfig.client
-          .from('bookings')
-          .select('job_id')
-          .eq('provider_id', agencyId)
-          .eq('status', BookingStatus.inProgress.name);
+      final bookingsSnapshot = await FirebaseConfig.firestore
+          .collection('bookings')
+          .where('provider_id', isEqualTo: agencyId)
+          .where('status', isEqualTo: BookingStatus.inProgress.name)
+          .get();
 
-      final bookingJobIds = (bookingsResponse as List)
-          .map((b) => b['job_id'] as int)
+      final bookingJobIds = bookingsSnapshot.docs
+          .map((doc) => doc.data()['job_id'] as int? ?? 0)
+          .where((id) => id > 0)
           .toSet();
 
       final allJobs = <Job>[];
       
       // Add agency-owned jobs
-      for (final map in jobsResponse) {
+      for (final doc in jobsSnapshot.docs) {
         try {
-          allJobs.add(Job.fromMap(Map<String, dynamic>.from(map)));
+          final data = doc.data();
+          data['id'] = int.tryParse(doc.id) ?? 0;
+          allJobs.add(Job.fromMap(data));
         } catch (e) {
           print('Error parsing job: $e');
         }
@@ -70,16 +74,18 @@ class JobsDB extends AbstractJobsRepo {
 
       // Add jobs with bookings
       if (bookingJobIds.isNotEmpty) {
-        final bookedJobsResponse = await SupabaseConfig.client
-            .from(tableName)
-            .select()
-            .inFilter('id', bookingJobIds.toList())
-            .eq('is_deleted', false)
-            .order('posted_date', ascending: false);
+        final bookedJobsSnapshot = await FirebaseConfig.firestore
+            .collection(collectionName)
+            .where(FieldPath.documentId, whereIn: bookingJobIds.map((id) => id.toString()).toList())
+            .where('is_deleted', isEqualTo: false)
+            .orderBy('posted_date', descending: true)
+            .get();
 
-        for (final map in bookedJobsResponse) {
+        for (final doc in bookedJobsSnapshot.docs) {
           try {
-            final job = Job.fromMap(Map<String, dynamic>.from(map));
+            final data = doc.data();
+            data['id'] = int.tryParse(doc.id) ?? 0;
+            final job = Job.fromMap(data);
             if (!allJobs.any((j) => j.id == job.id)) {
               allJobs.add(job);
             }
@@ -99,17 +105,19 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<List<Job>> getPastJobsForAgency(int agencyId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('agency_id', agencyId)
-          .isFilter('client_id', null)
-          .eq('is_deleted', false)
-          .order('posted_date', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('agency_id', isEqualTo: agencyId)
+          .where('client_id', isNull: true)
+          .where('is_deleted', isEqualTo: false)
+          .orderBy('posted_date', descending: true)
+          .get();
       
-      return (response as List)
-          .map((map) => Job.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return Job.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getPastJobsForAgency error: $e --> $stacktrace');
       return [];
@@ -119,17 +127,19 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<List<Job>> getAllJobsForAgency(int agencyId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('agency_id', agencyId)
-          .isFilter('client_id', null)
-          .eq('is_deleted', false)
-          .order('posted_date', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('agency_id', isEqualTo: agencyId)
+          .where('client_id', isNull: true)
+          .where('is_deleted', isEqualTo: false)
+          .orderBy('posted_date', descending: true)
+          .get();
       
-      return (response as List)
-          .map((map) => Job.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return Job.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getAllJobsForAgency error: $e --> $stacktrace');
       return [];
@@ -139,15 +149,17 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<Job?> getJobById(int jobId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('id', jobId)
-          .eq('is_deleted', false)
-          .maybeSingle();
+      final doc = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(jobId.toString())
+          .get();
       
-      if (response == null) return null;
-      return Job.fromMap(Map<String, dynamic>.from(response));
+      if (!doc.exists) return null;
+      final data = doc.data()!;
+      if (data['is_deleted'] == true) return null;
+      
+      data['id'] = jobId;
+      return Job.fromMap(data);
     } catch (e, stacktrace) {
       print('getJobById error: $e --> $stacktrace');
       return null;
@@ -162,15 +174,37 @@ class JobsDB extends AbstractJobsRepo {
         createdAt: now,
         updatedAt: now,
       ).toMap();
-      jobMap.remove('id');
       
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .insert(jobMap)
-          .select()
-          .single();
+      final id = jobMap.remove('id');
+      jobMap['created_at'] = Timestamp.fromDate(now);
+      jobMap['updated_at'] = Timestamp.fromDate(now);
       
-      return Job.fromMap(Map<String, dynamic>.from(response));
+      String docId;
+      if (id != null && id is int) {
+        docId = id.toString();
+      } else {
+        // Generate new ID
+        final snapshot = await FirebaseConfig.firestore
+            .collection(collectionName)
+            .orderBy('id', descending: true)
+            .limit(1)
+            .get();
+        
+        int newId = 1;
+        if (snapshot.docs.isNotEmpty) {
+          final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
+          newId = maxId + 1;
+        }
+        docId = newId.toString();
+        jobMap['id'] = newId;
+      }
+      
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(docId)
+          .set(jobMap);
+      
+      return job.copyWith(id: int.parse(docId), createdAt: now, updatedAt: now);
     } catch (e, stacktrace) {
       print('createJob error: $e --> $stacktrace');
       rethrow;
@@ -183,11 +217,12 @@ class JobsDB extends AbstractJobsRepo {
       final now = DateTime.now();
       final jobMap = job.copyWith(updatedAt: now).toMap();
       jobMap.remove('id');
+      jobMap['updated_at'] = Timestamp.fromDate(now);
       
-      await SupabaseConfig.client
-          .from(tableName)
-          .update(jobMap)
-          .eq('id', job.id!);
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(job.id.toString())
+          .update(jobMap);
       
       return job.copyWith(updatedAt: now);
     } catch (e, stacktrace) {
@@ -199,13 +234,13 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<void> deleteJob(int jobId) async {
     try {
-      await SupabaseConfig.client
-          .from(tableName)
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(jobId.toString())
           .update({
             'is_deleted': true,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', jobId);
+            'updated_at': FieldValue.serverTimestamp(),
+          });
     } catch (e, stacktrace) {
       print('deleteJob error: $e --> $stacktrace');
       rethrow;
@@ -215,13 +250,13 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<void> changeJobStatus(int jobId, JobStatus status) async {
     try {
-      await SupabaseConfig.client
-          .from(tableName)
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(jobId.toString())
           .update({
             'status': status.name,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', jobId);
+            'updated_at': FieldValue.serverTimestamp(),
+          });
     } catch (e, stacktrace) {
       print('changeJobStatus error: $e --> $stacktrace');
       rethrow;
@@ -231,14 +266,15 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<int> getTotalJobsCompletedForAgency(int agencyId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select('id')
-          .eq('agency_id', agencyId)
-          .eq('status', JobStatus.completed.name)
-          .eq('is_deleted', false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('agency_id', isEqualTo: agencyId)
+          .where('status', isEqualTo: JobStatus.completed.name)
+          .where('is_deleted', isEqualTo: false)
+          .count()
+          .get();
       
-      return (response as List).length;
+      return snapshot.count ?? 0;
     } catch (e, stacktrace) {
       print('getTotalJobsCompletedForAgency error: $e --> $stacktrace');
       return 0;
@@ -250,36 +286,39 @@ class JobsDB extends AbstractJobsRepo {
     try {
       // Get jobs posted by clients (not agencies) that are active
       // and not already applied to by this agency
-      final appliedJobIdsResponse = await SupabaseConfig.client
-          .from('bookings')
-          .select('job_id')
-          .eq('provider_id', agencyId);
+      final appliedJobIdsSnapshot = await FirebaseConfig.firestore
+          .collection('bookings')
+          .where('provider_id', isEqualTo: agencyId)
+          .get();
       
-      final appliedJobIds = (appliedJobIdsResponse as List)
-          .map((b) => b['job_id'] as int)
+      final appliedJobIds = appliedJobIdsSnapshot.docs
+          .map((doc) => doc.data()['job_id'] as int? ?? 0)
+          .where((id) => id > 0)
           .toSet();
       
       // Get jobs posted by clients (client_id IS NOT NULL) and not by agencies (agency_id IS NULL)
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .isFilter('agency_id', null)
-          .eq('status', JobStatus.active.name)
-          .eq('is_deleted', false)
-          .order('posted_date', ascending: false);
-      
-      // Filter to only include jobs where client_id is not null (client-side filter)
-      final filteredResponse = (response as List).where((map) => map['client_id'] != null).toList();
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('agency_id', isNull: true)
+          .where('status', isEqualTo: JobStatus.active.name)
+          .where('is_deleted', isEqualTo: false)
+          .orderBy('posted_date', descending: true)
+          .get();
       
       final jobs = <Job>[];
-      for (final map in filteredResponse) {
+      for (final doc in snapshot.docs) {
         try {
-          final job = Job.fromMap(Map<String, dynamic>.from(map));
-          if (!appliedJobIds.contains(job.id) &&
-              job.title.isNotEmpty &&
-              job.city.isNotEmpty &&
-              job.country.isNotEmpty) {
-            jobs.add(job);
+          final data = doc.data();
+          // Filter client-side for client_id not null
+          if (data['client_id'] != null) {
+            data['id'] = int.tryParse(doc.id) ?? 0;
+            final job = Job.fromMap(data);
+            if (!appliedJobIds.contains(job.id) &&
+                job.title.isNotEmpty &&
+                job.city.isNotEmpty &&
+                job.country.isNotEmpty) {
+              jobs.add(job);
+            }
           }
         } catch (e) {
           print('Error parsing job from map: $e');
@@ -296,16 +335,18 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<List<Job>> getJobsForClient(int clientId) async {
     try {
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .eq('client_id', clientId)
-          .eq('is_deleted', false)
-          .order('posted_date', ascending: false);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('client_id', isEqualTo: clientId)
+          .where('is_deleted', isEqualTo: false)
+          .orderBy('posted_date', descending: true)
+          .get();
       
-      return (response as List)
-          .map((map) => Job.fromMap(Map<String, dynamic>.from(map)))
-          .toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = int.tryParse(doc.id) ?? 0;
+        return Job.fromMap(data);
+      }).toList();
     } catch (e, stacktrace) {
       print('getJobsForClient error: $e --> $stacktrace');
       return [];
@@ -316,19 +357,22 @@ class JobsDB extends AbstractJobsRepo {
   Future<List<Job>> getRecentClientJobs({int limit = 10}) async {
     try {
       // Get jobs posted by clients (client_id IS NOT NULL) and not by agencies (agency_id IS NULL)
-      final response = await SupabaseConfig.client
-          .from(tableName)
-          .select()
-          .isFilter('agency_id', null)
-          .eq('is_deleted', false)
-          .order('posted_date', ascending: false)
-          .limit(limit);
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('agency_id', isNull: true)
+          .where('is_deleted', isEqualTo: false)
+          .orderBy('posted_date', descending: true)
+          .limit(limit)
+          .get();
       
       // Filter to only include jobs where client_id is not null (client-side filter)
-      final filteredResponse = (response as List).where((map) => map['client_id'] != null).toList();
-      
-      return filteredResponse
-          .map((map) => Job.fromMap(Map<String, dynamic>.from(map)))
+      return snapshot.docs
+          .where((doc) => doc.data()['client_id'] != null)
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = int.tryParse(doc.id) ?? 0;
+            return Job.fromMap(data);
+          })
           .toList();
     } catch (e, stacktrace) {
       print('getRecentClientJobs error: $e --> $stacktrace');
