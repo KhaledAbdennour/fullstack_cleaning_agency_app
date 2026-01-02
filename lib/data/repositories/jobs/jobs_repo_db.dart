@@ -234,12 +234,12 @@ class JobsDB extends AbstractJobsRepo {
     try {
       final response = await SupabaseConfig.client
           .from(tableName)
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('agency_id', agencyId)
           .eq('status', JobStatus.completed.name)
           .eq('is_deleted', false);
       
-      return response.count ?? 0;
+      return (response as List).length;
     } catch (e, stacktrace) {
       print('getTotalJobsCompletedForAgency error: $e --> $stacktrace');
       return 0;

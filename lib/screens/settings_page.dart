@@ -145,7 +145,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return ListTile(
       leading: const Icon(Icons.language, color: Color(0xFF4B5563)),
       title: Text(
-        AppLocalizations.of(context)?.language ?? 'Language',
+        'Language',
         style: const TextStyle(
           fontSize: 16,
           color: Color(0xFF1F2937),
@@ -184,7 +184,7 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text(AppLocalizations.of(context)?.language ?? 'Language'),
+          title: const Text('Language'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: languages.map((lang) {
@@ -211,7 +211,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void _changeLanguage(Locale locale) async {
     await LocaleService.saveLocale(locale);
     // Find the MyApp widget and update its locale
-    final appState = _MyAppState.of(context);
+    final appState = MyApp.of(context);
     if (appState != null) {
       appState._changeLocale(locale);
     }

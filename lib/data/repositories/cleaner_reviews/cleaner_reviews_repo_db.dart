@@ -102,10 +102,10 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
     try {
       final response = await SupabaseConfig.client
           .from(tableName)
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('cleaner_id', cleanerId);
       
-      return response.count ?? 0;
+      return (response as List).length;
     } catch (e, stacktrace) {
       print('getReviewCountForCleaner error: $e --> $stacktrace');
       return 0;
