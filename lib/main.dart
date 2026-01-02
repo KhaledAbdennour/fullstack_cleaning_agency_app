@@ -20,7 +20,7 @@ import 'logic/cubits/job_applications_cubit.dart';
 import 'data/databases/dbhelper.dart';
 import 'data/databases/database_seeder.dart';
 import 'utils/role_based_home.dart';
-import 'core/config/supabase_config.dart';
+import 'core/config/firebase_config.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/locale_service.dart';
 
@@ -145,12 +145,14 @@ void main() async {
     // #endregion
   }
   
-  // Initialize Supabase
-  try {
-    await SupabaseConfig.initialize();
-  } catch (e) {
-    print('Warning: Supabase initialization failed: $e');
-    print('Make sure to set SUPABASE_URL and SUPABASE_ANON_KEY environment variables');
+  // Initialize Firestore (only on Android/iOS - not supported on Windows/desktop)
+  if (Platform.isAndroid || Platform.isIOS) {
+    try {
+      await FirebaseConfig.initialize();
+      print('✅ Firestore initialized successfully');
+    } catch (e) {
+      print('Warning: Firestore initialization failed: $e');
+    }
   }
   
   // Initialize notifications (only on Android/iOS - not supported on Windows/desktop)

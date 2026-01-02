@@ -3,8 +3,9 @@ import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../config/supabase_config.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../config/firebase_config.dart';
 
 /// Firebase Cloud Messaging service
 class NotificationService {
@@ -80,7 +81,7 @@ class NotificationService {
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
       // Handle token refresh
-      _messaging.onTokenRefresh.listen(_saveTokenToSupabase);
+      _messaging.onTokenRefresh.listen(_saveTokenToFirestore);
 
       // Get initial token
       print('🔍 DEBUG: About to call getToken()...');
@@ -129,13 +130,13 @@ class NotificationService {
         // #region agent log
         try {
           final logFile = File(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log');
-          final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"D","location":"notification_service.dart:73","message":"Token received, saving to Supabase","data":{"tokenLength":token.length},"timestamp":DateTime.now().millisecondsSinceEpoch});
+          final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"D","location":"notification_service.dart:73","message":"Token received, saving to Firestore","data":{"tokenLength":token.length},"timestamp":DateTime.now().millisecondsSinceEpoch});
           logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
         } catch (e) {
           print('🔍 DEBUG: Log write failed: $e');
         }
         // #endregion
-        await _saveTokenToSupabase(token);
+        await _saveTokenToFirestore(token);
       } else {
         print('❌ FCM token is null');
         // #region agent log
@@ -210,34 +211,33 @@ class NotificationService {
     print('Notification tapped: ${response.payload}');
   }
 
-  /// Save FCM token to Supabase
-  static Future<void> _saveTokenToSupabase(String token) async {
+  /// Save FCM token to Firestore
+  static Future<void> _saveTokenToFirestore(String token) async {
     try {
-      final user = SupabaseConfig.currentUser;
-      if (user == null) {
-        // Try to get user ID from profiles table if auth not set up
-        // For now, skip if no auth user
+      // Get current user ID from SharedPreferences (same key used in profiles repo)
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('current_user_id');
+      
+      if (userId == null) {
+        // No user logged in, skip saving token
         return;
       }
 
-      // Get profile ID from auth_user_id
-      final profileResponse = await SupabaseConfig.client
-          .from('profiles')
-          .select('id')
-          .eq('auth_user_id', user.id)
-          .single();
-      
-      if (profileResponse == null) return;
-      
-      final profileId = profileResponse['id'] as int;
       final platform = Platform.isAndroid ? 'android' : 'ios';
+      final deviceId = '${platform}_${userId}'; // Unique device ID per user+platform
 
-      await SupabaseConfig.client.from('user_devices').upsert({
-        'user_id': profileId,
+      // Upsert device token in Firestore
+      await FirebaseConfig.firestore
+          .collection('user_devices')
+          .doc(deviceId)
+          .set({
+        'user_id': userId.toString(),
         'fcm_token': token,
         'platform': platform,
-        'updated_at': DateTime.now().toIso8601String(),
-      });
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+      
+      print('✅ FCM token saved to Firestore for user $userId');
     } catch (e) {
       print('Error saving FCM token: $e');
     }
@@ -252,7 +252,7 @@ class NotificationService {
 /// Background message handler (must be top-level)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Supabase should already be initialized in main(), but ensure it's available
+  // Firebase should already be initialized in main()
   // Handle background message if needed
   print('Background message: ${message.messageId}');
 }
