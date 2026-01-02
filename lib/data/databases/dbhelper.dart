@@ -58,7 +58,7 @@ class DBHelper {
         
         await db.execute(ProfileDB.sqlCode);
         
-        await db.execute(ProfileDB.currentUserSqlCode);
+        // ProfileDB.currentUserSqlCode removed - using Supabase now
         
         await db.execute(JobsDB.sqlCode);
         
