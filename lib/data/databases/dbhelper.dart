@@ -83,23 +83,23 @@ class DBHelper {
             
             try {
               
-              final tableInfo = await db.rawQuery('PRAGMA table_info(${JobsDB.tableName})');
+              final tableInfo = await db.rawQuery('PRAGMA table_info(jobs)');
               final columnNames = tableInfo.map((row) => row['name'] as String).toList();
               
               if (!columnNames.contains('client_id')) {
-                await db.execute('ALTER TABLE ${JobsDB.tableName} ADD COLUMN client_id INTEGER');
+                await db.execute('ALTER TABLE jobs ADD COLUMN client_id INTEGER');
               }
               if (!columnNames.contains('budget_min')) {
-                await db.execute('ALTER TABLE ${JobsDB.tableName} ADD COLUMN budget_min REAL');
+                await db.execute('ALTER TABLE jobs ADD COLUMN budget_min REAL');
               }
               if (!columnNames.contains('budget_max')) {
-                await db.execute('ALTER TABLE ${JobsDB.tableName} ADD COLUMN budget_max REAL');
+                await db.execute('ALTER TABLE jobs ADD COLUMN budget_max REAL');
               }
               if (!columnNames.contains('estimated_hours')) {
-                await db.execute('ALTER TABLE ${JobsDB.tableName} ADD COLUMN estimated_hours INTEGER');
+                await db.execute('ALTER TABLE jobs ADD COLUMN estimated_hours INTEGER');
               }
               if (!columnNames.contains('required_services')) {
-                await db.execute('ALTER TABLE ${JobsDB.tableName} ADD COLUMN required_services TEXT');
+                await db.execute('ALTER TABLE jobs ADD COLUMN required_services TEXT');
               }
               
               
@@ -111,9 +111,9 @@ class DBHelper {
             }
             
             try {
-              await db.execute('ALTER TABLE ${BookingsDB.tableName} ADD COLUMN provider_id INTEGER');
-              await db.execute('ALTER TABLE ${BookingsDB.tableName} ADD COLUMN bid_price REAL');
-              await db.execute('ALTER TABLE ${BookingsDB.tableName} ADD COLUMN message TEXT');
+              await db.execute('ALTER TABLE bookings ADD COLUMN provider_id INTEGER');
+              await db.execute('ALTER TABLE bookings ADD COLUMN bid_price REAL');
+              await db.execute('ALTER TABLE bookings ADD COLUMN message TEXT');
             } catch (e) {
               print('Migration error (might already be migrated): $e');
             }
@@ -131,7 +131,7 @@ class DBHelper {
             
             try {
               
-              final tableInfo = await db.rawQuery('PRAGMA table_info(${JobsDB.tableName})');
+              final tableInfo = await db.rawQuery('PRAGMA table_info(jobs)');
               final hasAgencyId = tableInfo.any((row) => row['name'] == 'agency_id');
               
               if (hasAgencyId) {
@@ -140,14 +140,14 @@ class DBHelper {
                 await db.execute('PRAGMA foreign_keys=OFF');
                 
                 
-                await db.execute('ALTER TABLE ${JobsDB.tableName} RENAME TO ${JobsDB.tableName}_old');
+                await db.execute('ALTER TABLE jobs RENAME TO jobs_old');
                 
                 
                 await db.execute(JobsDB.sqlCode);
                 
                 
                 await db.execute('''
-                  INSERT INTO ${JobsDB.tableName} 
+                  INSERT INTO jobs 
                   (id, title, city, country, description, status, posted_date, job_date, 
                    cover_image_url, client_id, agency_id, budget_min, budget_max, 
                    estimated_hours, required_services, is_deleted, created_at, updated_at)
@@ -157,11 +157,11 @@ class DBHelper {
                          CASE WHEN agency_id IS NOT NULL THEN agency_id ELSE NULL END,
                          budget_min, budget_max,
                          estimated_hours, required_services, is_deleted, created_at, updated_at
-                  FROM ${JobsDB.tableName}_old
+                  FROM jobs_old
                 ''');
                 
                 
-                await db.execute('DROP TABLE ${JobsDB.tableName}_old');
+                await db.execute('DROP TABLE jobs_old');
                 
                 
                 await db.execute('PRAGMA foreign_keys=ON');
@@ -171,7 +171,7 @@ class DBHelper {
               
               try {
                 await db.execute('PRAGMA foreign_keys=OFF');
-                await db.execute('ALTER TABLE ${JobsDB.tableName}_old RENAME TO ${JobsDB.tableName}');
+                await db.execute('ALTER TABLE jobs_old RENAME TO jobs');
                 await db.execute('PRAGMA foreign_keys=ON');
               } catch (e2) {
                 print('Failed to restore old table: $e2');
