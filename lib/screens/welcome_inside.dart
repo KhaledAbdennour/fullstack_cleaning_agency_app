@@ -19,11 +19,12 @@ class WelcomeInside extends StatelessWidget {
         elevation: 0,
       ),
       body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
               
               Container(
                 width: 100,
@@ -137,6 +138,7 @@ class WelcomeInside extends StatelessWidget {
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),

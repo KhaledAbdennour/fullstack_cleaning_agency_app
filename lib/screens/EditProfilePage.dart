@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../logic/cubits/profiles_cubit.dart';
 import '../utils/validators.dart';
 import '../utils/algerian_addresses.dart';
+import '../data/repositories/storage/storage_repo.dart';
+import '../data/repositories/profiles/profile_repo.dart';
+import '../widgets/profile_avatar_widget.dart';
+import '../l10n/app_localizations.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -26,6 +32,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   int? _userId;
   bool _isLoading = true;
   bool _isUpdating = false;
+  String? _currentAvatarUrl;
+  final ImagePicker _picker = ImagePicker();
+  bool _isUploadingImage = false;
+  bool _isRemovingImage = false;
 
   @override
   void initState() {
@@ -36,6 +46,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _loadProfile() {
     final cubit = context.read<ProfilesCubit>();
     cubit.loadCurrentUser().then((_) {
+      if (!mounted) return;
       final state = cubit.state;
       if (state is ProfilesLoaded && state.currentUser != null) {
         final user = state.currentUser!;
@@ -54,12 +65,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
           _bioController.text = user['bio'] as String? ?? '';
           _selectedGender = user['gender'] as String? ?? 'Male';
+          _currentAvatarUrl = user['picture'] as String?;
           _isLoading = false;
         });
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     });
   }
@@ -82,7 +96,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         _birthdateController.text = '${picked.month}/${picked.day}/${picked.year}';
       });
@@ -101,8 +115,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             icon: const Icon(Icons.arrow_back, color: Colors.black),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text(
-            'Edit Profile',
+          title: Text(
+            AppLocalizations.of(context)!.editProfile,
             style: TextStyle(
               color: Colors.black,
               fontSize: 16,
@@ -110,7 +124,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))),
       );
     }
 
@@ -146,7 +160,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Personal Information',
+                      AppLocalizations.of(context)!.personalInformation,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -156,7 +170,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     Text(
-                      'Full Name',
+                      AppLocalizations.of(context)!.fullName,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -170,7 +184,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         FilteringTextInputFormatter.allow(RegExp(r"[a-zA-Z\s\-']")),
                       ],
                       decoration: InputDecoration(
-                        hintText: 'Enter your full name',
+                        hintText: AppLocalizations.of(context)!.enterYourFullName,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -193,7 +207,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     Text(
-                      'Email Address',
+                      AppLocalizations.of(context)!.emailAddress,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -205,7 +219,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'Enter your email',
+                        hintText: AppLocalizations.of(context)!.enterYourEmail,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -227,7 +241,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     Text(
-                      'Phone Number',
+                      AppLocalizations.of(context)!.phoneNumber,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -242,7 +256,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         FilteringTextInputFormatter.allow(RegExp(r'^\+?[\d]*$')),
                       ],
                       decoration: InputDecoration(
-                        hintText: 'Enter your phone number',
+                        hintText: AppLocalizations.of(context)!.enterYourPhoneNumber,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -264,48 +278,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: 16),
                     
-                    InkWell(
-                      onTap: () {
-                        
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.photo_camera_outlined, color: Colors.grey.shade700),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Upload Profile Picture',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey.shade900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Upload a clear photo',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(Icons.chevron_right, color: Colors.grey.shade400),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _buildProfilePictureSection(),
                   ],
                 ),
               ),
@@ -750,10 +723,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(
+                                child: const CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor:
-                                      AlwaysStoppedAnimation<Color>(Colors.white),
+                                      AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
                                 ),
                               )
                             : const Text(
@@ -773,6 +746,317 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildProfilePictureSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Profile Picture',
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            // Current avatar display
+            ProfileAvatarWidget(
+              avatarUrl: _currentAvatarUrl,
+              fullName: _fullNameController.text,
+              radius: 40,
+            ),
+            const SizedBox(width: 16),
+            // Buttons
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: (_isUploadingImage || _isRemovingImage || _userId == null)
+                          ? null
+                          : _changePhoto,
+                      icon: _isUploadingImage
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3B82F6)),
+                            )
+                          : const Icon(Icons.photo_library_outlined, size: 18),
+                      label: const Text('Change Photo'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: (_isUploadingImage || _isRemovingImage || _userId == null)
+                            ? null
+                            : _removePhoto,
+                        icon: _isRemovingImage
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: const CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3B82F6)),
+                              )
+                            : const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Remove Photo'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _changePhoto() async {
+    if (_userId == null) return;
+
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (image == null || !mounted) return;
+
+      setState(() {
+        _isUploadingImage = true;
+      });
+
+      String? newImageUrl;
+      
+      try {
+        // Upload new image
+        final storageRepo = AbstractStorageRepo.getInstance();
+        newImageUrl = await storageRepo.uploadProfileImage(
+        _userId!,
+        image.path,
+      );
+
+      if (!mounted) return;
+
+      // Delete old image if it exists (fail silently if file doesn't exist)
+      // Note: deleteProfileImage should not throw, but wrap in try-catch just in case
+      if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty && _currentAvatarUrl!.startsWith('http')) {
+        try {
+          await storageRepo.deleteProfileImage(_currentAvatarUrl!);
+        } catch (e) {
+          // Ignore all errors from delete - it's not critical if old file can't be deleted
+          // This is expected if the file doesn't exist (e.g., first upload or file was already deleted)
+        }
+      }
+
+      // Update profile with new avatar URL
+      final profileRepo = AbstractProfileRepo.getInstance();
+      final success = await profileRepo.updateAvatarUrl(_userId!, newImageUrl!);
+
+        if (!mounted) return;
+
+        if (success) {
+          // Update local state first
+          setState(() {
+            _currentAvatarUrl = newImageUrl;
+            _isUploadingImage = false;
+          });
+
+          // Refresh profile state to ensure UI updates with new picture
+          final cubit = context.read<ProfilesCubit>();
+          await cubit.loadCurrentUser();
+
+          // Wait a bit to ensure state is updated
+          await Future.delayed(const Duration(milliseconds: 300));
+
+          if (mounted) {
+            // Force rebuild to show new image
+            setState(() {});
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile picture updated successfully!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        } else {
+          setState(() {
+            _isUploadingImage = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to update profile picture'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (!mounted) return;
+        
+        // Check if it's an object-not-found error (file doesn't exist)
+        // This is expected and should be handled silently
+        final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('object-not-found') || 
+          errorStr.contains('no object exists') ||
+          errorStr.contains('[firebase_storage/object-not-found]')) {
+        // Silently handle - this is expected when old file doesn't exist
+        setState(() {
+          _isUploadingImage = false;
+        });
+        
+        // Still try to update the profile if we have the new image URL from upload
+        // The upload should have succeeded, only the delete failed
+        if (newImageUrl != null && newImageUrl.isNotEmpty) {
+          // Try to update profile with the new image URL (upload succeeded)
+          try {
+            final profileRepo = AbstractProfileRepo.getInstance();
+            final success = await profileRepo.updateAvatarUrl(_userId!, newImageUrl);
+            
+            if (success) {
+              // Update local state
+              setState(() {
+                _currentAvatarUrl = newImageUrl;
+                _isUploadingImage = false;
+              });
+              
+              // Refresh profile state to show new image
+              final cubit = context.read<ProfilesCubit>();
+              await cubit.loadCurrentUser();
+              
+              if (mounted) {
+                // Force rebuild to show new image
+                setState(() {});
+              }
+            } else {
+              setState(() {
+                _isUploadingImage = false;
+              });
+            }
+          } catch (updateError) {
+            // If profile update also fails, just reset the uploading state
+            setState(() {
+              _isUploadingImage = false;
+            });
+          }
+        } else {
+          setState(() {
+            _isUploadingImage = false;
+          });
+        }
+        return; // Don't show error message for expected errors
+      }
+      
+        setState(() {
+          _isUploadingImage = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating profile picture: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (outerError) {
+      // Handle any unexpected errors from picking image
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _removePhoto() async {
+    if (_userId == null || _currentAvatarUrl == null || _currentAvatarUrl!.isEmpty) {
+      return;
+    }
+
+    try {
+      setState(() {
+        _isRemovingImage = true;
+      });
+
+      // Delete from storage
+      final storageRepo = AbstractStorageRepo.getInstance();
+      try {
+        await storageRepo.deleteProfileImage(_currentAvatarUrl!);
+      } catch (e) {
+        // Log but continue - the URL might already be invalid
+        print('Warning: Failed to delete avatar from storage: $e');
+      }
+
+      // Update profile to remove avatar URL
+      final profileRepo = AbstractProfileRepo.getInstance();
+      final success = await profileRepo.removeAvatar(_userId!);
+
+      if (!mounted) return;
+
+      if (success) {
+        setState(() {
+          _currentAvatarUrl = null;
+          _isRemovingImage = false;
+        });
+
+        // Refresh profile state
+        final cubit = context.read<ProfilesCubit>();
+        await cubit.loadCurrentUser();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture removed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        setState(() {
+          _isRemovingImage = false;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to remove profile picture'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isRemovingImage = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error removing profile picture: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildGenderButton(String gender) {

@@ -31,7 +31,10 @@ class AvailableJobsCubit extends Cubit<AvailableJobsState> {
     try {
       final jobs = await _jobsRepo.getAvailableJobsForAgency(agencyId);
       emit(AvailableJobsLoaded(jobs));
-    } catch (e) {
+    } catch (e, stack) {
+      // Log error before emitting error state
+      print('❌ [AvailableJobsCubit] loadAvailableJobs failed: $e');
+      print('❌ [AvailableJobsCubit] Stack: $stack');
       emit(AvailableJobsError('Failed to load available jobs: $e'));
     }
   }

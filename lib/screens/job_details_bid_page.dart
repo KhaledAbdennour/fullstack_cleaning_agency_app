@@ -4,6 +4,7 @@ import '../data/models/job_model.dart';
 import '../data/models/booking_model.dart';
 import '../logic/cubits/profiles_cubit.dart';
 import '../logic/cubits/available_jobs_cubit.dart';
+import '../logic/cubits/agency_dashboard_cubit.dart';
 import '../data/repositories/bookings/bookings_repo.dart';
 import '../data/repositories/profiles/profile_repo.dart';
 import '../utils/image_helper.dart';
@@ -127,7 +128,11 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
 
       
       if (mounted) {
+        // Refresh available jobs (to remove the job from available list)
         context.read<AvailableJobsCubit>().refresh(providerId);
+        
+        // Refresh active listings (to show the job as pending)
+        context.read<ActiveListingsCubit>().refresh(providerId);
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -141,9 +146,23 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
       }
     } catch (e) {
       if (mounted) {
+        // Safely format error message (avoid encoding FieldValue in error string)
+        String errorMsg = 'Error submitting bid';
+        try {
+          final errorStr = e.toString();
+          // Remove FieldValue references from error message
+          if (errorStr.contains('FieldValue')) {
+            errorMsg = 'Error submitting bid: Invalid data format. Please try again.';
+          } else {
+            errorMsg = 'Error submitting bid: ${errorStr.length > 100 ? errorStr.substring(0, 100) : errorStr}';
+          }
+        } catch (_) {
+          errorMsg = 'Error submitting bid: An unexpected error occurred';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error submitting bid: $e'),
+            content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );
@@ -256,19 +275,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                                     ],
                                   ),
                                 ),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.star, color: Colors.amber, size: 20),
-                                    const SizedBox(width: 4),
-                                    const Text(
-                                      '4.8',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                // Rating removed - clients don't have ratings on job listings
                               ],
                             );
                           },
@@ -298,7 +305,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       const Icon(Icons.calendar_today_outlined, color: Colors.grey, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        '${_formatDate(widget.job.jobDate)}, ${_formatTime(widget.job.jobDate)}',
+                        '${_formatDate(widget.job.postedDate)}, ${_formatTime(widget.job.postedDate)}',
                         style: const TextStyle(fontSize: 16),
                       ),
                       if (widget.job.estimatedHours != null)
@@ -483,9 +490,9 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(
+                        child: const CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
                         ),
                       )
                     : const Text(

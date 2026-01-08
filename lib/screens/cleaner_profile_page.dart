@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'jobdetails.dart';
+import '../utils/age_helper.dart';
+import '../core/utils/firestore_type.dart';
+import '../logic/cubits/cleaner_history_cubit.dart';
+import '../logic/cubits/cleaner_reviews_cubit.dart';
+import '../data/models/cleaning_history_item.dart';
+import '../data/models/cleaner_review.dart';
+import '../data/repositories/cleaner_reviews/cleaner_reviews_repo.dart';
 
 class CleanerProfilePage extends StatefulWidget {
   final Map<String, dynamic> cleaner;
@@ -17,54 +25,61 @@ class CleanerProfilePage extends StatefulWidget {
 
 class _CleanerProfilePageState extends State<CleanerProfilePage> {
   int _selectedTab = 0; 
+  int? _cleanerId;
+  double _rating = 0.0;
+  int _reviewCount = 0;
 
-  final List<Map<String, dynamic>> cleaningHistory = [
-    {
-      'type': 'Office Building',
-      'date': 'June 5, 2024',
-      'description': 'Standard office cleaning, completed successfully.',
-      'icon': Icons.business,
-      'color': Colors.blue,
-    },
-    {
-      'type': 'Apartment',
-      'date': 'May 20, 2024',
-      'description': 'Deep cleaning service for a 3-bedroom apartment.',
-      'icon': Icons.home,
-      'color': Colors.blue,
-    },
-    {
-      'type': 'Villa',
-      'date': 'May 10, 2024',
-      'description': 'Full-day cleaning for a large villa, including windows.',
-      'icon': Icons.villa,
-      'color': Colors.purple,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    // Use safe type helper to get cleaner ID
+    _cleanerId = readInt(widget.cleaner['id']);
+    
+    _loadRating();
+    if (_cleanerId != null) {
+      // Load history and reviews when tab is selected
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _cleanerId != null) {
+          context.read<CleanerHistoryCubit>().loadHistory(_cleanerId!);
+          context.read<CleanerReviewsCubit>().loadReviews(_cleanerId!);
+        }
+      });
+    }
+  }
 
-  final List<Map<String, dynamic>> reviews = [
-    {
-      'name': 'Amina K.',
-      'date': 'June 10, 2024',
-      'rating': 5,
-      'text': 'Fatima was amazing! She left my apartment sparkling clean. Very professional and friendly.',
-      'hasPhotos': false,
-    },
-    {
-      'name': 'Karim B.',
-      'date': 'May 28, 2024',
-      'rating': 5,
-      'text': 'Great service, very thorough. Would hire again.',
-      'hasPhotos': false,
-    },
-    {
-      'name': 'Yasmine L.',
-      'date': 'May 15, 2024',
-      'rating': 5,
-      'text': 'Excellent work! My house has never been cleaner. Fatima paid attention to every detail.',
-      'hasPhotos': true,
-    },
-  ];
+  Future<void> _loadRating() async {
+    if (_cleanerId == null) {
+      // Fallback to profile rating or default to 0.0
+      final profileRating = widget.cleaner['rating'] as num?;
+      setState(() {
+        _rating = profileRating?.toDouble() ?? 0.0;
+        _reviewCount = widget.cleaner['reviews'] as int? ?? 0;
+      });
+      return;
+    }
+
+    try {
+      final reviewsRepo = AbstractCleanerReviewsRepo.getInstance();
+      final averageRating = await reviewsRepo.getAverageRatingForCleaner(_cleanerId!);
+      final reviewCount = await reviewsRepo.getReviewCountForCleaner(_cleanerId!);
+      
+      if (mounted) {
+        setState(() {
+          _rating = averageRating;
+          _reviewCount = reviewCount;
+        });
+      }
+    } catch (e) {
+      // Fallback to profile rating or default to 0.0
+      final profileRating = widget.cleaner['rating'] as num?;
+      if (mounted) {
+        setState(() {
+          _rating = profileRating?.toDouble() ?? 0.0;
+          _reviewCount = widget.cleaner['reviews'] as int? ?? 0;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,12 +109,10 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 children: [
-                  
                   CircleAvatar(
                     radius: 60,
                     backgroundColor: Colors.white,
@@ -108,7 +121,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
                   Text(
                     widget.cleaner['name'] as String? ?? 'Unknown',
                     style: const TextStyle(
@@ -118,7 +130,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
                   if (widget.cleaner['agency'] != null)
                     Text(
                       'Part of ${widget.cleaner['agency']}.',
@@ -129,14 +140,13 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                       ),
                     ),
                   if (widget.cleaner['agency'] != null) const SizedBox(height: 8),
-                  
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.star, color: Color(0xFFF59E0B), size: 20),
                       const SizedBox(width: 4),
                       Text(
-                        '${(widget.cleaner['rating'] as num? ?? 0.0).toStringAsFixed(1)} (${widget.cleaner['reviews'] as int? ?? 0} Reviews)',
+                        '${_rating.toStringAsFixed(1)} ($_reviewCount Reviews)',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF111827),
@@ -146,7 +156,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  
                   if (widget.cleaner['isVerified'] == true)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -173,7 +182,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                 ],
               ),
             ),
-            
             Container(
               color: Colors.white,
               child: Row(
@@ -184,80 +192,10 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                 ],
               ),
             ),
-            
             _buildTabContent(),
           ],
         ),
       ),
-      
-      bottomNavigationBar: widget.isOwnProfile 
-          ? null 
-          : Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF9CA3AF)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Chat',
-                        style: TextStyle(
-                          color: Color(0xFF374151),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const JobDetailsScreen(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B82F6),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Book Now',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
     );
   }
 
@@ -269,6 +207,14 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
           setState(() {
             _selectedTab = index;
           });
+          // Load data when tab is selected
+          if (_cleanerId != null) {
+            if (index == 1) {
+              context.read<CleanerHistoryCubit>().loadHistory(_cleanerId!);
+            } else if (index == 2) {
+              context.read<CleanerReviewsCubit>().loadReviews(_cleanerId!);
+            }
+          }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -313,7 +259,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           const Text(
             'About Me',
             style: TextStyle(
@@ -333,7 +278,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
             ),
           ),
           const SizedBox(height: 24),
-          
           Row(
             children: [
               Expanded(
@@ -348,7 +292,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                 child: _buildInfoCard(
                   icon: Icons.cake_outlined,
                   label: 'Age',
-                  value: widget.cleaner['age'] ?? '28',
+                  value: (widget.cleaner['age'] as String?) ?? AgeHelper.formatAge((widget.cleaner['profileData'] as Map<String, dynamic>?)?['birthdate'] as String?),
                 ),
               ),
             ],
@@ -374,7 +318,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
             ],
           ),
           const SizedBox(height: 24),
-          
           if (widget.cleaner['agency'] != null)
             RichText(
               text: TextSpan(
@@ -396,7 +339,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               ),
             ),
           if (widget.cleaner['agency'] != null) const SizedBox(height: 24),
-          
           const Text(
             'Services Offered',
             style: TextStyle(
@@ -427,42 +369,71 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   Widget _buildHistoryTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Cleaning History',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...cleaningHistory.map((job) => _buildHistoryCard(job)),
-          const SizedBox(height: 16),
-          Center(
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+    if (_cleanerId == null) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: Text('Cleaner ID not found')),
+      );
+    }
+
+    return BlocBuilder<CleanerHistoryCubit, CleanerHistoryState>(
+      builder: (context, state) {
+        if (state is CleanerHistoryLoading) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (state is CleanerHistoryError) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(child: Text('Error: ${state.message}')),
+          );
+        }
+
+        if (state is CleanerHistoryLoaded) {
+          final historyItems = state.items;
+
+          if (historyItems.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  'No cleaning history available',
+                  style: TextStyle(color: Color(0xFF6B7280)),
+                ),
               ),
-              child: const Text(
-                'Load More',
-                style: TextStyle(color: Color(0xFF6B7280)),
-              ),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Cleaning History',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...historyItems.map((item) => _buildHistoryCard(item)),
+                const SizedBox(height: 80),
+              ],
             ),
-          ),
-          const SizedBox(height: 80),
-        ],
-      ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
     );
   }
 
-  Widget _buildHistoryCard(Map<String, dynamic> job) {
+  Widget _buildHistoryCard(CleaningHistoryItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -482,12 +453,12 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (job['color'] as Color).withOpacity(0.1),
+              color: item.type.iconBackgroundColor,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              job['icon'],
-              color: job['color'],
+              item.type.icon,
+              color: item.type.iconColor,
               size: 24,
             ),
           ),
@@ -497,7 +468,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  job['type'],
+                  item.title ?? 'Cleaning Job',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -506,20 +477,22 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  job['date'],
+                  _formatDate(item.date),
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF6B7280),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  job['description'],
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
+                if (item.description != null && item.description!.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    item.description!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF6B7280),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -529,116 +502,71 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   Widget _buildReviewsTab() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'All Reviews',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
+    if (_cleanerId == null) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: Text('Cleaner ID not found')),
+      );
+    }
+
+    return BlocBuilder<CleanerReviewsCubit, CleanerReviewsState>(
+      builder: (context, state) {
+        if (state is CleanerReviewsLoading) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (state is CleanerReviewsError) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(child: Text('Error: ${state.message}')),
+          );
+        }
+
+        if (state is CleanerReviewsLoaded) {
+          final reviews = state.filteredReviews;
+
+          if (reviews.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  'No reviews available',
+                  style: TextStyle(color: Color(0xFF6B7280)),
+                ),
+              ),
+            );
+          }
+
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'All Reviews',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Sort by: Recency',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                      ),
-                      Icon(Icons.keyboard_arrow_down, size: 16, color: Color(0xFF6B7280)),
-                    ],
-                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.filter_list, size: 16, color: Color(0xFF6B7280)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Filter',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          Row(
-            children: [
-              _buildRatingFilterChip('☆ 5'),
-              const SizedBox(width: 8),
-              _buildRatingFilterChip('☆ 4'),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.camera_alt_outlined, size: 14, color: Color(0xFF6B7280)),
-                    SizedBox(width: 4),
-                    Text(
-                      'With Photos',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          
-          ...reviews.map((review) => _buildReviewCard(review)),
-          const SizedBox(height: 16),
-          Center(
-            child: OutlinedButton(
-              onPressed: () {},
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              child: const Text(
-                'Load More',
-                style: TextStyle(color: Color(0xFF6B7280)),
-              ),
+                const SizedBox(height: 16),
+                ...reviews.map((review) => _buildReviewCard(review)),
+                const SizedBox(height: 80),
+              ],
             ),
-          ),
-          const SizedBox(height: 80),
-        ],
-      ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
     );
   }
 
-  Widget _buildReviewCard(Map<String, dynamic> review) {
+  Widget _buildReviewCard(CleanerReview review) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -662,7 +590,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                 radius: 20,
                 backgroundColor: const Color(0xFFE5E7EB),
                 child: Text(
-                  review['name'][0],
+                  review.reviewerName.isNotEmpty ? review.reviewerName[0].toUpperCase() : '?',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -676,7 +604,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      review['name'],
+                      review.reviewerName,
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -687,22 +615,16 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                     Row(
                       children: [
                         Text(
-                          review['date'],
+                          _formatDate(review.date),
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF9CA3AF),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        ...List.generate(
-                          5,
-                          (index) => Icon(
-                            Icons.star,
-                            size: 14,
-                            color: index < review['rating']
-                                ? const Color(0xFFF59E0B)
-                                : const Color(0xFFD1D5DB),
-                          ),
+                        Text(
+                          '${'⭐' * review.rating.floor()}${'☆' * (5 - review.rating.floor())}',
+                          style: const TextStyle(fontSize: 14),
                         ),
                       ],
                     ),
@@ -713,37 +635,38 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
           ),
           const SizedBox(height: 12),
           Text(
-            review['text'],
+            review.comment,
             style: const TextStyle(
               fontSize: 14,
               color: Color(0xFF374151),
               height: 1.5,
             ),
           ),
-          if (review['hasPhotos'] == true) ...[
+          if (review.hasPhotos && review.photoUrls != null && review.photoUrls!.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: review.photoUrls!.take(4).map((photoUrl) {
+                return Container(
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
                     color: const Color(0xFFE5E7EB),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.image, color: Color(0xFF9CA3AF)),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
+                  child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      photoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.image, color: Color(0xFF9CA3AF));
+                      },
+                    ),
                   ),
-                  child: const Icon(Icons.image, color: Color(0xFF9CA3AF)),
-                ),
-              ],
+                );
+              }).toList(),
             ),
           ],
         ],
@@ -751,40 +674,12 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
     );
   }
 
-  Widget _buildRatingFilterChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(IconData icon, String text) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 16, color: const Color(0xFF6B7280)),
-        const SizedBox(width: 4),
-        Flexible(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF6B7280),
-            ),
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ],
-    );
+  String _formatDate(DateTime date) {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
   Widget _buildInfoCard({
@@ -873,25 +768,8 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
     );
   }
 
-  Widget _buildServiceChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 13,
-          color: Color(0xFF374151),
-        ),
-      ),
-    );
-  }
-
   Widget _buildProfileImage() {
-    final imageUrl = widget.cleaner['image'] as String?;
+    final imageUrl = widget.cleaner['image'] as String? ?? widget.cleaner['picture'] as String?;
     if (imageUrl != null && imageUrl.isNotEmpty && imageUrl.startsWith('http')) {
       return Image.network(
         imageUrl,
@@ -906,5 +784,3 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
     return const Icon(Icons.person, size: 60, color: Color(0xFF9CA3AF));
   }
 }
-
-

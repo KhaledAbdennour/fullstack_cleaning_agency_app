@@ -74,7 +74,7 @@ class RoleBasedHome extends StatelessWidget {
     final userType = (user['user_type'] as String? ?? '').trim();
     
     if (userType == 'Agency' || userType == 'Individual Cleaner') {
-      
+      // For workers/agencies: go to AgencyDashboardPage
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -83,15 +83,11 @@ class RoleBasedHome extends StatelessWidget {
         (route) => false, 
       );
     } else {
-      
+      // For clients: go directly to HomeScreen (not WelcomeInside landing page)
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => WelcomeInside(
-            name: user['full_name'] as String? ?? 
-                  user['username'] as String? ?? 
-                  'User',
-          ),
+          builder: (context) => const HomeScreen(),
         ),
         (route) => false, 
       );

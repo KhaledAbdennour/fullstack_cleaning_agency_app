@@ -10,6 +10,8 @@ abstract class AbstractProfileRepo {
   Future<bool> insertProfile(Map<String, dynamic> profile);
   Future<bool> updateProfile(int id, Map<String, dynamic> profile);
   Future<bool> deleteProfile(int id);
+  Future<bool> updateAvatarUrl(int userId, String? url); // Update avatar URL
+  Future<bool> removeAvatar(int userId); // Remove avatar (set to null)
   Future<Map<String, dynamic>?> getCurrentUser();
   Future<bool> setCurrentUser(int userId);
   Future<bool> clearCurrentUser();

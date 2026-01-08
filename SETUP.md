@@ -1,353 +1,405 @@
-# CleanSpace Project - Finalization Analysis & Setup Guide
+# CleanSpace Project - Complete Setup Guide
 
-## STEP 1: PROJECT ANALYSIS REPORT
+## Prerequisites
 
-### Current Architecture ✅
-- **Repository Pattern**: Well-established with abstract contracts and DB implementations
-- **State Management**: Cubit/BLoC pattern used throughout
-- **Database**: ✅ **Migrated to Supabase** - All repositories use Supabase client
-- **Localization**: ✅ **Complete** - ARB files (EN/FR/AR) with language switching UI and RTL support
-- **Notifications**: ✅ **Complete** - FCM integration with Supabase Edge Function
-
-### Features Identified
-1. **Profiles**: User management (client, agency, individual cleaner)
-2. **Jobs**: Job listings with status management
-3. **Bookings**: Job applications/bookings with status tracking
-4. **Cleaners**: Cleaner team management for agencies
-5. **Cleaner Reviews**: Review system for cleaners
-6. **Cleaning History**: History tracking for cleaners
-
-### What Works Now ✅
-- All repository interfaces defined
-- SQLite database with all tables created
-- Models properly defined with toMap/fromMap
-- Cubits for state management
-- UI screens implemented
-- Localization files generated
-
-### Implementation Status ✅
-
-#### 1. Backend Integration ✅ COMPLETE
-- ✅ Supabase initialization in `main.dart`
-- ✅ Environment variable handling via `EnvHelper`
-- ✅ **All 6 repositories migrated to Supabase**
-- ⏳ Supabase Auth integration (optional - currently using local auth)
-- ⏳ Image upload to Supabase Storage (optional enhancement)
-
-#### 2. Database Schema ✅ COMPLETE
-- ✅ Supabase SQL schema file (`supabase/migrations/001_initial_schema.sql`)
-- ✅ RLS (Row Level Security) policies implemented
-- ✅ Indexes for performance optimization
-- ✅ All tables with proper relationships and constraints
-
-#### 3. Notifications System ✅ COMPLETE
-- ✅ Firebase Cloud Messaging (FCM) setup
-- ✅ FCM token collection (automatic on app start)
-- ✅ Token storage in Supabase (`user_devices` table)
-- ✅ Notification sending mechanism (Supabase Edge Function)
-- ✅ Notification history table (`notifications` table)
-- ✅ Background/foreground handlers configured
-
-#### 4. Localization ✅ COMPLETE
-- ✅ Language switching UI in Settings page
-- ✅ Language persistence with SharedPreferences
-- ✅ RTL support for Arabic (Directionality widget)
-- ⏳ Some hardcoded strings remain (can be migrated as needed)
-
-#### 5. Repository Methods ✅ COMPLETE
-- ✅ All repository methods implemented with Supabase
-- ✅ Error handling consistent across repositories
-- ✅ Pagination implemented where needed (e.g., cleaning history)
-- ⏳ Image upload functionality (optional enhancement)
-
-### File-by-File Implementation Status ✅
-
-#### Core Infrastructure ✅ COMPLETE
-1. ✅ `lib/core/env/env_helper.dart` - Environment variable helper
-2. ✅ `lib/main.dart` - Supabase init, language persistence, FCM init, RTL support
-3. ✅ `lib/core/config/supabase_config.dart` - Supabase client singleton
-
-#### Repository Migrations ✅ ALL COMPLETE
-1. ✅ `lib/data/repositories/profiles/profile_repo_db.dart` - Migrated to Supabase
-2. ✅ `lib/data/repositories/jobs/jobs_repo_db.dart` - Migrated to Supabase
-3. ✅ `lib/data/repositories/bookings/bookings_repo_db.dart` - Migrated to Supabase
-4. ✅ `lib/data/repositories/cleaners/cleaners_repo_db.dart` - Migrated to Supabase
-5. ✅ `lib/data/repositories/cleaner_reviews/cleaner_reviews_repo_db.dart` - Migrated to Supabase
-6. ✅ `lib/data/repositories/cleaning_history/cleaning_history_repo_db.dart` - Migrated to Supabase
-
-#### Notifications ✅ COMPLETE
-1. ✅ `lib/core/services/notification_service.dart` - FCM service with foreground/background handlers
-2. ✅ `lib/core/services/notification_repo.dart` - Notification repository interface
-3. ✅ `lib/core/services/notification_repo_db.dart` - Supabase implementation
-4. ✅ `supabase/functions/send_push/index.ts` - Edge function for sending notifications
-
-#### Localization ✅ COMPLETE
-1. ✅ `lib/core/services/locale_service.dart` - Language switching service with persistence
-2. ✅ `lib/main.dart` - Locale resolution and RTL support (Directionality widget)
-3. ✅ `lib/screens/settings_page.dart` - Language picker UI implemented
-
-#### Database Schema ✅ COMPLETE
-1. ✅ `supabase/migrations/001_initial_schema.sql` - Complete schema with RLS policies, indexes, and triggers
+- Flutter SDK (3.9.2 or higher)
+- Android Studio / VS Code
+- Firebase account
+- Android device or emulator for testing
 
 ---
 
-## STEP 2: SUPABASE BACKEND INTEGRATION ✅
+## STEP 1: Firebase Project Setup
 
-### Environment Setup
-**IMPORTANT**: Set environment variables before running the app:
+### 1.1 Create/Select Firebase Project
 
-**Option 1: Using --dart-define (Recommended)**
-```bash
-flutter run --dart-define=SUPABASE_URL=https://your-project.supabase.co --dart-define=SUPABASE_ANON_KEY=your-anon-key
-```
+1. Go to [Firebase Console](https://console.firebase.google.com)
+2. Click **"Add project"** or select existing project **"cleanspace-8214c"**
+3. If creating new project:
+   - Project name: `cleanspace` (or your preferred name)
+   - Enable Google Analytics (optional)
+   - Create project
 
-**Option 2: Create a launch configuration**
-- VS Code: Add to `.vscode/launch.json`:
-```json
-{
-  "configurations": [{
-    "name": "CleanSpace",
-    "dartDefine": {
-      "SUPABASE_URL": "https://your-project.supabase.co",
-      "SUPABASE_ANON_KEY": "your-anon-key"
+### 1.2 Enable Cloud Firestore
+
+1. In Firebase Console, go to **Firestore Database**
+2. Click **"Create database"**
+3. Select **"Start in production mode"** (we'll set rules later)
+4. Choose location: **us-central** (or closest to your users)
+5. Click **"Enable"**
+
+**Important:** Wait 2-3 minutes for Firestore to be fully enabled.
+
+### 1.3 Enable Cloud Firestore API
+
+1. Go to [Google Cloud Console - Firestore API](https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=cleanspace-8214c)
+2. Click **"Enable"** if not already enabled
+3. Wait for API to be enabled (may take a few minutes)
+
+### 1.4 Set Firestore Security Rules (Development)
+
+1. In Firebase Console → **Firestore Database** → **Rules** tab
+2. Replace with these development rules (allows read/write for testing):
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read/write access to all documents (DEVELOPMENT ONLY)
+    match /{document=**} {
+      allow read, write: if true;
     }
-  }]
+  }
 }
 ```
 
-### Required Dependencies ✅
-Already added to `pubspec.yaml`:
-- ✅ `supabase_flutter: ^2.5.6`
-- ✅ `firebase_messaging: ^14.7.9`
-- ✅ `flutter_local_notifications: ^16.3.0`
-- ✅ `shared_preferences: ^2.2.2`
+3. Click **"Publish"**
 
-**Run**: `flutter pub get`
+**⚠️ WARNING:** These rules allow anyone to read/write. For production, implement proper authentication-based rules.
 
 ---
 
-## STEP 3: DATABASE SCHEMA ✅
+## STEP 2: Android App Configuration
 
-### Setup Instructions
+### 2.1 Add Android App to Firebase
 
-1. **Create Supabase Project**
-   - Go to https://supabase.com
-   - Create a new project
-   - Note your project URL and anon key
+1. In Firebase Console → **Project Settings** (gear icon)
+2. Scroll to **"Your apps"** section
+3. Click **"Add app"** → Select **Android**
+4. Enter package name: `com.example.mob_dev_project`
+   - Find this in `android/app/build.gradle.kts` → `applicationId`
+5. Register app
+6. Download `google-services.json`
+7. Replace `android/app/google-services.json` with the downloaded file
 
-2. **Run Migration**
-   - Open Supabase Dashboard → SQL Editor
-   - Copy contents of `supabase/migrations/001_initial_schema.sql`
-   - Paste and execute in SQL Editor
-   - Verify all tables are created
+### 2.2 Add SHA-1/SHA-256 Fingerprints (Optional - for Google Sign-In)
 
-3. **Schema Includes**:
-   - ✅ All table definitions matching current models (using BIGSERIAL for IDs)
-   - ✅ Foreign key relationships
-   - ✅ Indexes for common queries
-   - ✅ RLS policies for security (simplified for now - can be tightened)
-   - ✅ `user_devices` table for FCM tokens
-   - ✅ `notifications` table for notification history
-   - ✅ Automatic `updated_at` triggers
-
-### Important Notes
-- IDs use `BIGSERIAL` (not UUID) to match existing Flutter models that use `int`
-- RLS policies are simplified - tighten them based on your auth requirements
-- If using Supabase Auth, link `auth_user_id` field in profiles table
-
----
-
-## STEP 4: NOTIFICATIONS SETUP ✅
-
-### Firebase Setup
-1. **Create Firebase Project**
-   - Go to https://console.firebase.google.com
-   - Create a new project
-   - Add Android app (package: check `android/app/build.gradle.kts`)
-   - Add iOS app (bundle ID: check `ios/Runner/Info.plist`)
-
-2. **Download Configuration Files**
-   - Android: Download `google-services.json` → place in `android/app/`
-   - iOS: Download `GoogleService-Info.plist` → place in `ios/Runner/`
-
-3. **Enable Cloud Messaging**
-   - Firebase Console → Cloud Messaging → Enable API
-   - Get Server Key: Project Settings → Cloud Messaging → Server Key
-
-### Supabase Edge Function ✅
-1. **Deploy Function**
-   - Supabase Dashboard → Edge Functions
-   - Create new function: `send_push`
-   - Copy code from `supabase/functions/send_push/index.ts`
-   - Deploy function
-
-2. **Set Secrets**
-   - Supabase Dashboard → Project Settings → Edge Functions → Secrets
-   - Add secret: `FCM_SERVER_KEY` = your Firebase Server Key
-
-3. **Function Behavior**
-   - Reads FCM tokens from `user_devices` table
-   - Sends notifications via FCM HTTP v1 API
-   - Saves notification history to `notifications` table
-
-### Flutter Integration ✅
-- ✅ Permission request (iOS) - handled in `NotificationService`
-- ✅ FCM token collection - automatic on app start
-- ✅ Token save to Supabase - automatic when user logs in
-- ✅ Foreground notifications - displays local notifications
-- ✅ Background handler - configured
-
-### Testing Notifications
-```dart
-// Send test notification
-final notificationRepo = AbstractNotificationRepo.getInstance();
-await notificationRepo.sendNotification(
-  userId: '1', // profile ID
-  title: 'Test Notification',
-  body: 'This is a test',
-);
-```
-
----
-
-## STEP 5: LOCALIZATION COMPLETION ✅
-
-### Language Switching ✅
-- ✅ Language picker in settings page
-- ✅ Persist selection with SharedPreferences
-- ✅ Update MaterialApp locale dynamically
-- ✅ RTL support for Arabic (Directionality widget)
-
-### Usage
-1. Go to Settings page
-2. Tap "Language"
-3. Select desired language (English/Français/العربية)
-4. App restarts with new language
-5. Selection persists across app restarts
-
-### Adding New Strings
-1. Add key to `lib/l10n/app_en.arb`:
-```json
-{
-  "newKey": "English text"
-}
-```
-
-2. Add translations to `app_fr.arb` and `app_ar.arb`
-
-3. Run: `flutter gen-l10n`
-
-4. Use in code:
-```dart
-AppLocalizations.of(context)?.newKey ?? 'Fallback'
-```
-
-### Missing Keys
-- Some hardcoded strings still exist in UI files
-- Replace with `AppLocalizations.of(context)?.keyName` as needed
-
----
-
-## STEP 6: REMAINING WORK
-
-### Repository Migrations ✅ COMPLETE
-- ✅ Profiles repository - migrated to Supabase
-- ✅ Jobs repository - migrated to Supabase
-- ✅ Bookings repository - migrated to Supabase
-- ✅ Cleaners repository - migrated to Supabase
-- ✅ Cleaner Reviews repository - migrated to Supabase
-- ✅ Cleaning History repository - migrated to Supabase
-
-**All repositories have been successfully migrated to Supabase!**
-
-### Testing Checklist
-
-#### Basic Functionality
-- [ ] User registration/login (currently uses local auth - can integrate Supabase Auth later)
-- [ ] Profile CRUD operations
-- [ ] Job creation/update/delete
-- [ ] Booking creation and status updates
-- [ ] Cleaner management
-- [ ] Review submission
-- [ ] History tracking
-
-#### Notifications
-- [ ] FCM token registration (automatic on app start)
-- [ ] Notification sending (via Edge Function)
-- [ ] Notification receiving (foreground + background)
-- [ ] Notification history display
-
-#### Localization
-- [x] Language switching (EN/FR/AR) - **WORKING**
-- [x] RTL layout for Arabic - **WORKING**
-- [x] Language persistence - **WORKING**
-- [ ] Replace remaining hardcoded strings
-
-#### Advanced (Optional)
-- [ ] Image uploads to Supabase Storage
-- [ ] Supabase Auth integration (replace local auth)
-- [ ] Real-time subscriptions for live updates
-- [ ] Offline support with local caching
-
----
-
-## COMPLETION STATUS
-
-### ✅ Completed - ALL CORE FEATURES
-1. ✅ Analysis report created
-2. ✅ Supabase dependencies added
-3. ✅ Environment helper created
-4. ✅ Supabase initialized in main.dart
-5. ✅ Database schema SQL created
-6. ✅ Notifications system implemented
-7. ✅ Localization completed (language switching + RTL)
-8. ✅ **ALL repositories migrated to Supabase:**
-   - ✅ Profiles repository
-   - ✅ Jobs repository
-   - ✅ Bookings repository
-   - ✅ Cleaners repository
-   - ✅ Cleaner Reviews repository
-   - ✅ Cleaning History repository
-
-### ⏳ Next Steps (Testing & Optional)
-1. ⏳ Test all flows end-to-end
-   - Create test users
-   - Test CRUD operations for all entities
-   - Test notifications (send/receive)
-   - Test language switching (EN/FR/AR)
-   - Verify RTL layout for Arabic
-
-2. ⏳ Optional Enhancements
-   - Integrate Supabase Auth (replace local auth)
-   - Add image upload to Supabase Storage
-   - Add real-time subscriptions for live updates
-   - Tighten RLS policies based on auth requirements
-   - Add offline support with local caching
-
-## QUICK START
-
-1. **Set Environment Variables**
+1. Get SHA-1 fingerprint:
    ```bash
-   flutter run --dart-define=SUPABASE_URL=your_url --dart-define=SUPABASE_ANON_KEY=your_key
+   cd android
+   ./gradlew signingReport
    ```
+   Look for SHA1 in the output under `Variant: debug`
 
-2. **Run Database Migration**
-   - Copy `supabase/migrations/001_initial_schema.sql`
-   - Execute in Supabase SQL Editor
+2. In Firebase Console → **Project Settings** → **Your apps** → Android app
+3. Click **"Add fingerprint"**
+4. Paste SHA-1 and SHA-256 (if available)
+5. Click **"Save"**
 
-3. **Setup Firebase** (for notifications)
-   - Create Firebase project
-   - Add apps (Android/iOS)
-   - Download config files
-   - Deploy Edge Function with FCM_SERVER_KEY secret
+---
 
-4. **Repository Migrations** ✅
-   - All repositories have been migrated to Supabase
-   - See `MIGRATION_GUIDE.md` for reference patterns
+## STEP 3: iOS App Configuration (If Needed)
 
-5. **Test**
-   - Run app
-   - Test all features
-   - Verify notifications work
-   - Test language switching
+### 3.1 Add iOS App to Firebase
 
+1. In Firebase Console → **Project Settings** → **Your apps**
+2. Click **"Add app"** → Select **iOS**
+3. Enter bundle ID: Check `ios/Runner/Info.plist` → `CFBundleIdentifier`
+4. Register app
+5. Download `GoogleService-Info.plist`
+6. Replace `ios/Runner/GoogleService-Info.plist` with downloaded file
+
+---
+
+## STEP 4: Firebase Cloud Messaging (FCM) Setup
+
+### 4.1 Enable Cloud Messaging API
+
+1. Go to [Google Cloud Console - FCM API](https://console.developers.google.com/apis/api/fcm.googleapis.com/overview?project=cleanspace-8214c)
+2. Click **"Enable"** if not already enabled
+
+### 4.2 Get FCM Server Key
+
+1. In Firebase Console → **Project Settings** → **Cloud Messaging** tab
+2. Copy the **Server key** (starts with `AIza...`)
+3. This key is already stored in:
+   - `lib/core/services/notification_backend_service.dart`
+   - `lib/data/repositories/notifications/notifications_repo_db.dart`
+
+**Note:** For production, move this key to Firebase Functions environment variables or a secure backend.
+
+---
+
+## STEP 5: Firestore Collections Structure
+
+The app will automatically create these collections when data is first written:
+
+### Required Collections:
+
+1. **`profiles`** - User profiles
+   - Fields: `id`, `username`, `email`, `user_type`, `full_name`, etc.
+
+2. **`jobs`** - Job listings
+   - Fields: `id`, `title`, `city`, `country`, `status`, `client_id`, `agency_id`, etc.
+
+3. **`bookings`** - Job applications/bookings
+   - Fields: `id`, `job_id`, `client_id`, `provider_id`, `status`, etc.
+
+4. **`cleaners`** - Cleaner team members
+   - Fields: `id`, `name`, `rating`, `agency_id`, etc.
+
+5. **`cleaning_history`** - Cleaning history records
+   - Fields: `id`, `cleaner_id`, `title`, `date`, `type`, etc.
+
+6. **`cleaner_reviews`** - Reviews for cleaners
+   - Fields: `id`, `cleaner_id`, `reviewer_name`, `rating`, `comment`, etc.
+
+7. **`notifications`** - Notification history
+   - Fields: `user_id`, `title`, `body`, `data_json`, `created_at`, `read`, etc.
+
+8. **`user_devices`** - FCM tokens per user
+   - Fields: `user_id`, `fcm_token`, `platform`, `updated_at`, etc.
+
+**No manual creation needed** - collections are created automatically on first write.
+
+### 8. **`job_history`** - Job completion history for all roles
+   - Fields: `job_id`, `participant_user_id`, `role`, `completed_at`, `title`, `other_party_id`, etc.
+   - Tracks completed jobs for workers, clients, and agencies
+
+---
+
+## STEP 6: Deploy Firestore Composite Indexes
+
+**CRITICAL:** Firestore requires composite indexes for queries that combine `where()` filters with `orderBy()`. These indexes must be deployed before the app can query notifications and jobs efficiently.
+
+### 6.1 Install Firebase CLI (if not already installed)
+
+```bash
+npm install -g firebase-tools
+```
+
+### 6.2 Login to Firebase
+
+```bash
+firebase login
+```
+
+### 6.3 Initialize Firebase in Project (if not already done)
+
+```bash
+cd C:\Users\wailo\Desktop\mob_dev_project
+firebase init firestore
+```
+
+When prompted:
+- Select existing project: `cleanspace-8214c` (or your project)
+- Use existing `firestore.indexes.json`: **Yes**
+- Use existing `firestore.rules`: **Yes** (or create new)
+
+### 6.4 Deploy Indexes
+
+```bash
+firebase deploy --only firestore:indexes
+```
+
+**Expected Output:**
+```
+✔  firestore: indexes deployed successfully
+```
+
+### 6.5 Verify Indexes in Firebase Console
+
+1. Go to Firebase Console → **Firestore Database** → **Indexes** tab
+2. Verify all indexes show **"Enabled"** status:
+   - `notifications` - user_id + type + created_at
+   - `notifications` - user_id + read + created_at
+   - `jobs` - assigned_worker_id + status + is_deleted + posted_date
+   - `jobs` - client_id + status + is_deleted + posted_date
+   - `jobs` - agency_id + status + is_deleted + assigned_worker_id
+   - `job_history` - participant_user_id + role + completed_at
+
+**Note:** Index creation can take 5-10 minutes. The app will use fallback queries (client-side filtering) if indexes are not ready, but performance will be better once indexes are enabled.
+
+---
+
+## STEP 7: Install Dependencies
+
+```bash
+cd C:\Users\wailo\Desktop\mob_dev_project
+flutter pub get
+```
+
+---
+
+## STEP 8: Run the App
+
+### 7.1 Check Connected Devices
+
+```bash
+flutter devices
+```
+
+### 7.2 Run on Android Device/Emulator
+
+```bash
+flutter run -d <device-id>
+```
+
+Or simply:
+```bash
+flutter run
+```
+
+---
+
+## STEP 9: Verify Setup
+
+### 8.1 Check Firebase Connection
+
+1. Run the app
+2. Check console logs for:
+   - `✅ Firebase initialized successfully!`
+   - `✅ Firestore initialized successfully`
+   - No `PERMISSION_DENIED` errors
+
+### 8.2 Check Firestore Data
+
+1. Go to Firebase Console → **Firestore Database**
+2. Verify collections are created after app runs
+3. Check that seed data appears (profiles, jobs, etc.)
+
+### 8.3 Test Notifications
+
+1. Create a test user account in the app
+2. Check that FCM token is saved in `user_devices` collection
+3. Create a job as a client
+4. Verify workers receive notification (check Firestore `notifications` collection)
+
+---
+
+## STEP 10: Firebase Cloud Functions (Optional - for Production)
+
+If you want to use Cloud Functions instead of direct FCM calls:
+
+### 9.1 Install Firebase CLI
+
+```bash
+npm install -g firebase-tools
+```
+
+### 9.2 Login to Firebase
+
+```bash
+npx firebase login
+```
+
+### 9.3 Deploy Functions
+
+```bash
+cd functions
+npm install
+cd ..
+npx firebase deploy --only functions
+```
+
+**Note:** Cloud Functions require **Blaze (pay-as-you-go) plan**, but has a generous free tier (2M invocations/month).
+
+**Current Setup:** The app uses direct FCM HTTP API calls (FREE, works on Spark plan).
+
+---
+
+## Notification Architecture
+
+### How Notifications Work
+
+1. **Creation**: When an event occurs (job created, application accepted, etc.), `NotificationServiceEnhanced.createNotification()` is called
+2. **Storage**: Notification is saved to Firestore `notifications` collection with:
+   - `user_id`: Recipient's user ID
+   - `type`: Notification type (job_published, job_accepted, etc.)
+   - `title`, `body`: Notification content
+   - `created_at`: Timestamp
+   - `read`: Boolean flag
+3. **Push Notification**: FCM push notification is sent to user's device
+4. **Retrieval**: UI queries notifications using role-based selectors:
+   - `getNotificationsForWorker()` - Returns job_accepted, job_rejected, job_completed, review_added
+   - `getNotificationsForAgency()` - Returns job_published, job_accepted, job_rejected, job_completed, review_added
+   - `getNotificationsForClient()` - Returns job_accepted, job_rejected, job_completed, review_added
+5. **Badge Count**: Uses the same role-based query as inbox to ensure consistency
+
+### Job Lifecycle State Machine
+
+```
+open → assigned → inProgress → completedPendingConfirmation → completed
+  ↓                                                              ↑
+pending                                                          |
+  ↓                                                              |
+cancelled ←──────────────────────────────────────────────────────┘
+```
+
+**State Transitions:**
+- **open** → **assigned**: Client accepts worker application (`acceptApplication()`)
+- **assigned** → **inProgress**: Worker starts job (`markJobStarted()`)
+- **inProgress** → **completedPendingConfirmation**: One party marks done (`markClientDone()` or `markWorkerDone()`)
+- **completedPendingConfirmation** → **completed**: Both parties confirm completion
+- **completed**: History entries created in `job_history` collection for worker, client, and agency
+
+**Review Flow:**
+- Reviews can only be added when `job.status == completed`
+- Client reviews cleaner (required)
+- Worker can optionally review client
+- Rating automatically updates cleaner's profile
+
+---
+
+## Troubleshooting
+
+### Error: "Cloud Firestore API has not been used"
+
+- **Solution:** Enable Firestore API in Google Cloud Console (Step 1.3)
+- Wait 2-3 minutes after enabling
+
+### Error: "No Firebase App '[DEFAULT]' has been created"
+
+- **Solution:** Ensure `Firebase.initializeApp()` runs before any Firestore calls
+- Check `lib/main.dart` - initialization order is fixed
+
+### Error: "PERMISSION_DENIED"
+
+- **Solution:** 
+  1. Check Firestore rules (Step 1.4)
+  2. Ensure Firestore database is created (Step 1.2)
+  3. Wait a few minutes after creating database
+
+### Notifications Not Working
+
+- **Check:**
+  1. FCM token is saved in `user_devices` collection
+  2. FCM Server Key is correct in code
+  3. Cloud Messaging API is enabled
+  4. App has notification permissions (Android: automatic, iOS: request permission)
+
+### Build Errors
+
+- **Solution:** Run `flutter clean` then `flutter pub get`
+- Check that `google-services.json` is in `android/app/` directory
+
+---
+
+## Production Checklist
+
+Before deploying to production:
+
+- [ ] Update Firestore security rules with proper authentication
+- [ ] Move FCM Server Key to secure backend (Firebase Functions or environment variables)
+- [ ] Enable Firebase App Check for additional security
+- [ ] Set up proper error monitoring (Firebase Crashlytics)
+- [ ] Test on multiple devices and Android versions
+- [ ] Review and optimize Firestore queries
+- [ ] Set up Firebase Storage for image uploads (if needed)
+- [ ] Configure proper backup and data retention policies
+
+---
+
+## Support
+
+If you encounter issues:
+
+1. Check Firebase Console for error logs
+2. Check Flutter console output for detailed errors
+3. Verify all steps in this guide are completed
+4. Ensure Firebase project ID matches `.firebaserc` file
+
+---
+
+**Last Updated:** 2024
+**Project:** CleanSpace - Mobile Development Project

@@ -25,18 +25,20 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<List<Cleaner>> getCleanersForAgency(int agencyId) async {
     try {
+      // Fetch without orderBy to avoid composite index; filter client-side
       final snapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('agency_id', isEqualTo: agencyId)
-          .where('is_active', isEqualTo: true)
-          .orderBy('jobs_completed', descending: true)
           .get();
       
-      return snapshot.docs.map((doc) {
+      final cleaners = snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = int.tryParse(doc.id) ?? 0;
         return Cleaner.fromMap(data);
-      }).toList();
+      }).where((c) => c.isActive).toList();
+      
+      cleaners.sort((a, b) => b.jobsCompleted.compareTo(a.jobsCompleted));
+      return cleaners;
     } catch (e, stacktrace) {
       print('getCleanersForAgency error: $e --> $stacktrace');
       return [];

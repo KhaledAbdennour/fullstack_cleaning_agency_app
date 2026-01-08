@@ -1,12 +1,13 @@
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mob_dev_project/l10n/app_localizations.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/homescreen.dart';
+import 'screens/agency_dashboard_page.dart';
+import 'screens/login.dart';
 import 'logic/cubits/profiles_cubit.dart';
 import 'logic/cubits/agency_dashboard_cubit.dart';
 import 'logic/cubits/listings_cubit.dart';
@@ -17,185 +18,62 @@ import 'logic/cubits/cleaner_history_cubit.dart';
 import 'logic/cubits/cleaner_reviews_cubit.dart';
 import 'logic/cubits/client_jobs_cubit.dart';
 import 'logic/cubits/job_applications_cubit.dart';
-import 'data/databases/dbhelper.dart';
+import 'logic/cubits/worker_active_jobs_cubit.dart';
 import 'data/databases/database_seeder.dart';
-import 'utils/role_based_home.dart';
 import 'core/config/firebase_config.dart';
-import 'core/services/notification_service.dart';
 import 'core/services/locale_service.dart';
+import 'core/di/service_locator.dart';
+import 'data/repositories/notifications/notifications_repo.dart';
+import 'logic/cubits/notifications/notifications_cubit.dart';
+import 'core/services/notification_router.dart';
+import 'core/navigation/app_navigator.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/debug/debug_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize sqflite for desktop platforms (keeping for backward compatibility)
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
-  
-  // Initialize database (keeping for backward compatibility)
-  await DBHelper.initialize();
-  
-  // Seed database with dummy data (keeping for backward compatibility)
-  await DatabaseSeeder.seedDatabase();
-  
-  // Initialize Firebase Core (only on Android/iOS - not supported on Windows/desktop)
-  print('═══════════════════════════════════════');
-  print('🔍 DEBUG: Checking platform for Firebase...');
-  print('🔍 DEBUG: Platform: ${Platform.operatingSystem}');
-  print('═══════════════════════════════════════');
-  
-  // #region agent log
-  try {
-    final logPath = r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log';
-    final logDir = Directory(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor');
-    if (!logDir.existsSync()) {
-      logDir.createSync(recursive: true);
-      print('🔍 DEBUG: Created log directory');
-    }
-    final logFile = File(logPath);
-    final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.dart:47","message":"Checking platform for Firebase","data":{"platform":Platform.operatingSystem,"isAndroid":Platform.isAndroid,"isIOS":Platform.isIOS,"isWindows":Platform.isWindows},"timestamp":DateTime.now().millisecondsSinceEpoch});
-    logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
-    print('🔍 DEBUG: Log written successfully');
-  } catch (e) {
-    print('❌ DEBUG: Log write failed: $e');
-  }
-  // #endregion
-  
-  // Firebase only works on Android/iOS, skip on Windows/desktop
+  // Initialize Firebase Core FIRST (only on Android/iOS - not supported on Windows/desktop)
   if (Platform.isAndroid || Platform.isIOS) {
-    print('🔍 DEBUG: Platform supports Firebase (Android/iOS)');
-    // Check if Firebase apps already exist
     try {
-      final existingApps = Firebase.apps;
-      print('🔍 DEBUG: Existing Firebase apps count: ${existingApps.length}');
-      if (existingApps.isNotEmpty) {
-        print('✅ DEBUG: Firebase already initialized, skipping');
-        for (final app in existingApps) {
-          print('   - App: ${app.name}, Project: ${app.options.projectId}');
-        }
-      } else {
-        print('🔍 DEBUG: No existing Firebase apps, will initialize');
-      }
-    } catch (e) {
-      print('❌ DEBUG: Error checking Firebase apps: $e');
-    }
-    
-    try {
-      print('🔍 DEBUG: Calling Firebase.initializeApp()...');
+      // Check if Firebase is already initialized
       FirebaseApp app;
       try {
-        // Try to get default app first
         app = Firebase.app();
-        print('🔍 DEBUG: Default Firebase app already exists');
+        debugPrint('✅ Firebase already initialized');
       } catch (e) {
-        // If no default app exists, initialize it
-        print('🔍 DEBUG: No default app found, initializing...');
+        // Initialize Firebase
+        debugPrint('🔍 Initializing Firebase...');
         app = await Firebase.initializeApp();
+        debugPrint('✅ Firebase initialized successfully');
+        debugPrint('   Project ID: ${app.options.projectId}');
       }
-      print('═══════════════════════════════════════');
-      print('✅ Firebase initialized successfully!');
-      print('   App name: ${app.name}');
-      print('   Project ID: ${app.options.projectId}');
-      if (app.options.apiKey.isNotEmpty) {
-        print('   API Key: ${app.options.apiKey.substring(0, 20)}...');
-      }
-      print('═══════════════════════════════════════');
-      // #region agent log
-      try {
-        final logFile = File(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log');
-        final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.dart:85","message":"Firebase initialized successfully","data":{"appName":app.name,"projectId":app.options.projectId},"timestamp":DateTime.now().millisecondsSinceEpoch});
-        logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
-      } catch (e) {
-        print('❌ DEBUG: Log write failed: $e');
-      }
-      // #endregion
-    } catch (e, stackTrace) {
-      print('═══════════════════════════════════════');
-      print('❌ Firebase initialization FAILED!');
-      print('   Error: $e');
-      print('   Type: ${e.runtimeType}');
-      print('═══════════════════════════════════════');
-      print('Full stack trace:');
-      print(stackTrace);
-      print('═══════════════════════════════════════');
-      // #region agent log
-      try {
-        final logFile = File(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log');
-        final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.dart:98","message":"Firebase initialization failed","data":{"error":e.toString(),"errorType":e.runtimeType.toString()},"timestamp":DateTime.now().millisecondsSinceEpoch});
-        logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
-      } catch (logErr) {
-        print('❌ DEBUG: Log write failed: $logErr');
-      }
-      // #endregion
-      // Don't throw - allow app to continue even if Firebase fails
-    }
-  } else {
-    print('⚠️  DEBUG: Firebase not supported on ${Platform.operatingSystem}');
-    print('   Firebase will only work on Android/iOS devices');
-    print('   To test Firebase, run on Android emulator or device');
-    // #region agent log
-    try {
-      final logFile = File(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log');
-      final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"main.dart:110","message":"Firebase skipped - platform not supported","data":{"platform":Platform.operatingSystem},"timestamp":DateTime.now().millisecondsSinceEpoch});
-      logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
-    } catch (e) {
-      print('❌ DEBUG: Log write failed: $e');
-    }
-    // #endregion
-  }
-  
-  // Initialize Firestore (only on Android/iOS - not supported on Windows/desktop)
-  if (Platform.isAndroid || Platform.isIOS) {
-    try {
+      
+      // Initialize Firestore AFTER Firebase Core is initialized
       await FirebaseConfig.initialize();
-      print('✅ Firestore initialized successfully');
-    } catch (e) {
-      print('Warning: Firestore initialization failed: $e');
+      debugPrint('✅ Firestore initialized successfully');
+      
+      // Seed database with dummy data AFTER Firestore is ready (async, don't block)
+      DatabaseSeeder.seedDatabase().catchError((e) {
+        debugPrint('Database seeding error: $e');
+      });
+    } catch (e, stackTrace) {
+      debugPrint('❌ Firebase/Firestore initialization failed: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Don't throw - allow app to continue, but data operations will fail
     }
+  } else {
+    debugPrint('⚠️  Firebase not supported on ${Platform.operatingSystem}');
+    debugPrint('   App will run but Firebase features will not work');
   }
   
-  // Initialize notifications (only on Android/iOS - not supported on Windows/desktop)
-  if (Platform.isAndroid || Platform.isIOS) {
-    print('🔍 DEBUG: Starting NotificationService initialization...');
-  // #region agent log
-  try {
-    final logFile = File(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log');
-    final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"main.dart:62","message":"Starting NotificationService initialization","data":{},"timestamp":DateTime.now().millisecondsSinceEpoch});
-    logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
-  } catch (e) {
-    print('🔍 DEBUG: Log write failed: $e');
-  }
-  // #endregion
-  try {
-    await NotificationService.initialize();
-    print('✅ NotificationService initialized successfully');
-    // #region agent log
-    try {
-      final logFile = File(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log');
-      final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"main.dart:69","message":"NotificationService initialized successfully","data":{},"timestamp":DateTime.now().millisecondsSinceEpoch});
-      logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
-    } catch (e) {
-      print('🔍 DEBUG: Log write failed: $e');
-    }
-    // #endregion
-  } catch (e, stackTrace) {
-    print('❌ Warning: Notification initialization failed: $e');
-    print('Stack trace: $stackTrace');
-    // #region agent log
-    try {
-      final logFile = File(r'c:\Users\wailo\Desktop\mob_dev_project\.cursor\debug.log');
-      final logEntry = jsonEncode({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"main.dart:77","message":"NotificationService initialization failed","data":{"error":e.toString(),"errorType":e.runtimeType.toString()},"timestamp":DateTime.now().millisecondsSinceEpoch});
-      logFile.writeAsStringSync('$logEntry\n', mode: FileMode.append);
-    } catch (logErr) {
-      print('🔍 DEBUG: Log write failed: $logErr');
-    }
-    // #endregion
-  }
-  } else {
-    print('⚠️  DEBUG: Notifications skipped - not supported on ${Platform.operatingSystem}');
-    print('   Notifications will only work on Android/iOS devices');
-  }
+  // Setup GetIt service locator
+  setupServiceLocator();
+  print('✅ Service locator initialized');
+  
+  // Notifications are now initialized via NotificationsCubit in the app
+  // The cubit will call repo.initMessaging() when the app starts
   
   runApp(const MyApp());
 }
@@ -275,10 +153,18 @@ class _MyAppState extends State<MyApp> {
         BlocProvider(create: (context) => CleanerReviewsCubit()),
         BlocProvider(create: (context) => ClientJobsCubit()),
         BlocProvider(create: (context) => JobApplicationsCubit()),
+        BlocProvider(create: (context) => WorkerActiveJobsCubit()),
+        // Notifications cubit using GetIt
+        BlocProvider(
+          create: (context) => NotificationsCubit(
+            getIt<AbstractNotificationsRepo>(),
+          ),
+        ),
       ],
       child: Directionality(
         textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
         child: MaterialApp(
+          navigatorKey: navigatorKey,
           title: 'CleanSpace',
           debugShowCheckedModeBanner: false,
           locale: _locale,
@@ -292,9 +178,165 @@ class _MyAppState extends State<MyApp> {
             GlobalCupertinoLocalizations.delegate,
           ],
           supportedLocales: LocaleService.supportedLocales,
-          home: const OnboardingScreen(),
+          home: const _CheckAuthScreen(),
+          // Handle notification clicks
+          builder: (context, child) {
+            // Mark app as ready after first frame
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              NotificationRouter.markAppReady();
+              // Handle initial message (app opened from terminated state)
+              NotificationRouter.handleInitialMessage();
+            });
+            
+            // Handle notification opened app (when app is in background)
+            FirebaseMessaging.onMessageOpenedApp.listen((message) {
+              NotificationRouter.handleMessage(message);
+            });
+            
+            return child!;
+          },
         ),
       ),
+    );
+  }
+}
+
+/// Screen that checks if user is already logged in (persistent login)
+class _CheckAuthScreen extends StatefulWidget {
+  const _CheckAuthScreen();
+
+  @override
+  State<_CheckAuthScreen> createState() => _CheckAuthScreenState();
+}
+
+class _CheckAuthScreenState extends State<_CheckAuthScreen> {
+  bool _checked = false;
+  bool? _hasSeenOnboarding;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    // #region agent log
+    DebugLogger.log('_CheckAuthScreen', '_checkAuth_START', data: {
+      'hypothesisId': 'H3',
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+    
+    // Check if user has seen onboarding
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+    
+    // #region agent log
+    final currentUserId = prefs.getInt('current_user_id');
+    DebugLogger.log('_CheckAuthScreen', '_checkAuth_SHAREDPREFS', data: {
+      'hypothesisId': 'H4',
+      'currentUserId': currentUserId,
+      'hasSeenOnboarding': hasSeenOnboarding,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+    
+    // Check if user is already logged in via SharedPreferences
+    final profilesCubit = context.read<ProfilesCubit>();
+    await profilesCubit.loadCurrentUser();
+    
+    if (mounted) {
+      setState(() {
+        _hasSeenOnboarding = hasSeenOnboarding;
+        _checked = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_checked) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return BlocBuilder<ProfilesCubit, ProfilesState>(
+      buildWhen: (previous, current) {
+        // Only rebuild if state actually changed to a different type
+        // This prevents unnecessary rebuilds when the same state is emitted
+        if (previous.runtimeType == current.runtimeType) {
+          // If both are ProfilesLoaded, check if user changed
+          if (previous is ProfilesLoaded && current is ProfilesLoaded) {
+            final prevUser = previous.currentUser?['id'];
+            final currUser = current.currentUser?['id'];
+            return prevUser != currUser;
+          }
+          return false;
+        }
+        return true;
+      },
+      builder: (context, state) {
+        // #region agent log
+        DebugLogger.log('_CheckAuthScreen', 'BUILD_DECISION_START', data: {
+          'hypothesisId': 'H3',
+          'stateType': state.runtimeType.toString(),
+          'isProfilesLoaded': state is ProfilesLoaded,
+          'hasCurrentUser': state is ProfilesLoaded && (state as ProfilesLoaded).currentUser != null,
+          'hasSeenOnboarding': _hasSeenOnboarding,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
+        
+        // If user is loaded (logged in), show appropriate home screen
+        if (state is ProfilesLoaded && state.currentUser != null) {
+          final userType = (state.currentUser!['user_type'] as String? ?? '').trim();
+          
+          // #region agent log
+          DebugLogger.log('_CheckAuthScreen', 'USER_LOGGED_IN', data: {
+            'hypothesisId': 'H3',
+            'userType': userType,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          });
+          // #endregion
+          
+          // For clients: go directly to HomeScreen (not WelcomeInside)
+          // Use a key to preserve state when widget is recreated
+          if (userType == 'Client') {
+            return const HomeScreen(key: ValueKey('client_home'));
+          }
+          
+          // For Agency/Individual Cleaner: go to AgencyDashboardPage
+          if (userType == 'Agency' || userType == 'Individual Cleaner') {
+            return const AgencyDashboardPage();
+          }
+        }
+        
+        // Not logged in: check if user has seen onboarding
+        // #region agent log
+        DebugLogger.log('_CheckAuthScreen', 'NOT_LOGGED_IN_DECISION', data: {
+          'hypothesisId': 'H3',
+          'hypothesisId2': 'H4',
+          'hasSeenOnboarding': _hasSeenOnboarding,
+          'willShowOnboarding': _hasSeenOnboarding == false,
+          'willShowLogin': _hasSeenOnboarding == true,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
+        
+        if (_hasSeenOnboarding == true) {
+          // User has seen onboarding before, show login page
+          return const Login();
+        } else {
+          // First time user, show onboarding
+          return const OnboardingScreen();
+        }
+      },
     );
   }
 }

@@ -283,4 +283,334 @@ class AppLocalizationsEn extends AppLocalizations {
   String hello(String name) {
     return 'Hello $name';
   }
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get noNotifications => 'No notifications';
+
+  @override
+  String get markAllRead => 'Mark all read';
+
+  @override
+  String get notificationPermissionRequired =>
+      'Notification permission is required to receive updates';
+
+  @override
+  String get notificationPermissionDenied => 'Notification permission denied';
+
+  @override
+  String get newBooking => 'New Booking';
+
+  @override
+  String get bookingUpdated => 'Booking Updated';
+
+  @override
+  String get newJobAvailable => 'New Job Available';
+
+  @override
+  String get settingsPage => 'Settings Page';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get payment => 'Payment';
+
+  @override
+  String get paymentMethods => 'Payment Methods';
+
+  @override
+  String get support => 'Support';
+
+  @override
+  String get helpSupport => 'Help & Support';
+
+  @override
+  String get logOut => 'Log Out?';
+
+  @override
+  String get logOutMessage =>
+      'Are you sure you want to log out of your CleanSpace account?';
+
+  @override
+  String get yesLogOut => 'Yes, Log Out';
+
+  @override
+  String get loggedOutSuccessfully => 'Logged out successfully';
+
+  @override
+  String get addPost => 'Add Post';
+
+  @override
+  String get postNow => 'Post Now';
+
+  @override
+  String get jobTitle => 'Job Title';
+
+  @override
+  String get jobDescription => 'Job Description';
+
+  @override
+  String get budget => 'Budget';
+
+  @override
+  String get estimatedDuration => 'Estimated Duration';
+
+  @override
+  String get hours => 'Hours';
+
+  @override
+  String get days => 'Days';
+
+  @override
+  String get selectServiceType => 'Select Service Type';
+
+  @override
+  String get selectProvince => 'Select Province';
+
+  @override
+  String get uploadImages => 'Upload Images';
+
+  @override
+  String get maxImages => 'Maximum 5 images';
+
+  @override
+  String get pleaseLogin => 'Please login to post a job';
+
+  @override
+  String get jobPostedSuccessfully => 'Job posted successfully!';
+
+  @override
+  String get searchForCleaningServices => 'Search for cleaning services';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get rating => 'Rating';
+
+  @override
+  String get price => 'Price';
+
+  @override
+  String get selectWilayasMultiple => 'Select Wilayas (Multiple)';
+
+  @override
+  String get selectAll => 'Select All';
+
+  @override
+  String get deselectAll => 'Deselect All';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get ratingRange => 'Rating Range';
+
+  @override
+  String get minRating => 'Min Rating (0-5)';
+
+  @override
+  String get maxRating => 'Max Rating (0-5)';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
+  String get priceRangeDzd => 'Price Range (DZD)';
+
+  @override
+  String get minPrice => 'Min Price';
+
+  @override
+  String get maxPrice => 'Max Price';
+
+  @override
+  String get noCleanersFound => 'No cleaners found';
+
+  @override
+  String get availableJobs => 'Available Jobs';
+
+  @override
+  String get pending => 'Pending';
+
+  @override
+  String get assigned => 'Assigned';
+
+  @override
+  String get jobDone => 'Done';
+
+  @override
+  String get cancelled => 'Cancelled';
+
+  @override
+  String get manageJob => 'Manage Job';
+
+  @override
+  String get pauseJob => 'Pause Job';
+
+  @override
+  String get activateJob => 'Activate Job';
+
+  @override
+  String get leaveReview => 'Leave a Review';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get decline => 'Decline';
+
+  @override
+  String get applications => 'Applications';
+
+  @override
+  String get noApplications => 'No applications yet';
+
+  @override
+  String get assignedWorker => 'Assigned Worker';
+
+  @override
+  String get noWorkerAssigned => 'No worker assigned yet';
+
+  @override
+  String get overview => 'Overview';
+
+  @override
+  String get aboutMe => 'About Me';
+
+  @override
+  String get viewDetails => 'View Details';
+
+  @override
+  String get personalInformation => 'Personal Information';
+
+  @override
+  String get enterYourFullName => 'Enter your full name';
+
+  @override
+  String get emailAddress => 'Email Address';
+
+  @override
+  String get enterYourEmail => 'Enter your email';
+
+  @override
+  String get enterYourPhoneNumber => 'Enter your phone number';
+
+  @override
+  String get profilePicture => 'Profile Picture';
+
+  @override
+  String get changePhoto => 'Change Photo';
+
+  @override
+  String get identityVerification => 'Identity Verification';
+
+  @override
+  String get idVerificationMessage =>
+      'For the safety of our community, we require ID verification.';
+
+  @override
+  String get uploadId => 'Upload ID';
+
+  @override
+  String get idUploadDescription => 'Front and back of your ID';
+
+  @override
+  String get accountDetails => 'Account Details';
+
+  @override
+  String get dateFormatHint => 'mm/dd/yyyy';
+
+  @override
+  String get wilayaProvince => 'Wilaya (Province)';
+
+  @override
+  String get selectYourWilaya => 'Select your wilaya';
+
+  @override
+  String get baladiya => 'Baladiya';
+
+  @override
+  String get selectYourBaladiya => 'Select your baladiya (optional)';
+
+  @override
+  String get enterStreetName => 'Enter street name, building number, etc.';
+
+  @override
+  String get tellUsAboutYourself => 'Tell us about yourself...';
+
+  @override
+  String get contactForPricing => 'Contact for pricing';
+
+  @override
+  String get postANewJob => 'Post a New Job';
+
+  @override
+  String get locationWilaya => 'Location (Wilaya)';
+
+  @override
+  String get selectYourProvince => 'Select your province';
+
+  @override
+  String get yourBudgetDzd => 'Your Budget (DZD)';
+
+  @override
+  String get enterYourBudget => 'Enter your budget';
+
+  @override
+  String get durationExample => 'e.g., 3';
+
+  @override
+  String get addPhotos => 'Add Photos';
+
+  @override
+  String get maximumPhotosAllowed => 'Maximum 5 photos allowed';
+
+  @override
+  String get pleaseSelectServiceType => 'Please select a service type';
+
+  @override
+  String get pleaseSelectLocation => 'Please select a location';
+
+  @override
+  String get pleaseEnterBudget => 'Please enter a budget';
+
+  @override
+  String get pleaseEnterJobDescription => 'Please enter a job description';
+
+  @override
+  String errorPickingImages(String error) {
+    return 'Error picking images: $error';
+  }
+
+  @override
+  String errorPostingJob(String error) {
+    return 'Error posting job: $error';
+  }
+
+  @override
+  String get today => 'Today';
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
+  String daysAgo(int count) {
+    return '$count days ago';
+  }
+
+  @override
+  String get posted => 'Posted';
+
+  @override
+  String get weeks => 'Weeks';
 }

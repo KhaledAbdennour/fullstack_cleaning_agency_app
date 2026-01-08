@@ -29,27 +29,62 @@ class Cleaner {
       'rating': rating,
       'jobs_completed': jobsCompleted,
       'agency_id': agencyId,
-      'is_active': isActive ? 1 : 0,
+      // store as bool; legacy readers still handle int
+      'is_active': isActive,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
   }
 
   factory Cleaner.fromMap(Map<String, dynamic> map) {
+    DateTime? _parseDate(dynamic v) {
+      if (v == null) return null;
+      if (v is DateTime) return v;
+      if (v is String) {
+        try {
+          return DateTime.parse(v);
+        } catch (_) {
+          return null;
+        }
+      }
+      if (v is dynamic && v.runtimeType.toString() == 'Timestamp') {
+        try {
+          return v.toDate();
+        } catch (_) {
+          return null;
+        }
+      }
+      return null;
+    }
+
+    bool _parseBool(dynamic v) {
+      if (v is bool) return v;
+      if (v is int) return v == 1;
+      return false;
+    }
+
+    int _parseInt(dynamic v) {
+      if (v is int) return v;
+      if (v is String) return int.tryParse(v) ?? 0;
+      return 0;
+    }
+
+    double _parseDouble(dynamic v) {
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? 0;
+      return 0;
+    }
+
     return Cleaner(
       id: map['id'] as int?,
-      name: map['name'] as String,
+      name: map['name'] as String? ?? 'Unknown',
       avatarUrl: map['avatar_url'] as String?,
-      rating: (map['rating'] as num).toDouble(),
-      jobsCompleted: map['jobs_completed'] as int,
-      agencyId: map['agency_id'] as int,
-      isActive: (map['is_active'] as int? ?? 1) == 1,
-      createdAt: map['created_at'] != null
-          ? DateTime.parse(map['created_at'] as String)
-          : null,
-      updatedAt: map['updated_at'] != null
-          ? DateTime.parse(map['updated_at'] as String)
-          : null,
+      rating: _parseDouble(map['rating']),
+      jobsCompleted: _parseInt(map['jobs_completed']),
+      agencyId: _parseInt(map['agency_id']),
+      isActive: _parseBool(map['is_active'] ?? true),
+      createdAt: _parseDate(map['created_at']),
+      updatedAt: _parseDate(map['updated_at']),
     );
   }
 

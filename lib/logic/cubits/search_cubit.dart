@@ -38,18 +38,26 @@ class SearchCubit extends Cubit<SearchState> {
   
   Future<void> loadSearchResults({
     String? query,
-    String? location,
-    String? rating,
-    String? price,
+    List<String>? wilayas,
+    double? minRating,
+    double? maxRating,
+    double? minPrice,
+    double? maxPrice,
   }) async {
     emit(SearchLoading());
     try {
       
       final allProfiles = await _profileRepo.getAllProfiles();
+      // Filter out clients - show all non-client profiles (cleaners, agencies, etc.)
       final cleanersAndAgencies = allProfiles.where((profile) {
-        final userType = profile['user_type'] as String?;
-        return userType == 'Individual Cleaner' || userType == 'Agency';
+        final userType = (profile['user_type'] as String?)?.trim();
+        // Show all profiles that are NOT clients (case-insensitive check)
+        if (userType == null || userType.isEmpty) return false;
+        return userType.toLowerCase() != 'client';
       }).toList();
+      
+      print('📊 [SearchCubit] Total profiles: ${allProfiles.length}');
+      print('📊 [SearchCubit] Non-client profiles: ${cleanersAndAgencies.length}');
 
       
       List<Map<String, dynamic>> results = cleanersAndAgencies.map((profile) {
@@ -60,40 +68,61 @@ class SearchCubit extends Cubit<SearchState> {
             ? (agencyName ?? fullName ?? 'Unknown')
             : (fullName ?? 'Unknown');
         
+        // Use real data only - no dummy defaults
+        final rating = (profile['rating'] as num?)?.toDouble() ?? 0.0;
+        final reviewsCount = profile['reviews_count'] as int? ?? (profile['jobs_completed'] as int?) ?? 0;
+        final bio = profile['bio'] as String?;
+        final experienceYears = profile['experience_years'] as int?;
+        final age = profile['age'];
+        final languages = profile['languages'] as String?;
+        final hourlyRate = profile['hourly_rate'];
+        
         return {
           'id': profile['id'],
           'name': name,
-          'description': profile['bio'] as String? ?? '',
+          'description': bio ?? '',
           'location': _extractLocation(profile['address'] as String?),
-          'price': profile['hourly_rate'] != null 
-              ? 'From ${profile['hourly_rate']} DZD/hr'
+          'price': hourlyRate != null 
+              ? 'From $hourlyRate DZD/hr'
               : 'Contact for pricing',
-          'rating': (profile['rating'] as num?)?.toDouble() ?? 4.5,
-          'reviews': profile['reviews_count'] as int? ?? 0,
-          'image': profile['avatar_url'] as String?,
+          'rating': rating,
+          'reviews': reviewsCount,
+          'image': profile['picture'] as String?,
           'isVerified': profile['is_verified'] as bool? ?? false,
           'type': userType == 'Agency' ? 'Agency' : 'Individual',
           'userType': userType,
-          'aboutMe': profile['bio'] as String? ?? 'Professional cleaning service provider.',
-          'experience': profile['experience_years'] != null 
-              ? '${profile['experience_years']}+ Years'
-              : '5+ Years',
-          'age': profile['age'] != null ? profile['age'].toString() : '28',
-          'languages': profile['languages'] as String? ?? 'Arabic, French',
+          'aboutMe': bio ?? '',
+          'experience': experienceYears != null 
+              ? '$experienceYears+ Years'
+              : null,
+          'age': age != null ? age.toString() : null,
+          'languages': languages,
           'agency': userType == 'Agency' ? null : (profile['agency_name'] as String?),
           'profileData': profile,
         };
       }).toList();
 
       
-      results = _applyFilters(results, query: query, location: location, rating: rating, price: price);
+      results = _applyFilters(
+        results, 
+        query: query, 
+        wilayas: wilayas,
+        minRating: minRating,
+        maxRating: maxRating,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+      );
 
       emit(SearchLoaded(
         results: results,
         searchQuery: query,
-        locationFilter: location,
-        ratingFilter: rating,
-        priceFilter: price,
+        locationFilter: wilayas?.join(', '),
+        ratingFilter: minRating != null || maxRating != null
+            ? '${minRating ?? 0.0}-${maxRating ?? 5.0}'
+            : null,
+        priceFilter: minPrice != null || maxPrice != null
+            ? '${minPrice ?? 0}-${maxPrice ?? "∞"} DZD'
+            : null,
       ));
     } catch (e) {
       emit(SearchError('Failed to load search results: $e'));
@@ -104,13 +133,15 @@ class SearchCubit extends Cubit<SearchState> {
   List<Map<String, dynamic>> _applyFilters(
     List<Map<String, dynamic>> results, {
     String? query,
-    String? location,
-    String? rating,
-    String? price,
+    List<String>? wilayas,
+    double? minRating,
+    double? maxRating,
+    double? minPrice,
+    double? maxPrice,
   }) {
     var filtered = results;
 
-    
+    // Filter by search query
     if (query != null && query.isNotEmpty) {
       filtered = filtered.where((item) {
         final name = (item['name'] as String? ?? '').toLowerCase();
@@ -120,27 +151,43 @@ class SearchCubit extends Cubit<SearchState> {
       }).toList();
     }
 
-    
-    if (location != null && location != 'All') {
+    // Filter by wilayas (multiple selection)
+    if (wilayas != null && wilayas.isNotEmpty) {
       filtered = filtered.where((item) {
         final itemLocation = (item['location'] as String? ?? '').toLowerCase();
-        return itemLocation.contains(location.toLowerCase());
+        // Check if location contains any of the selected wilayas
+        return wilayas.any((wilaya) => 
+          itemLocation.contains(wilaya.toLowerCase())
+        );
       }).toList();
     }
 
-    
-    if (rating != null && rating != 'All') {
-      final minRating = _parseRatingFilter(rating);
+    // Filter by rating range
+    if (minRating != null || maxRating != null) {
       filtered = filtered.where((item) {
         final itemRating = (item['rating'] as num? ?? 0.0).toDouble();
-        return itemRating >= minRating;
+        if (minRating != null && itemRating < minRating) return false;
+        if (maxRating != null && itemRating > maxRating) return false;
+        return true;
       }).toList();
     }
 
-    
-    if (price != null && price != 'All') {
-      
-      
+    // Filter by price range
+    if (minPrice != null || maxPrice != null) {
+      filtered = filtered.where((item) {
+        // Extract price from hourly_rate or price field
+        final priceStr = item['price'] as String? ?? '';
+        // Try to extract numeric value (e.g., "From 2500 DZD/hr" -> 2500)
+        final priceMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(priceStr);
+        if (priceMatch == null) return true; // Include if can't parse
+        
+        final itemPrice = double.tryParse(priceMatch.group(1) ?? '');
+        if (itemPrice == null) return true;
+        
+        if (minPrice != null && itemPrice < minPrice) return false;
+        if (maxPrice != null && itemPrice > maxPrice) return false;
+        return true;
+      }).toList();
     }
 
     return filtered;
@@ -154,32 +201,21 @@ class SearchCubit extends Cubit<SearchState> {
     return parts.isNotEmpty ? parts.first.trim() : address;
   }
 
-  
-  double _parseRatingFilter(String rating) {
-    switch (rating) {
-      case '4.5+':
-        return 4.5;
-      case '4.0+':
-        return 4.0;
-      case '3.5+':
-        return 3.5;
-      default:
-        return 0.0;
-    }
-  }
-
-  
   Future<void> refresh({
     String? query,
-    String? location,
-    String? rating,
-    String? price,
+    List<String>? wilayas,
+    double? minRating,
+    double? maxRating,
+    double? minPrice,
+    double? maxPrice,
   }) async {
     await loadSearchResults(
       query: query,
-      location: location,
-      rating: rating,
-      price: price,
+      wilayas: wilayas,
+      minRating: minRating,
+      maxRating: maxRating,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
     );
   }
 }

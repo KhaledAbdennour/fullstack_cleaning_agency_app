@@ -7,7 +7,6 @@ import '../models/job_model.dart';
 import '../models/cleaner_model.dart';
 import '../models/cleaning_history_item.dart';
 import '../models/cleaner_review.dart';
-import 'dbhelper.dart';
 
 
 
@@ -26,23 +25,31 @@ class DatabaseSeeder {
         return; 
       }
 
+      print('🌱 Starting database seeding...');
       
       await _seedProfiles();
-      
+      print('✅ Profiles seeded');
       
       await _seedJobs();
-      
+      print('✅ Jobs seeded');
       
       await _seedCleaners();
+      print('✅ Cleaners seeded');
 
-      
       await _seedCleaningHistory();
+      print('✅ Cleaning history seeded');
+      
       await _seedCleanerReviews();
+      print('✅ Cleaner reviews seeded');
 
       _seeded = true;
+      print('✅ Database seeding completed successfully');
       
-    } catch (e) {
-      
+    } catch (e, stackTrace) {
+      print('❌ Database seeding failed: $e');
+      print('Stack trace: $stackTrace');
+      // Don't set _seeded = true so it can retry
+      rethrow; // Re-throw so caller knows seeding failed
     }
   }
 
@@ -63,7 +70,7 @@ class DatabaseSeeder {
       'address': 'Alger, Algeria',
       'gender': 'Male',
       'birthdate': '1990-01-01',
-      'avatar_url': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop',
+      'picture': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop',
       'created_at': DateTime.now().toIso8601String(),
     });
 
@@ -79,7 +86,7 @@ class DatabaseSeeder {
       'address': 'Oran, Algeria',
       'gender': 'Male',
       'birthdate': '1985-05-15',
-      'avatar_url': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
+      'picture': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
       'created_at': DateTime.now().toIso8601String(),
     });
 
@@ -97,7 +104,7 @@ class DatabaseSeeder {
       'address': 'Constantine, Algeria',
       'gender': 'Female',
       'birthdate': '1992-03-20',
-      'avatar_url': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
+      'picture': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
       'created_at': DateTime.now().toIso8601String(),
     });
   }
@@ -125,6 +132,7 @@ class DatabaseSeeder {
       postedDate: now.subtract(const Duration(days: 2)),
       jobDate: now.add(const Duration(days: 5)),
       agencyId: agencyId,
+      clientId: null, // Explicitly set to null for agency jobs
       coverImageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop',
     ));
 
@@ -137,6 +145,7 @@ class DatabaseSeeder {
       postedDate: now.subtract(const Duration(days: 5)),
       jobDate: now.add(const Duration(days: 3)),
       agencyId: agencyId,
+      clientId: null, // Explicitly set to null for agency jobs
       coverImageUrl: 'https://images.unsplash.com/photo-1581579184808-b72b4f5f8a03?w=800&h=400&fit=crop',
     ));
 
@@ -149,6 +158,7 @@ class DatabaseSeeder {
       postedDate: now.subtract(const Duration(days: 10)),
       jobDate: now.add(const Duration(days: 7)),
       agencyId: agencyId,
+      clientId: null, // Explicitly set to null for agency jobs
       coverImageUrl: 'https://images.unsplash.com/photo-1581578017423-3b243dbb3a34?w=800&h=400&fit=crop',
     ));
 

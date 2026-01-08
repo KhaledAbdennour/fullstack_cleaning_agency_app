@@ -8,6 +8,7 @@ import '../logic/cubits/client_jobs_cubit.dart';
 import '../logic/cubits/listings_cubit.dart';
 import '../data/repositories/jobs/jobs_repo.dart';
 import '../data/models/job_model.dart';
+import '../l10n/app_localizations.dart';
 
 
 class PostJobScreen extends StatefulWidget {
@@ -30,19 +31,23 @@ class _PostJobScreenState extends State<PostJobScreen> {
   final List<Map<String, dynamic>> serviceTypes = [
     {
       'title': 'Home',
-      'image': 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c52f?w=600&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop', // Mop/cleaning on wooden floor
+      'isAsset': false,
     },
     {
       'title': 'Office',
-      'image': 'https://images.unsplash.com/photo-1507206130118-b5907f817163?w=600&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1507206130118-b5907f817163?w=600&auto=format&fit=crop', // Office cleaning
+      'isAsset': false,
     },
     {
       'title': 'Industrial',
-      'image': 'https://images.unsplash.com/photo-1551703599-62b152d0f8f1?w=600&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600&auto=format&fit=crop', // Industrial/warehouse cleaning
+      'isAsset': false,
     },
     {
       'title': 'Specialty',
-      'image': 'https://images.unsplash.com/photo-1581578017426-1c42a7f1d449?w=600&auto=format&fit=crop',
+      'image': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&auto=format&fit=crop', // Modern house exterior
+      'isAsset': false,
     },
   ];
 
@@ -183,16 +188,25 @@ class _PostJobScreenState extends State<PostJobScreen> {
     try {
       
       final profilesCubit = context.read<ProfilesCubit>();
-      await profilesCubit.loadCurrentUser();
-      final state = profilesCubit.state;
+      
+      // Try to use existing state first
+      var state = profilesCubit.state;
+      if (state is! ProfilesLoaded || state.currentUser == null) {
+        // If not loaded, try loading
+        await profilesCubit.loadCurrentUser();
+        if (!mounted) return;
+        state = profilesCubit.state;
+      }
       
       if (state is! ProfilesLoaded || state.currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please login to post a job'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please login to post a job'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
         return;
       }
 
@@ -200,12 +214,14 @@ class _PostJobScreenState extends State<PostJobScreen> {
       final clientId = user['id'] as int?;
       
       if (clientId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to get user ID'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to get user ID'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
         return;
       }
 
@@ -325,17 +341,19 @@ class _PostJobScreenState extends State<PostJobScreen> {
       }
       
       
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (mounted) {
+        final errorMessage = e.toString().replaceAll('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error posting job: $e'),
+            content: Text('Error posting job: $errorMessage'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 5),
           ),
         );
         
         print('Error posting job: $e');
+        print('Stack trace: $stackTrace');
       }
     }
   }
@@ -348,8 +366,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
-          'Post a New Job',
+        title: Text(
+          AppLocalizations.of(context)!.postANewJob,
           style: TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -399,7 +417,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF00A8E8)
+                              ? const Color(0xFF3B82F6)
                               : Colors.transparent,
                           width: 3,
                         ),
@@ -412,35 +430,98 @@ class _PostJobScreenState extends State<PostJobScreen> {
                         ],
                       ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(
-                            child: Container(
-                              margin: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[200],
-                                borderRadius: BorderRadius.circular(12),
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(13), // Account for border width
+                                topRight: Radius.circular(13),
                               ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  service['image'],
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Icon(
-                                      Icons.image_not_supported_outlined,
-                                      size: 40,
-                                      color: Colors.grey[500],
-                                    );
-                                  },
-                                ),
-                              ),
+                              child: service['isAsset'] == true
+                                  ? Image.asset(
+                                      service['image'],
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      cacheWidth: 600, // Limit to 600px width for memory efficiency
+                                      cacheHeight: 600, // Limit to 600px height for memory efficiency
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.image_not_supported_outlined,
+                                                size: 40,
+                                                color: Colors.grey[500],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Image not found',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey[500],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Image.network(
+                                      service['image'],
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      cacheWidth: 600, // Limit to 600px width for memory efficiency
+                                      cacheHeight: 600, // Limit to 600px height for memory efficiency
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded /
+                                                      loadingProgress.expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.grey[200],
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.image_not_supported_outlined,
+                                                size: 40,
+                                                color: Colors.grey[500],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Failed to load',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey[500],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             child: Text(
                               service['title'],
+                              textAlign: TextAlign.center,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -693,7 +774,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                               style: TextStyle(
                                 color: selectedImages.length >= 5 
                                     ? Colors.grey[400]
-                                    : const Color(0xFF00A8E8),
+                                    : const Color(0xFF3B82F6),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -766,7 +847,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 child: ElevatedButton(
                   onPressed: _submitJob,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00A8E8),
+                    backgroundColor: const Color(0xFF3B82F6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

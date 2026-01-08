@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'login.dart';
+import 'EditProfilePage.dart';
 import '../logic/cubits/profiles_cubit.dart';
 import '../core/services/locale_service.dart';
 import '../l10n/app_localizations.dart';
@@ -21,9 +22,9 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFE5E7EB),
       appBar: AppBar(
-        title: const Text(
-          'Settings Page',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)!.settingsPage,
+          style: const TextStyle(
             color: Color(0xFF6B7280),
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -31,36 +32,21 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         backgroundColor: const Color(0xFFE5E7EB),
         elevation: 0,
-        iconTheme: const IconThemeData(color: Color(0xFF6B7280)),
+        iconTheme: const IconThemeData(color: Color(0xFF3B82F6)),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 12),
-              const Center(
-                child: Text(
-                  'Settings',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
+      body: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
 
               
-              const Text(
-                'Account',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.account,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF6B7280),
@@ -68,13 +54,14 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 8),
               _buildLanguageTile(),
+              _buildEditProfileTile(),
               _buildNotificationTile(),
               const SizedBox(height: 16),
 
               
-              const Text(
-                'Payment',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.payment,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF6B7280),
@@ -83,15 +70,15 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 8),
               _buildTile(
                 icon: Icons.credit_card,
-                title: 'Payment Methods',
+                title: AppLocalizations.of(context)!.paymentMethods,
                 onTap: () {},
               ),
               const SizedBox(height: 16),
 
               
-              const Text(
-                'Support',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.support,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF6B7280),
@@ -100,7 +87,7 @@ class _SettingsPageState extends State<SettingsPage> {
               const SizedBox(height: 8),
               _buildTile(
                 icon: Icons.help_outline,
-                title: 'Help & Support',
+                title: AppLocalizations.of(context)!.helpSupport,
                 onTap: () {},
               ),
               const Spacer(),
@@ -111,17 +98,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: ElevatedButton.icon(
                   onPressed: _showLogoutDialog,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFEE2E2),
+                    backgroundColor: const Color(0xFF3B82F6).withOpacity(0.1),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
                   ),
-                  icon: const Icon(Icons.logout, color: Color(0xFFDC2626)),
-                  label: const Text(
-                    'Logout',
-                    style: TextStyle(
-                      color: Color(0xFFDC2626),
+                  icon: const Icon(Icons.logout, color: Color(0xFF3B82F6)),
+                  label: Text(
+                    AppLocalizations.of(context)!.logout,
+                    style: const TextStyle(
+                      color: Color(0xFF3B82F6),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -130,7 +117,6 @@ class _SettingsPageState extends State<SettingsPage> {
             ],
           ),
         ),
-      ),
     );
   }
 
@@ -143,29 +129,22 @@ class _SettingsPageState extends State<SettingsPage> {
     };
 
     return ListTile(
-      leading: const Icon(Icons.language, color: Color(0xFF4B5563)),
+      leading: const Icon(Icons.language, color: Color(0xFF3B82F6)),
       title: Text(
-        'Language',
+        AppLocalizations.of(context)!.language,
         style: const TextStyle(
           fontSize: 16,
           color: Color(0xFF1F2937),
           fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            localeNames[currentLocale] ?? 'English',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF3B82F6),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(width: 4),
-          const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
-        ],
+      trailing: Text(
+        localeNames[currentLocale] ?? 'English',
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF3B82F6),
+          fontWeight: FontWeight.w600,
+        ),
       ),
       onTap: () => _showLanguageDialog(),
     );
@@ -184,7 +163,7 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Language'),
+          title: Text(AppLocalizations.of(context)!.language),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: languages.map((lang) {
@@ -210,6 +189,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _changeLanguage(Locale locale) async {
     await LocaleService.saveLocale(locale);
+    if (!mounted) return;
     // Find the MyApp widget and update its locale
     final appState = MyApp.of(context);
     if (appState != null) {
@@ -217,19 +197,41 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Widget _buildEditProfileTile() {
+    return ListTile(
+      leading: const Icon(Icons.edit, color: Color(0xFF3B82F6)),
+      title: Text(
+        AppLocalizations.of(context)!.editProfile,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF1F2937),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EditProfileScreen(),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildNotificationTile() {
     return SwitchListTile(
-      secondary: const Icon(Icons.notifications_none, color: Color(0xFF4B5563)),
-      title: const Text(
-        'Notifications',
-        style: TextStyle(
+      secondary: const Icon(Icons.notifications_none, color: Color(0xFF3B82F6)),
+      title: Text(
+        AppLocalizations.of(context)!.notifications,
+        style: const TextStyle(
           fontSize: 16,
           color: Color(0xFF1F2937),
           fontWeight: FontWeight.w500,
         ),
       ),
       value: _notificationsEnabled,
-      activeColor: const Color(0xFF10B981),
+      activeColor: const Color(0xFF3B82F6),
       onChanged: (value) {
         setState(() {
           _notificationsEnabled = value;
@@ -245,7 +247,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: const Color(0xFF4B5563)),
+      leading: Icon(icon, color: const Color(0xFF3B82F6)),
       title: Text(
         title,
         style: const TextStyle(
@@ -254,7 +256,6 @@ class _SettingsPageState extends State<SettingsPage> {
           fontWeight: FontWeight.w500,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF)),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -274,17 +275,17 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               const Icon(Icons.logout, size: 40, color: Color(0xFF3B82F6)),
               const SizedBox(height: 16),
-              const Text(
-                'Log Out?',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.logOut,
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF111827),
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Are you sure you want to log out of your CleanSpace account?',
+              Text(
+                AppLocalizations.of(context)!.logOutMessage,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 15,
@@ -304,7 +305,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         (route) => false,
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Logged out successfully')),
+                        SnackBar(content: Text(AppLocalizations.of(context)!.loggedOutSuccessfully)),
                       );
                     });
                   },
@@ -315,8 +316,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Yes, Log Out',
+                  child: Text(
+                    AppLocalizations.of(context)!.yesLogOut,
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -338,8 +339,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     side: const BorderSide(color: Color(0xFFE5E7EB)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Cancel',
+                  child: Text(
+                    AppLocalizations.of(context)!.cancel,
                     style: TextStyle(
                       color: Color(0xFF111827),
                       fontWeight: FontWeight.w600,

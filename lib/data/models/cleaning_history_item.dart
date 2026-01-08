@@ -75,46 +75,26 @@ extension CleaningHistoryTypeExtension on CleaningHistoryType {
   IconData get icon {
     switch (this) {
       case CleaningHistoryType.office:
-        return Icons.business;
+        return Icons.business_outlined;
       case CleaningHistoryType.apartment:
-        return Icons.apartment;
+        return Icons.apartment_outlined;
       case CleaningHistoryType.villa:
-        return Icons.home;
+        return Icons.villa_outlined;
       case CleaningHistoryType.house:
-        return Icons.home;
+        return Icons.home_outlined;
       case CleaningHistoryType.commercial:
-        return Icons.store;
+        return Icons.cleaning_services_outlined; // For industrial/commercial cleaning
     }
   }
 
   Color get iconColor {
-    switch (this) {
-      case CleaningHistoryType.office:
-        return Colors.blue;
-      case CleaningHistoryType.apartment:
-        return Colors.green;
-      case CleaningHistoryType.villa:
-        return Colors.purple;
-      case CleaningHistoryType.house:
-        return Colors.orange;
-      case CleaningHistoryType.commercial:
-        return Colors.teal;
-    }
+    // All icons use the same color (blue)
+    return Colors.blue;
   }
 
   Color get iconBackgroundColor {
-    switch (this) {
-      case CleaningHistoryType.office:
-        return Colors.blue.shade50;
-      case CleaningHistoryType.apartment:
-        return Colors.green.shade50;
-      case CleaningHistoryType.villa:
-        return Colors.purple.shade50;
-      case CleaningHistoryType.house:
-        return Colors.orange.shade50;
-      case CleaningHistoryType.commercial:
-        return Colors.teal.shade50;
-    }
+    // All icons use the same background color
+    return Colors.blue.shade50;
   }
 }
 

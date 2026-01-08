@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'EditProfilePage.dart';
+import '../widgets/notification_bell_widget.dart';
+import 'data_doctor_page.dart';
 import 'settings_page.dart';
 import 'manage_job_page.dart';
 import 'add-post.dart';
@@ -9,6 +13,9 @@ import '../logic/cubits/profiles_cubit.dart';
 import '../logic/cubits/client_jobs_cubit.dart';
 import '../data/models/job_model.dart';
 import '../utils/image_helper.dart';
+import '../core/debug/debug_logger.dart';
+import '../data/repositories/storage/storage_repo.dart';
+import '../data/repositories/profiles/profile_repo.dart';
 
 class ClientProfilePage extends StatefulWidget {
   const ClientProfilePage({Key? key}) : super(key: key);
@@ -20,28 +27,142 @@ class ClientProfilePage extends StatefulWidget {
 class _ClientProfilePageState extends State<ClientProfilePage> {
   int _selectedTabIndex = 0;
   int? _clientId;
+  String? _avatarUrl;
+  bool _isUploadingImage = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
+    // #region agent log
+    DebugLogger.log('ClientProfilePage', 'initState', data: {
+      'hypothesisId': 'H1',
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
     _loadClientId();
   }
 
 
   Future<void> _loadClientId() async {
+    // #region agent log
+    DebugLogger.log('ClientProfilePage', '_loadClientId_START', data: {
+      'hypothesisId': 'H1',
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+    
     final cubit = context.read<ProfilesCubit>();
+    
+    // Check current state first - avoid reloading if already loaded
+    final currentState = cubit.state;
+    if (currentState is ProfilesLoaded && currentState.currentUser != null) {
+      // User already loaded, use existing state
+      final userId = currentState.currentUser!['id'] as int?;
+      final userType = currentState.currentUser!['user_type'] as String?;
+      
+      // #region agent log
+      DebugLogger.log('ClientProfilePage', '_loadClientId_USE_EXISTING', data: {
+        'hypothesisId': 'H1',
+        'userId': userId,
+        'userType': userType,
+        'isClient': userType == 'Client',
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      });
+      // #endregion
+      
+      if (userId != null && userType == 'Client') {
+        setState(() {
+          _clientId = userId;
+          _avatarUrl = currentState.currentUser!['picture'] as String?;
+        });
+        
+        // #region agent log
+        DebugLogger.log('ClientProfilePage', '_loadClientId_SET_CLIENT_ID', data: {
+          'hypothesisId': 'H1',
+          'clientId': _clientId,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
+        
+        if (mounted) {
+          context.read<ClientJobsCubit>().loadClientJobs(userId);
+        }
+      } else {
+        // #region agent log
+        DebugLogger.log('ClientProfilePage', '_loadClientId_NOT_CLIENT', data: {
+          'hypothesisId': 'H1',
+          'userId': userId,
+          'userType': userType,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
+      }
+      return;
+    }
+    
+    // Only load if not already loaded
     await cubit.loadCurrentUser();
+    if (!mounted) return;
     final state = cubit.state;
     if (state is ProfilesLoaded && state.currentUser != null) {
       final userId = state.currentUser!['id'] as int?;
       final userType = state.currentUser!['user_type'] as String?;
+      
+      // #region agent log
+      DebugLogger.log('ClientProfilePage', '_loadClientId_USER_DATA', data: {
+        'hypothesisId': 'H1',
+        'userId': userId,
+        'userType': userType,
+        'isClient': userType == 'Client',
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      });
+      // #endregion
+      
       if (userId != null && userType == 'Client') {
         setState(() {
           _clientId = userId;
+          _avatarUrl = state.currentUser!['picture'] as String?;
         });
         
-        context.read<ClientJobsCubit>().loadClientJobs(userId);
+        // #region agent log
+        DebugLogger.log('ClientProfilePage', '_loadClientId_SET_CLIENT_ID', data: {
+          'hypothesisId': 'H1',
+          'clientId': _clientId,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
+        
+        if (mounted) {
+          context.read<ClientJobsCubit>().loadClientJobs(userId);
+        }
+      } else {
+        // #region agent log
+        DebugLogger.log('ClientProfilePage', '_loadClientId_NOT_CLIENT', data: {
+          'hypothesisId': 'H1',
+          'userId': userId,
+          'userType': userType,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
       }
+    } else {
+      // #region agent log
+      DebugLogger.log('ClientProfilePage', '_loadClientId_NO_USER', data: {
+        'hypothesisId': 'H1',
+        'stateType': state.runtimeType.toString(),
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      });
+      // #endregion
     }
   }
 
@@ -99,6 +220,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         builder: (context) => const EditProfileScreen(),
       ),
     );
+    // No context usage after Navigator.push - safe
     
     if (mounted) {
       context.read<ProfilesCubit>().loadCurrentUser();
@@ -117,38 +239,264 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     
   }
 
+  Future<void> _changePhoto() async {
+    if (_clientId == null || _isUploadingImage) return;
+
+    try {
+      // Show options to pick from gallery or camera
+      final ImageSource? source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null || !mounted) return;
+
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (image == null || !mounted) return;
+
+      setState(() {
+        _isUploadingImage = true;
+      });
+
+      String? newImageUrl;
+      
+      try {
+        // Upload new image
+        final storageRepo = AbstractStorageRepo.getInstance();
+        newImageUrl = await storageRepo.uploadProfileImage(
+          _clientId!,
+          image.path,
+        );
+
+        if (!mounted) return;
+
+        // Delete old image if it exists (fail silently if file doesn't exist)
+        // Note: deleteProfileImage should not throw, but wrap in try-catch just in case
+        if (_avatarUrl != null && _avatarUrl!.isNotEmpty && _avatarUrl!.startsWith('http')) {
+          try {
+            await storageRepo.deleteProfileImage(_avatarUrl!);
+          } catch (e) {
+            // Ignore all errors from delete - it's not critical if old file can't be deleted
+            // This is expected if the file doesn't exist (e.g., first upload or file was already deleted)
+          }
+        }
+
+        // Update profile with new avatar URL
+        final profileRepo = AbstractProfileRepo.getInstance();
+        final success = await profileRepo.updateAvatarUrl(_clientId!, newImageUrl!);
+
+        if (!mounted) return;
+
+        if (success) {
+          // Update local state first
+          setState(() {
+            _avatarUrl = newImageUrl;
+            _isUploadingImage = false;
+          });
+
+          // Refresh profile state to ensure UI updates with new picture
+          final cubit = context.read<ProfilesCubit>();
+          await cubit.loadCurrentUser();
+
+          // Wait a bit to ensure state is updated
+          await Future.delayed(const Duration(milliseconds: 300));
+
+          if (mounted) {
+            // Force rebuild to show new image
+            setState(() {});
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profile picture updated successfully!'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+        } else {
+          setState(() {
+            _isUploadingImage = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to update profile picture'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (!mounted) return;
+        
+        // Check if it's an object-not-found error (file doesn't exist)
+        // This is expected and should be handled silently
+        final errorStr = e.toString().toLowerCase();
+      if (errorStr.contains('object-not-found') || 
+          errorStr.contains('no object exists') ||
+          errorStr.contains('[firebase_storage/object-not-found]')) {
+        // Silently handle - this is expected when old file doesn't exist
+        setState(() {
+          _isUploadingImage = false;
+        });
+        // Still try to update the profile if we have the new image URL from upload
+        // The upload should have succeeded, only the delete failed
+        if (newImageUrl != null && newImageUrl.isNotEmpty) {
+          // Try to update profile with the new image URL (upload succeeded)
+          try {
+            final profileRepo = AbstractProfileRepo.getInstance();
+            final success = await profileRepo.updateAvatarUrl(_clientId!, newImageUrl);
+            
+            if (success) {
+              // Update local state
+              setState(() {
+                _avatarUrl = newImageUrl;
+                _isUploadingImage = false;
+              });
+              
+              // Refresh profile state to show new image
+              final cubit = context.read<ProfilesCubit>();
+              await cubit.loadCurrentUser();
+              
+              if (mounted) {
+                // Force rebuild to show new image
+                setState(() {});
+              }
+            } else {
+              setState(() {
+                _isUploadingImage = false;
+              });
+            }
+          } catch (updateError) {
+            // If profile update also fails, just reset the uploading state
+            setState(() {
+              _isUploadingImage = false;
+            });
+          }
+        } else {
+          setState(() {
+            _isUploadingImage = false;
+          });
+        }
+        return; // Don't show error message for expected errors
+      }
+      
+        // If it's not an object-not-found error, show error message
+        setState(() {
+          _isUploadingImage = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating profile picture: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (outerError) {
+      // Handle any errors from showing bottom sheet or picking image
+      if (mounted) {
+        setState(() {
+          _isUploadingImage = false;
+        });
+      }
+    }
+  }
+
   
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // #region agent log
+    DebugLogger.log('ClientProfilePage', 'didChangeDependencies', data: {
+      'hypothesisId': 'H1',
+      'clientId': _clientId,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
   }
 
   @override
   void didUpdateWidget(ClientProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // #region agent log
+    DebugLogger.log('ClientProfilePage', 'didUpdateWidget', data: {
+      'hypothesisId': 'H1',
+      'clientId': _clientId,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
     
     if (_clientId != null) {
       context.read<ClientJobsCubit>().loadClientJobs(_clientId!);
     }
   }
+  
+  @override
+  void dispose() {
+    // #region agent log
+    DebugLogger.log('ClientProfilePage', 'dispose', data: {
+      'hypothesisId': 'H1',
+      'clientId': _clientId,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    // #region agent log
+    DebugLogger.log('ClientProfilePage', 'build_CALLED', data: {
+      'hypothesisId': 'H1',
+      'clientId': _clientId,
+      'selectedTabIndex': _selectedTabIndex,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+    
+    // Return full Scaffold so profile page can be used standalone or in HomeScreen
     return Scaffold(
       backgroundColor: const Color(0xFFE5E7EB),
       appBar: AppBar(
         backgroundColor: const Color(0xFFE5E7EB),
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
-          'My Profile',
-          style: TextStyle(
-            color: Color(0xFF6B7280),
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
+        title: GestureDetector(
+          onLongPress: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const DataDoctorPage()),
+            );
+          },
+          child: const SizedBox.shrink(),
         ),
         actions: [
+          const NotificationBellWidget(),
           IconButton(
             icon: const Icon(Icons.settings, color: Color(0xFF6B7280)),
             onPressed: _handleSettings,
@@ -156,24 +504,20 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         ],
       ),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                _buildProfileHeader(),
-                _buildProfileInfo(),
-                const SizedBox(height: 24),
-                _buildTabBar(),
-                const SizedBox(height: 16),
-                _buildTabContent(),
-                const SizedBox(height: 24),
-              ],
-            ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+          ),
+          child: Column(
+            children: [
+              _buildProfileHeader(),
+              _buildProfileInfo(),
+              const SizedBox(height: 24),
+              _buildTabBar(),
+              const SizedBox(height: 16),
+              _buildTabContent(),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
@@ -181,59 +525,86 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   }
 
   Widget _buildProfileHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const SizedBox(width: 40), 
-          const Text(
-            'My Profile',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          TextButton(
-            onPressed: _handleEditProfile,
-            child: const Text(
-              'Edit',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF3B82F6),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildProfileInfo() {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, state) {
         String displayName = 'New User';
+        String? avatarUrl;
+        
         if (state is ProfilesLoaded && state.currentUser != null) {
           displayName = state.currentUser!['full_name'] as String? ?? 
                        state.currentUser!['username'] as String? ?? 
                        'New User';
+          avatarUrl = state.currentUser!['picture'] as String?;
+          
+          // Update local avatar URL if different
+          if (avatarUrl != _avatarUrl) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _avatarUrl = avatarUrl;
+                });
+              }
+            });
+          }
         }
 
         return Column(
           children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFDE68A),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.person,
-                size: 60,
-                color: Color(0xFF92400E),
+            const SizedBox(height: 24),
+            GestureDetector(
+              onTap: _isUploadingImage ? null : _changePhoto,
+              child: Stack(
+                children: [
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3B82F6),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFE5E7EB),
+                        width: 2,
+                      ),
+                    ),
+                    child: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                        ? ClipOval(
+                            child: AppImage(
+                              imageUrl: _avatarUrl!,
+                              width: 140,
+                              height: 140,
+                              fit: BoxFit.cover,
+                              errorWidget: const Icon(
+                                Icons.person,
+                                size: 70,
+                                color: Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.person,
+                            size: 70,
+                            color: Colors.white,
+                          ),
+                  ),
+                  if (_isUploadingImage)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Center(
+                          child: const CircularProgressIndicator(
+                            color: Color(0xFF3B82F6),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -254,10 +625,10 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   Widget _buildTabBar() {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, state) {
-        bool isIndividualCleaner = false;
+        bool isClient = true;
         if (state is ProfilesLoaded && state.currentUser != null) {
           final userType = state.currentUser!['user_type'] as String?;
-          isIndividualCleaner = userType == 'Individual Cleaner';
+          isClient = userType == 'Client';
         }
 
         return Container(
@@ -265,12 +636,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           child: Row(
             children: [
               _buildTab('My Posts', 0),
-              if (isIndividualCleaner) ...[
-                const SizedBox(width: 24),
-                _buildTab('History', 1),
-                const SizedBox(width: 24),
-                _buildTab('Reviews', 2),
-              ],
             ],
           ),
         );
@@ -319,25 +684,18 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
 
 
   Widget _buildTabContent() {
-    if (_selectedTabIndex == 0) {
-      return _buildJobPostsList();
-    } else if (_selectedTabIndex == 1) {
-      return _buildHistoryList();
-    } else if (_selectedTabIndex == 2) {
-      return _buildReviewsList();
-    }
     return _buildJobPostsList();
   }
 
   Widget _buildJobPostsList() {
     if (_clientId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
     }
 
     return BlocBuilder<ClientJobsCubit, ClientJobsState>(
       builder: (context, state) {
         if (state is ClientJobsLoading && state is! ClientJobsLoaded) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
         } else if (state is ClientJobsError) {
           return Center(
             child: Column(
@@ -371,8 +729,12 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
             );
           }
 
+          // Sort jobs by most recent first (postedDate descending) - same as homepage
+          final sortedJobs = List<Job>.from(state.jobs);
+          sortedJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
+
           return Column(
-            children: state.jobs.map((job) {
+            children: sortedJobs.map((job) {
               try {
                 
                 if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
@@ -713,7 +1075,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFFF9FAFB),
@@ -758,7 +1120,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF6B7280)),
+                      const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF3B82F6)),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -772,15 +1134,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'View Details',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF3B82F6),
-                    ),
                   ),
                 ],
               ),
@@ -831,7 +1184,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFFF9FAFB),
@@ -867,15 +1220,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                     style: const TextStyle(
                       fontSize: 14,
                       color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'View Details',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF3B82F6),
                     ),
                   ),
                 ],

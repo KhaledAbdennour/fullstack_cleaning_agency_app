@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
+import '../../core/utils/firestore_type.dart';
 
 class CleanerReview {
   final int? id;
   final int cleanerId;
+  final int? jobId; // Optional: link review to specific job
   final String reviewerName;
   final double rating;
   final DateTime date;
@@ -15,6 +16,7 @@ class CleanerReview {
   CleanerReview({
     this.id,
     required this.cleanerId,
+    this.jobId,
     required this.reviewerName,
     required this.rating,
     required this.date,
@@ -28,6 +30,7 @@ class CleanerReview {
     return {
       'id': id,
       'cleaner_id': cleanerId,
+      'job_id': jobId,
       'reviewer_name': reviewerName,
       'rating': rating,
       'date': date.toIso8601String(),
@@ -39,18 +42,38 @@ class CleanerReview {
   }
 
   factory CleanerReview.fromMap(Map<String, dynamic> map) {
+    // Use safe type helpers
+    final cleanerIdValue = readInt(map['cleaner_id']);
+    if (cleanerIdValue == null) {
+      throw Exception('cleaner_id is required and must be int. Got: ${map['cleaner_id']} (${map['cleaner_id']?.runtimeType})');
+    }
+
+    // Support both 'date' (string ISO) and 'created_at' (Timestamp) for backward compatibility
+    DateTime? dateValue;
+    if (map.containsKey('date') && map['date'] != null) {
+      dateValue = readDate(map['date']);
+    }
+    if (dateValue == null && map.containsKey('created_at') && map['created_at'] != null) {
+      dateValue = readDate(map['created_at']);
+    }
+    if (dateValue == null) {
+      // Fallback to now if neither exists
+      dateValue = DateTime.now();
+    }
+
     return CleanerReview(
-      id: map['id'] as int?,
-      cleanerId: map['cleaner_id'] as int,
-      reviewerName: map['reviewer_name'] as String,
-      rating: (map['rating'] as num).toDouble(),
-      date: DateTime.parse(map['date'] as String),
-      comment: map['comment'] as String,
-      hasPhotos: (map['has_photos'] as int? ?? 0) == 1,
+      id: readInt(map['id']),
+      cleanerId: cleanerIdValue,
+      jobId: readInt(map['job_id']),
+      reviewerName: readString(map['reviewer_name']) ?? 'Anonymous',
+      rating: readDouble(map['rating']) ?? 0.0,
+      date: dateValue,
+      comment: readString(map['comment']) ?? '',
+      hasPhotos: readBool(map['has_photos']),
       photoUrls: map['photo_urls'] != null
-          ? (map['photo_urls'] as String).split(',').where((s) => s.isNotEmpty).toList()
+          ? (readString(map['photo_urls']) ?? '').split(',').where((s) => s.isNotEmpty).toList()
           : null,
-      reviewerId: map['reviewer_id'] as int?,
+      reviewerId: readInt(map['reviewer_id']),
     );
   }
 }

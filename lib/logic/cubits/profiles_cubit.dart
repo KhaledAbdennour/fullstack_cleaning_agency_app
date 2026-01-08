@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/profiles/profile_repo.dart';
+import '../../core/debug/debug_logger.dart';
 
 
 abstract class ProfilesState {}
@@ -33,18 +34,41 @@ class LogoutSuccess extends ProfilesState {}
 
 class ProfilesCubit extends Cubit<ProfilesState> {
   final AbstractProfileRepo _repo = AbstractProfileRepo.getInstance();
+  bool _isLoading = false;
 
   ProfilesCubit() : super(ProfilesInitial()) {
-    loadCurrentUser();
+    // Don't auto-load - let the CheckAuthScreen handle it
+    // loadCurrentUser();
   }
 
   Future<void> loadCurrentUser() async {
+    // Prevent multiple simultaneous loads
+    if (_isLoading) {
+      return;
+    }
+    
+    // If already loaded with the same user, don't reload
+    if (state is ProfilesLoaded) {
+      return;
+    }
+    
+    _isLoading = true;
     emit(ProfilesLoading());
     try {
       final user = await _repo.getCurrentUser();
+      DebugLogger.log('ProfilesCubit', 'loadCurrentUser', data: {
+        'userId': user?['id'],
+        'userIdType': user?['id']?.runtimeType.toString(),
+        'userType': user?['user_type'],
+        'storageKey': 'current_user_id',
+        'source': 'SharedPreferences via ProfileRepo.getCurrentUser()',
+      });
       emit(ProfilesLoaded(user));
-    } catch (e) {
+    } catch (e, stack) {
+      DebugLogger.error('ProfilesCubit', 'loadCurrentUser failed', e, stack);
       emit(ProfilesError('Failed to load user: $e'));
+    } finally {
+      _isLoading = false;
     }
   }
 
@@ -56,14 +80,24 @@ class ProfilesCubit extends Cubit<ProfilesState> {
         return;
       }
 
+      DebugLogger.log('ProfilesCubit', 'login START', data: {'username': username});
       final user = await _repo.login(username, password);
       if (user != null) {
+        DebugLogger.log('ProfilesCubit', 'login SUCCESS', data: {
+          'userId': user['id'],
+          'userIdType': user['id']?.runtimeType.toString(),
+          'userType': user['user_type'],
+          'storageKey': 'current_user_id',
+          'source': 'SharedPreferences set via ProfileRepo.login() -> setCurrentUser()',
+        });
         emit(LoginSuccess(user));
         emit(ProfilesLoaded(user));
       } else {
+        DebugLogger.log('ProfilesCubit', 'login FAILED', data: {'reason': 'Invalid credentials'});
         emit(ProfilesError('Incorrect username or password, try again'));
       }
-    } catch (e) {
+    } catch (e, stack) {
+      DebugLogger.error('ProfilesCubit', 'login ERROR', e, stack);
       emit(ProfilesError('Login failed: $e'));
     }
   }

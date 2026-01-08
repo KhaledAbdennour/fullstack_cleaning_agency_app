@@ -195,7 +195,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get viewProfile => 'Voir le profil';
 
   @override
-  String get apply => 'Postuler';
+  String get apply => 'Appliquer';
 
   @override
   String get bookNow => 'Réserver maintenant';
@@ -285,4 +285,339 @@ class AppLocalizationsFr extends AppLocalizations {
   String hello(String name) {
     return 'Bonjour $name';
   }
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get noNotifications => 'Aucune notification';
+
+  @override
+  String get markAllRead => 'Tout marquer comme lu';
+
+  @override
+  String get notificationPermissionRequired =>
+      'L\'autorisation de notification est requise pour recevoir les mises à jour';
+
+  @override
+  String get notificationPermissionDenied =>
+      'Autorisation de notification refusée';
+
+  @override
+  String get newBooking => 'Nouvelle réservation';
+
+  @override
+  String get bookingUpdated => 'Réservation mise à jour';
+
+  @override
+  String get newJobAvailable => 'Nouveau travail disponible';
+
+  @override
+  String get settingsPage => 'Page des paramètres';
+
+  @override
+  String get account => 'Compte';
+
+  @override
+  String get language => 'Langue';
+
+  @override
+  String get editProfile => 'Modifier le profil';
+
+  @override
+  String get payment => 'Paiement';
+
+  @override
+  String get paymentMethods => 'Méthodes de paiement';
+
+  @override
+  String get support => 'Support';
+
+  @override
+  String get helpSupport => 'Aide et support';
+
+  @override
+  String get logOut => 'Se déconnecter?';
+
+  @override
+  String get logOutMessage =>
+      'Êtes-vous sûr de vouloir vous déconnecter de votre compte CleanSpace?';
+
+  @override
+  String get yesLogOut => 'Oui, se déconnecter';
+
+  @override
+  String get loggedOutSuccessfully => 'Déconnexion réussie';
+
+  @override
+  String get addPost => 'Ajouter une publication';
+
+  @override
+  String get postNow => 'Publier maintenant';
+
+  @override
+  String get jobTitle => 'Titre du travail';
+
+  @override
+  String get jobDescription => 'Description du travail';
+
+  @override
+  String get budget => 'Budget';
+
+  @override
+  String get estimatedDuration => 'Durée estimée';
+
+  @override
+  String get hours => 'Heures';
+
+  @override
+  String get days => 'Jours';
+
+  @override
+  String get selectServiceType => 'Sélectionner le type de service';
+
+  @override
+  String get selectProvince => 'Sélectionner la province';
+
+  @override
+  String get uploadImages => 'Télécharger des images';
+
+  @override
+  String get maxImages => 'Maximum 5 images';
+
+  @override
+  String get pleaseLogin => 'Veuillez vous connecter pour publier un travail';
+
+  @override
+  String get jobPostedSuccessfully => 'Travail publié avec succès!';
+
+  @override
+  String get searchForCleaningServices =>
+      'Rechercher des services de nettoyage';
+
+  @override
+  String get location => 'Emplacement';
+
+  @override
+  String get rating => 'Note';
+
+  @override
+  String get price => 'Prix';
+
+  @override
+  String get selectWilayasMultiple => 'Sélectionner les wilayas (multiple)';
+
+  @override
+  String get selectAll => 'Tout sélectionner';
+
+  @override
+  String get deselectAll => 'Tout désélectionner';
+
+  @override
+  String get done => 'Terminé';
+
+  @override
+  String get ratingRange => 'Plage de notes';
+
+  @override
+  String get minRating => 'Note minimale (0-5)';
+
+  @override
+  String get maxRating => 'Note maximale (0-5)';
+
+  @override
+  String get clear => 'Effacer';
+
+  @override
+  String get priceRangeDzd => 'Plage de prix (DZD)';
+
+  @override
+  String get minPrice => 'Prix minimum';
+
+  @override
+  String get maxPrice => 'Prix maximum';
+
+  @override
+  String get noCleanersFound => 'Aucun nettoyeur trouvé';
+
+  @override
+  String get availableJobs => 'Travaux disponibles';
+
+  @override
+  String get pending => 'En attente';
+
+  @override
+  String get assigned => 'Assigné';
+
+  @override
+  String get jobDone => 'Terminé';
+
+  @override
+  String get cancelled => 'Annulé';
+
+  @override
+  String get manageJob => 'Gérer le travail';
+
+  @override
+  String get pauseJob => 'Mettre en pause le travail';
+
+  @override
+  String get activateJob => 'Activer le travail';
+
+  @override
+  String get leaveReview => 'Laisser un avis';
+
+  @override
+  String get accept => 'Accepter';
+
+  @override
+  String get decline => 'Refuser';
+
+  @override
+  String get applications => 'Candidatures';
+
+  @override
+  String get noApplications => 'Aucune candidature pour le moment';
+
+  @override
+  String get assignedWorker => 'Travailleur assigné';
+
+  @override
+  String get noWorkerAssigned => 'Aucun travailleur assigné pour le moment';
+
+  @override
+  String get overview => 'Aperçu';
+
+  @override
+  String get aboutMe => 'À propos de moi';
+
+  @override
+  String get viewDetails => 'Voir les détails';
+
+  @override
+  String get personalInformation => 'Informations personnelles';
+
+  @override
+  String get enterYourFullName => 'Entrez votre nom complet';
+
+  @override
+  String get emailAddress => 'Adresse e-mail';
+
+  @override
+  String get enterYourEmail => 'Entrez votre e-mail';
+
+  @override
+  String get enterYourPhoneNumber => 'Entrez votre numéro de téléphone';
+
+  @override
+  String get profilePicture => 'Photo de profil';
+
+  @override
+  String get changePhoto => 'Changer la photo';
+
+  @override
+  String get identityVerification => 'Vérification d\'identité';
+
+  @override
+  String get idVerificationMessage =>
+      'Pour la sécurité de notre communauté, nous exigeons une vérification d\'identité.';
+
+  @override
+  String get uploadId => 'Télécharger la pièce d\'identité';
+
+  @override
+  String get idUploadDescription => 'Recto et verso de votre pièce d\'identité';
+
+  @override
+  String get accountDetails => 'Détails du compte';
+
+  @override
+  String get dateFormatHint => 'mm/jj/aaaa';
+
+  @override
+  String get wilayaProvince => 'Wilaya (Province)';
+
+  @override
+  String get selectYourWilaya => 'Sélectionnez votre wilaya';
+
+  @override
+  String get baladiya => 'Baladiya';
+
+  @override
+  String get selectYourBaladiya => 'Sélectionnez votre baladiya (optionnel)';
+
+  @override
+  String get enterStreetName =>
+      'Entrez le nom de la rue, le numéro du bâtiment, etc.';
+
+  @override
+  String get tellUsAboutYourself => 'Parlez-nous de vous...';
+
+  @override
+  String get contactForPricing => 'Contacter pour le prix';
+
+  @override
+  String get postANewJob => 'Publier un nouveau travail';
+
+  @override
+  String get locationWilaya => 'Emplacement (Wilaya)';
+
+  @override
+  String get selectYourProvince => 'Sélectionnez votre province';
+
+  @override
+  String get yourBudgetDzd => 'Votre budget (DZD)';
+
+  @override
+  String get enterYourBudget => 'Entrez votre budget';
+
+  @override
+  String get durationExample => 'ex: 3';
+
+  @override
+  String get addPhotos => 'Ajouter des photos';
+
+  @override
+  String get maximumPhotosAllowed => 'Maximum 5 photos autorisées';
+
+  @override
+  String get pleaseSelectServiceType =>
+      'Veuillez sélectionner un type de service';
+
+  @override
+  String get pleaseSelectLocation => 'Veuillez sélectionner un emplacement';
+
+  @override
+  String get pleaseEnterBudget => 'Veuillez entrer un budget';
+
+  @override
+  String get pleaseEnterJobDescription =>
+      'Veuillez entrer une description du travail';
+
+  @override
+  String errorPickingImages(String error) {
+    return 'Erreur lors de la sélection des images: $error';
+  }
+
+  @override
+  String errorPostingJob(String error) {
+    return 'Erreur lors de la publication du travail: $error';
+  }
+
+  @override
+  String get today => 'Aujourd\'hui';
+
+  @override
+  String get yesterday => 'Hier';
+
+  @override
+  String daysAgo(int count) {
+    return 'Il y a $count jours';
+  }
+
+  @override
+  String get posted => 'Publié';
+
+  @override
+  String get weeks => 'Semaines';
 }

@@ -7,32 +7,6 @@ class ProfileDB extends AbstractProfileRepo {
   static const String collectionName = 'profiles';
   static const String _currentUserIdKey = 'current_user_id';
 
-  // Keep SQL code for reference (used by DBHelper for SQLite fallback)
-  static const String sqlCode = '''
-    CREATE TABLE $collectionName (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      full_name TEXT NOT NULL,
-      email TEXT,
-      phone TEXT,
-      birthdate TEXT,
-      address TEXT,
-      bio TEXT,
-      gender TEXT,
-      user_type TEXT NOT NULL,
-      agency_name TEXT,
-      business_id TEXT,
-      services TEXT,
-      experience_level TEXT,
-      hourly_rate TEXT,
-      profile_picture_path TEXT,
-      id_verification_path TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT
-    )
-  ''';
-
   @override
   Future<List<Map<String, dynamic>>> getAllProfiles() async {
     try {
@@ -44,6 +18,10 @@ class ProfileDB extends AbstractProfileRepo {
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = int.tryParse(doc.id) ?? 0;
+        // Ensure picture field exists (null if not present) for consistency
+        if (!data.containsKey('picture')) {
+          data['picture'] = null;
+        }
         return data;
       }).toList();
     } catch (e, stacktrace) {
@@ -63,6 +41,10 @@ class ProfileDB extends AbstractProfileRepo {
       if (!doc.exists) return null;
       final data = doc.data()!;
       data['id'] = id;
+      // Ensure picture field exists (null if not present) for consistency
+      if (!data.containsKey('picture')) {
+        data['picture'] = null;
+      }
       return data;
     } catch (e, stacktrace) {
       print('getProfileById error: $e --> $stacktrace');
@@ -83,6 +65,10 @@ class ProfileDB extends AbstractProfileRepo {
       final doc = snapshot.docs.first;
       final data = doc.data();
       data['id'] = int.tryParse(doc.id) ?? 0;
+      // Ensure picture field exists (null if not present) for consistency
+      if (!data.containsKey('picture')) {
+        data['picture'] = null;
+      }
       return data;
     } catch (e, stacktrace) {
       print('getProfileByUsername error: $e --> $stacktrace');
@@ -103,6 +89,10 @@ class ProfileDB extends AbstractProfileRepo {
       final doc = snapshot.docs.first;
       final data = doc.data();
       data['id'] = int.tryParse(doc.id) ?? 0;
+      // Ensure picture field exists (null if not present) for consistency
+      if (!data.containsKey('picture')) {
+        data['picture'] = null;
+      }
       return data;
     } catch (e, stacktrace) {
       print('getProfileByEmail error: $e --> $stacktrace');
@@ -123,6 +113,10 @@ class ProfileDB extends AbstractProfileRepo {
       final doc = snapshot.docs.first;
       final data = doc.data();
       data['id'] = int.tryParse(doc.id) ?? 0;
+      // Ensure picture field exists (null if not present) for consistency
+      if (!data.containsKey('picture')) {
+        data['picture'] = null;
+      }
       return data;
     } catch (e, stacktrace) {
       print('getProfileByPhone error: $e --> $stacktrace');
@@ -145,6 +139,10 @@ class ProfileDB extends AbstractProfileRepo {
       final data = doc.data();
       final userId = int.tryParse(doc.id) ?? 0;
       data['id'] = userId;
+      // Ensure picture field exists (null if not present) for consistency
+      if (!data.containsKey('picture')) {
+        data['picture'] = null;
+      }
       
       await setCurrentUser(userId);
       return data;
@@ -161,6 +159,21 @@ class ProfileDB extends AbstractProfileRepo {
       if (!profile.containsKey('created_at') || profile['created_at'] == null) {
         profile['created_at'] = FieldValue.serverTimestamp();
       }
+      
+      // Ensure updated_at is set (same as created_at for new profiles)
+      if (!profile.containsKey('updated_at') || profile['updated_at'] == null) {
+        profile['updated_at'] = FieldValue.serverTimestamp();
+      }
+      
+      // Initialize picture field - always include it in profile (null if not provided)
+      // This ensures the field exists in Firestore even if no avatar is uploaded initially
+      if (!profile.containsKey('picture')) {
+        profile['picture'] = null;
+      }
+      
+      // Profile fields that can be included:
+      // - picture: String? (URL to profile picture in Firebase Storage) - now always initialized
+      // - Other fields are handled by the profile data map
       
       // Remove id if present (Firestore will generate or use provided doc ID)
       final id = profile.remove('id');
@@ -231,11 +244,46 @@ class ProfileDB extends AbstractProfileRepo {
   }
 
   @override
+  Future<bool> updateAvatarUrl(int userId, String? url) async {
+    try {
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(userId.toString())
+          .update({
+        'picture': url,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e, stacktrace) {
+      print('updateAvatarUrl error: $e --> $stacktrace');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> removeAvatar(int userId) async {
+    try {
+      await FirebaseConfig.firestore
+          .collection(collectionName)
+          .doc(userId.toString())
+          .update({
+        'picture': null,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e, stacktrace) {
+      print('removeAvatar error: $e --> $stacktrace');
+      return false;
+    }
+  }
+
+  @override
   Future<Map<String, dynamic>?> getCurrentUser() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt(_currentUserIdKey);
       if (userId == null) return null;
+      // getProfileById already normalizes picture, so we can just return it
       return await getProfileById(userId);
     } catch (e, stacktrace) {
       print('getCurrentUser error: $e --> $stacktrace');

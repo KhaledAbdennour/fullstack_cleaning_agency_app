@@ -633,6 +633,648 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hello {name}'**
   String hello(String name);
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @noNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications'**
+  String get noNotifications;
+
+  /// No description provided for @markAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get markAllRead;
+
+  /// No description provided for @notificationPermissionRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission is required to receive updates'**
+  String get notificationPermissionRequired;
+
+  /// No description provided for @notificationPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission denied'**
+  String get notificationPermissionDenied;
+
+  /// No description provided for @newBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'New Booking'**
+  String get newBooking;
+
+  /// No description provided for @bookingUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Updated'**
+  String get bookingUpdated;
+
+  /// No description provided for @newJobAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'New Job Available'**
+  String get newJobAvailable;
+
+  /// No description provided for @settingsPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings Page'**
+  String get settingsPage;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfile;
+
+  /// No description provided for @payment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get payment;
+
+  /// No description provided for @paymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Methods'**
+  String get paymentMethods;
+
+  /// No description provided for @support.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get support;
+
+  /// No description provided for @helpSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & Support'**
+  String get helpSupport;
+
+  /// No description provided for @logOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out?'**
+  String get logOut;
+
+  /// No description provided for @logOutMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to log out of your CleanSpace account?'**
+  String get logOutMessage;
+
+  /// No description provided for @yesLogOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, Log Out'**
+  String get yesLogOut;
+
+  /// No description provided for @loggedOutSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged out successfully'**
+  String get loggedOutSuccessfully;
+
+  /// No description provided for @addPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Post'**
+  String get addPost;
+
+  /// No description provided for @postNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Post Now'**
+  String get postNow;
+
+  /// No description provided for @jobTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Title'**
+  String get jobTitle;
+
+  /// No description provided for @jobDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Description'**
+  String get jobDescription;
+
+  /// No description provided for @budget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get budget;
+
+  /// No description provided for @estimatedDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated Duration'**
+  String get estimatedDuration;
+
+  /// No description provided for @hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours'**
+  String get hours;
+
+  /// No description provided for @days.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get days;
+
+  /// No description provided for @selectServiceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Service Type'**
+  String get selectServiceType;
+
+  /// No description provided for @selectProvince.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Province'**
+  String get selectProvince;
+
+  /// No description provided for @uploadImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Images'**
+  String get uploadImages;
+
+  /// No description provided for @maxImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum 5 images'**
+  String get maxImages;
+
+  /// No description provided for @pleaseLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Please login to post a job'**
+  String get pleaseLogin;
+
+  /// No description provided for @jobPostedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Job posted successfully!'**
+  String get jobPostedSuccessfully;
+
+  /// No description provided for @searchForCleaningServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for cleaning services'**
+  String get searchForCleaningServices;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @rating.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get rating;
+
+  /// No description provided for @price.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get price;
+
+  /// No description provided for @selectWilayasMultiple.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Wilayas (Multiple)'**
+  String get selectWilayasMultiple;
+
+  /// No description provided for @selectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select All'**
+  String get selectAll;
+
+  /// No description provided for @deselectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Deselect All'**
+  String get deselectAll;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @ratingRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating Range'**
+  String get ratingRange;
+
+  /// No description provided for @minRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Min Rating (0-5)'**
+  String get minRating;
+
+  /// No description provided for @maxRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Max Rating (0-5)'**
+  String get maxRating;
+
+  /// No description provided for @clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clear;
+
+  /// No description provided for @priceRangeDzd.
+  ///
+  /// In en, this message translates to:
+  /// **'Price Range (DZD)'**
+  String get priceRangeDzd;
+
+  /// No description provided for @minPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Min Price'**
+  String get minPrice;
+
+  /// No description provided for @maxPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Max Price'**
+  String get maxPrice;
+
+  /// No description provided for @noCleanersFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No cleaners found'**
+  String get noCleanersFound;
+
+  /// No description provided for @availableJobs.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Jobs'**
+  String get availableJobs;
+
+  /// No description provided for @pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pending;
+
+  /// No description provided for @assigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get assigned;
+
+  /// No description provided for @jobDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get jobDone;
+
+  /// No description provided for @cancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get cancelled;
+
+  /// No description provided for @manageJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Job'**
+  String get manageJob;
+
+  /// No description provided for @pauseJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause Job'**
+  String get pauseJob;
+
+  /// No description provided for @activateJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate Job'**
+  String get activateJob;
+
+  /// No description provided for @leaveReview.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave a Review'**
+  String get leaveReview;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @decline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get decline;
+
+  /// No description provided for @applications.
+  ///
+  /// In en, this message translates to:
+  /// **'Applications'**
+  String get applications;
+
+  /// No description provided for @noApplications.
+  ///
+  /// In en, this message translates to:
+  /// **'No applications yet'**
+  String get noApplications;
+
+  /// No description provided for @assignedWorker.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned Worker'**
+  String get assignedWorker;
+
+  /// No description provided for @noWorkerAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'No worker assigned yet'**
+  String get noWorkerAssigned;
+
+  /// No description provided for @overview.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get overview;
+
+  /// No description provided for @aboutMe.
+  ///
+  /// In en, this message translates to:
+  /// **'About Me'**
+  String get aboutMe;
+
+  /// No description provided for @viewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View Details'**
+  String get viewDetails;
+
+  /// No description provided for @personalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get personalInformation;
+
+  /// No description provided for @enterYourFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your full name'**
+  String get enterYourFullName;
+
+  /// No description provided for @emailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get emailAddress;
+
+  /// No description provided for @enterYourEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email'**
+  String get enterYourEmail;
+
+  /// No description provided for @enterYourPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your phone number'**
+  String get enterYourPhoneNumber;
+
+  /// No description provided for @profilePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Picture'**
+  String get profilePicture;
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Photo'**
+  String get changePhoto;
+
+  /// No description provided for @identityVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'Identity Verification'**
+  String get identityVerification;
+
+  /// No description provided for @idVerificationMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'For the safety of our community, we require ID verification.'**
+  String get idVerificationMessage;
+
+  /// No description provided for @uploadId.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload ID'**
+  String get uploadId;
+
+  /// No description provided for @idUploadDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Front and back of your ID'**
+  String get idUploadDescription;
+
+  /// No description provided for @accountDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Details'**
+  String get accountDetails;
+
+  /// No description provided for @dateFormatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'mm/dd/yyyy'**
+  String get dateFormatHint;
+
+  /// No description provided for @wilayaProvince.
+  ///
+  /// In en, this message translates to:
+  /// **'Wilaya (Province)'**
+  String get wilayaProvince;
+
+  /// No description provided for @selectYourWilaya.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your wilaya'**
+  String get selectYourWilaya;
+
+  /// No description provided for @baladiya.
+  ///
+  /// In en, this message translates to:
+  /// **'Baladiya'**
+  String get baladiya;
+
+  /// No description provided for @selectYourBaladiya.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your baladiya (optional)'**
+  String get selectYourBaladiya;
+
+  /// No description provided for @enterStreetName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter street name, building number, etc.'**
+  String get enterStreetName;
+
+  /// No description provided for @tellUsAboutYourself.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us about yourself...'**
+  String get tellUsAboutYourself;
+
+  /// No description provided for @contactForPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact for pricing'**
+  String get contactForPricing;
+
+  /// No description provided for @postANewJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a New Job'**
+  String get postANewJob;
+
+  /// No description provided for @locationWilaya.
+  ///
+  /// In en, this message translates to:
+  /// **'Location (Wilaya)'**
+  String get locationWilaya;
+
+  /// No description provided for @selectYourProvince.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your province'**
+  String get selectYourProvince;
+
+  /// No description provided for @yourBudgetDzd.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Budget (DZD)'**
+  String get yourBudgetDzd;
+
+  /// No description provided for @enterYourBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your budget'**
+  String get enterYourBudget;
+
+  /// No description provided for @durationExample.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 3'**
+  String get durationExample;
+
+  /// No description provided for @addPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photos'**
+  String get addPhotos;
+
+  /// No description provided for @maximumPhotosAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum 5 photos allowed'**
+  String get maximumPhotosAllowed;
+
+  /// No description provided for @pleaseSelectServiceType.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a service type'**
+  String get pleaseSelectServiceType;
+
+  /// No description provided for @pleaseSelectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a location'**
+  String get pleaseSelectLocation;
+
+  /// No description provided for @pleaseEnterBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a budget'**
+  String get pleaseEnterBudget;
+
+  /// No description provided for @pleaseEnterJobDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a job description'**
+  String get pleaseEnterJobDescription;
+
+  /// No description provided for @errorPickingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Error picking images: {error}'**
+  String errorPickingImages(String error);
+
+  /// No description provided for @errorPostingJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Error posting job: {error}'**
+  String errorPostingJob(String error);
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterday;
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days ago'**
+  String daysAgo(int count);
+
+  /// No description provided for @posted.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted'**
+  String get posted;
+
+  /// No description provided for @weeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Weeks'**
+  String get weeks;
 }
 
 class _AppLocalizationsDelegate

@@ -195,7 +195,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get viewProfile => 'عرض الملف الشخصي';
 
   @override
-  String get apply => 'تقديم';
+  String get apply => 'تطبيق';
 
   @override
   String get bookNow => 'احجز الآن';
@@ -283,4 +283,333 @@ class AppLocalizationsAr extends AppLocalizations {
   String hello(String name) {
     return 'مرحباً $name';
   }
+
+  @override
+  String get notifications => 'الإشعارات';
+
+  @override
+  String get noNotifications => 'لا توجد إشعارات';
+
+  @override
+  String get markAllRead => 'تعليم الكل كمقروء';
+
+  @override
+  String get notificationPermissionRequired =>
+      'إذن الإشعارات مطلوب لتلقي التحديثات';
+
+  @override
+  String get notificationPermissionDenied => 'تم رفض إذن الإشعارات';
+
+  @override
+  String get newBooking => 'حجز جديد';
+
+  @override
+  String get bookingUpdated => 'تم تحديث الحجز';
+
+  @override
+  String get newJobAvailable => 'وظيفة جديدة متاحة';
+
+  @override
+  String get settingsPage => 'صفحة الإعدادات';
+
+  @override
+  String get account => 'الحساب';
+
+  @override
+  String get language => 'اللغة';
+
+  @override
+  String get editProfile => 'تعديل الملف الشخصي';
+
+  @override
+  String get payment => 'الدفع';
+
+  @override
+  String get paymentMethods => 'طرق الدفع';
+
+  @override
+  String get support => 'الدعم';
+
+  @override
+  String get helpSupport => 'المساعدة والدعم';
+
+  @override
+  String get logOut => 'تسجيل الخروج؟';
+
+  @override
+  String get logOutMessage =>
+      'هل أنت متأكد من أنك تريد تسجيل الخروج من حساب CleanSpace الخاص بك؟';
+
+  @override
+  String get yesLogOut => 'نعم، تسجيل الخروج';
+
+  @override
+  String get loggedOutSuccessfully => 'تم تسجيل الخروج بنجاح';
+
+  @override
+  String get addPost => 'إضافة منشور';
+
+  @override
+  String get postNow => 'نشر الآن';
+
+  @override
+  String get jobTitle => 'عنوان الوظيفة';
+
+  @override
+  String get jobDescription => 'وصف الوظيفة';
+
+  @override
+  String get budget => 'الميزانية';
+
+  @override
+  String get estimatedDuration => 'المدة المقدرة';
+
+  @override
+  String get hours => 'ساعات';
+
+  @override
+  String get days => 'أيام';
+
+  @override
+  String get selectServiceType => 'اختر نوع الخدمة';
+
+  @override
+  String get selectProvince => 'اختر الولاية';
+
+  @override
+  String get uploadImages => 'رفع الصور';
+
+  @override
+  String get maxImages => 'حد أقصى 5 صور';
+
+  @override
+  String get pleaseLogin => 'يرجى تسجيل الدخول لنشر وظيفة';
+
+  @override
+  String get jobPostedSuccessfully => 'تم نشر الوظيفة بنجاح!';
+
+  @override
+  String get searchForCleaningServices => 'البحث عن خدمات التنظيف';
+
+  @override
+  String get location => 'الموقع';
+
+  @override
+  String get rating => 'التقييم';
+
+  @override
+  String get price => 'السعر';
+
+  @override
+  String get selectWilayasMultiple => 'اختر الولايات (متعدد)';
+
+  @override
+  String get selectAll => 'تحديد الكل';
+
+  @override
+  String get deselectAll => 'إلغاء تحديد الكل';
+
+  @override
+  String get done => 'تم';
+
+  @override
+  String get ratingRange => 'نطاق التقييم';
+
+  @override
+  String get minRating => 'الحد الأدنى للتقييم (0-5)';
+
+  @override
+  String get maxRating => 'الحد الأقصى للتقييم (0-5)';
+
+  @override
+  String get clear => 'مسح';
+
+  @override
+  String get priceRangeDzd => 'نطاق السعر (دج)';
+
+  @override
+  String get minPrice => 'الحد الأدنى للسعر';
+
+  @override
+  String get maxPrice => 'الحد الأقصى للسعر';
+
+  @override
+  String get noCleanersFound => 'لم يتم العثور على منظفين';
+
+  @override
+  String get availableJobs => 'الوظائف المتاحة';
+
+  @override
+  String get pending => 'قيد الانتظار';
+
+  @override
+  String get assigned => 'معين';
+
+  @override
+  String get jobDone => 'تم';
+
+  @override
+  String get cancelled => 'ملغي';
+
+  @override
+  String get manageJob => 'إدارة الوظيفة';
+
+  @override
+  String get pauseJob => 'إيقاف الوظيفة مؤقتاً';
+
+  @override
+  String get activateJob => 'تفعيل الوظيفة';
+
+  @override
+  String get leaveReview => 'ترك تقييم';
+
+  @override
+  String get accept => 'قبول';
+
+  @override
+  String get decline => 'رفض';
+
+  @override
+  String get applications => 'الطلبات';
+
+  @override
+  String get noApplications => 'لا توجد طلبات بعد';
+
+  @override
+  String get assignedWorker => 'العامل المعين';
+
+  @override
+  String get noWorkerAssigned => 'لم يتم تعيين عامل بعد';
+
+  @override
+  String get overview => 'نظرة عامة';
+
+  @override
+  String get aboutMe => 'نبذة عني';
+
+  @override
+  String get viewDetails => 'عرض التفاصيل';
+
+  @override
+  String get personalInformation => 'المعلومات الشخصية';
+
+  @override
+  String get enterYourFullName => 'أدخل اسمك الكامل';
+
+  @override
+  String get emailAddress => 'عنوان البريد الإلكتروني';
+
+  @override
+  String get enterYourEmail => 'أدخل بريدك الإلكتروني';
+
+  @override
+  String get enterYourPhoneNumber => 'أدخل رقم هاتفك';
+
+  @override
+  String get profilePicture => 'صورة الملف الشخصي';
+
+  @override
+  String get changePhoto => 'تغيير الصورة';
+
+  @override
+  String get identityVerification => 'التحقق من الهوية';
+
+  @override
+  String get idVerificationMessage => 'لحماية مجتمعنا، نطلب التحقق من الهوية.';
+
+  @override
+  String get uploadId => 'رفع بطاقة الهوية';
+
+  @override
+  String get idUploadDescription => 'الوجه الأمامي والخلفي لبطاقة الهوية';
+
+  @override
+  String get accountDetails => 'تفاصيل الحساب';
+
+  @override
+  String get dateFormatHint => 'شهر/يوم/سنة';
+
+  @override
+  String get wilayaProvince => 'الولاية';
+
+  @override
+  String get selectYourWilaya => 'اختر ولايتك';
+
+  @override
+  String get baladiya => 'البلدية';
+
+  @override
+  String get selectYourBaladiya => 'اختر بلديتك (اختياري)';
+
+  @override
+  String get enterStreetName => 'أدخل اسم الشارع ورقم المبنى، إلخ';
+
+  @override
+  String get tellUsAboutYourself => 'أخبرنا عن نفسك...';
+
+  @override
+  String get contactForPricing => 'اتصل للاستفسار عن السعر';
+
+  @override
+  String get postANewJob => 'نشر وظيفة جديدة';
+
+  @override
+  String get locationWilaya => 'الموقع (الولاية)';
+
+  @override
+  String get selectYourProvince => 'اختر ولايتك';
+
+  @override
+  String get yourBudgetDzd => 'ميزانيتك (دج)';
+
+  @override
+  String get enterYourBudget => 'أدخل ميزانيتك';
+
+  @override
+  String get durationExample => 'مثال: 3';
+
+  @override
+  String get addPhotos => 'إضافة صور';
+
+  @override
+  String get maximumPhotosAllowed => 'حد أقصى 5 صور';
+
+  @override
+  String get pleaseSelectServiceType => 'يرجى اختيار نوع الخدمة';
+
+  @override
+  String get pleaseSelectLocation => 'يرجى اختيار الموقع';
+
+  @override
+  String get pleaseEnterBudget => 'يرجى إدخال الميزانية';
+
+  @override
+  String get pleaseEnterJobDescription => 'يرجى إدخال وصف الوظيفة';
+
+  @override
+  String errorPickingImages(String error) {
+    return 'خطأ في اختيار الصور: $error';
+  }
+
+  @override
+  String errorPostingJob(String error) {
+    return 'خطأ في نشر الوظيفة: $error';
+  }
+
+  @override
+  String get today => 'اليوم';
+
+  @override
+  String get yesterday => 'أمس';
+
+  @override
+  String daysAgo(int count) {
+    return 'منذ $count أيام';
+  }
+
+  @override
+  String get posted => 'نُشر';
+
+  @override
+  String get weeks => 'أسابيع';
 }

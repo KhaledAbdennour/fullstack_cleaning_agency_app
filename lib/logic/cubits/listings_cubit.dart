@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/job_model.dart';
 import '../../data/repositories/jobs/jobs_repo.dart';
 import '../../data/repositories/profiles/profile_repo.dart';
+import '../../core/debug/debug_logger.dart';
 
 
 
@@ -33,40 +35,136 @@ class ListingsCubit extends Cubit<ListingsState> {
 
   ListingsCubit() : super(ListingsInitial());
 
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value);
+    if (value is int) {
+      // best-effort: treat as epoch milliseconds
+      return DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    return null;
+  }
+
+  DateTime _profileRecency(Map<String, dynamic> profile) {
+    // Prefer updated_at when present, otherwise created_at.
+    // Falls back to epoch start so "unknown" is always least recent.
+    final updated = _parseDate(profile['updated_at']);
+    final created = _parseDate(profile['created_at']);
+    return updated ?? created ?? DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
   
   Future<void> loadListings() async {
     emit(ListingsLoading());
     try {
+      // Load ALL recent client jobs (not just limit 10, we'll sort and take most recent)
+      // Get recent jobs from database, sorted by posted_date descending
+      final recentClientJobs = await _jobsRepo.getRecentClientJobs(limit: 100);
       
-      final recentClientJobs = await _jobsRepo.getRecentClientJobs(limit: 10);
-      
-      
-      final profiles = await AbstractProfileRepo.getInstance().getAllProfiles();
-      final agency = profiles.firstWhere(
-        (p) => p['user_type'] == 'Agency',
-        orElse: () => profiles.first,
-      );
-      final agencyId = agency['id'] as int?;
-      
-      List<Job> agencyJobs = [];
-      if (agencyId != null) {
-        agencyJobs = await _jobsRepo.getAllJobsForAgency(agencyId);
-      }
-      
-      
-      final allJobs = [...recentClientJobs, ...agencyJobs];
-      allJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
-      final recent = allJobs.take(10).toList();
+      // Filter out deleted jobs AND non-open jobs (only "Open" should appear on homepage)
+      // Note: getRecentClientJobs already filters for open status, but double-check here
+      final validJobs = recentClientJobs
+          .where((job) =>
+              !job.isDeleted &&
+              job.status == JobStatus.open &&
+              job.assignedWorkerId == null)
+          .toList();
+      // Sort by posted_date descending (most recent at the left)
+      validJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
+      final recent = validJobs.take(50).toList(); // Show top 50 most recent
 
+      // Get ALL agencies from database; sort by rating desc, then recency desc (tie-breaker)
+      final profiles = await AbstractProfileRepo.getInstance().getAllProfiles();
       
+      final allAgencies = profiles
+          .where((p) => p['user_type'] == 'Agency')
+          .map((p) => {
+                'name': p['agency_name'] ?? p['full_name'] ?? 'Unknown Agency',
+                'rating': (p['rating'] as num?)?.toDouble() ?? 0.0,
+                'jobsCompleted': (p['jobs_completed'] as int?) ?? 0,
+                'location': p['address'] ?? 'Unknown',
+                'image': p['picture'] ?? '',
+                'id': p['id'],
+                'created_at': p['created_at'],
+                'updated_at': p['updated_at'],
+              })
+          .toList();
       
-      final topAgencies = _getDummyTopAgencies();
-      final topCleaners = _getDummyTopCleaners();
+      // Sort by rating descending, then by recency descending (most recent/highest rated at left)
+      allAgencies.sort((a, b) {
+        final ratingA = (a['rating'] as double? ?? 0.0);
+        final ratingB = (b['rating'] as double? ?? 0.0);
+        final ratingCmp = ratingB.compareTo(ratingA); // Higher rating first
+        if (ratingCmp != 0) return ratingCmp;
+        // Tie-breaker: most recent first (higher timestamp = more recent)
+        final recencyA = _profileRecency(a);
+        final recencyB = _profileRecency(b);
+        return recencyB.compareTo(recencyA); // More recent first
+      });
+
+      // Debug log: top 5 agencies
+      if (allAgencies.isNotEmpty) {
+        final topFive = allAgencies.take(5).map((a) => {
+          'id': a['id'],
+          'name': a['name'],
+          'rating': a['rating'],
+          'created_at_ms': _profileRecency(a).millisecondsSinceEpoch,
+        }).toList();
+
+        DebugLogger.log('ListingsCubit', 'loadListings_TOP_AGENCIES', data: {
+          'totalAgencies': allAgencies.length,
+          'topFive': topFive,
+        });
+      }
+
+      // Get ALL individuals/cleaners from database; sort by rating desc, then recency desc (tie-breaker)
+      final allCleaners = profiles
+          .where((p) => p['user_type'] == 'Individual Cleaner')
+          .map((p) => {
+                'name': p['full_name'] ?? 'Unknown Cleaner',
+                'rating': (p['rating'] as num?)?.toDouble() ?? 0.0,
+                'jobsCompleted': (p['jobs_completed'] as int?) ?? 0,
+                'location': p['address'] ?? 'Unknown',
+                'image': p['picture'] ?? '',
+                'id': p['id'],
+                'created_at': p['created_at'],
+                'updated_at': p['updated_at'],
+              })
+          .toList();
+      
+      // Sort by rating descending, then by recency descending (most recent/highest rated at left)
+      allCleaners.sort((a, b) {
+        final ratingA = (a['rating'] as double? ?? 0.0);
+        final ratingB = (b['rating'] as double? ?? 0.0);
+        final ratingCmp = ratingB.compareTo(ratingA); // Higher rating first
+        if (ratingCmp != 0) return ratingCmp;
+        // Tie-breaker: most recent first (higher timestamp = more recent)
+        final recencyA = _profileRecency(a);
+        final recencyB = _profileRecency(b);
+        return recencyB.compareTo(recencyA); // More recent first
+      });
+
+      // Debug log: top 5 cleaners
+      if (allCleaners.isNotEmpty) {
+        final topFive = allCleaners.take(5).map((c) => {
+          'id': c['id'],
+          'name': c['name'],
+          'rating': c['rating'],
+          'created_at_ms': _profileRecency(c).millisecondsSinceEpoch,
+        }).toList();
+
+        DebugLogger.log('ListingsCubit', 'loadListings_TOP_CLEANERS', data: {
+          'totalCleaners': allCleaners.length,
+          'topFive': topFive,
+        });
+      }
 
       emit(ListingsLoaded(
         recentListings: recent,
-        topAgencies: topAgencies,
-        topCleaners: topCleaners,
+        topAgencies: allAgencies, // ALL agencies, not just top 5
+        topCleaners: allCleaners, // ALL individuals, not just top 5
       ));
     } catch (e) {
       emit(ListingsError('Failed to load listings: $e'));
@@ -76,58 +174,5 @@ class ListingsCubit extends Cubit<ListingsState> {
   
   Future<void> refresh() async {
     await loadListings();
-  }
-
-  
-  List<Map<String, dynamic>> _getDummyTopAgencies() {
-    return [
-      {
-        'name': 'CleanSpace Agency',
-        'rating': 4.9,
-        'jobsCompleted': 1234,
-        'location': 'Algiers',
-        'image': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop',
-        'id': 1,
-      },
-      {
-        'name': 'ProClean Services',
-        'rating': 4.7,
-        'jobsCompleted': 856,
-        'location': 'Oran',
-        'image': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=400&fit=crop',
-        'id': 2,
-      },
-    ];
-  }
-
-  
-  List<Map<String, dynamic>> _getDummyTopCleaners() {
-    return [
-      {
-        'name': 'Fatima Zahra',
-        'rating': 4.8,
-        'jobsCompleted': 124,
-        'location': 'Algiers',
-        'image': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
-        'id': 1,
-      },
-      {
-        'name': 'Ahmed Ali',
-        'rating': 5.0,
-        'jobsCompleted': 98,
-        'location': 'Constantine',
-        'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
-        'id': 2,
-      },
-      {
-        'name': 'Yasmine K.',
-        'rating': 4.5,
-        'jobsCompleted': 76,
-        'location': 'Oran',
-        'image': 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
-        'id': 3,
-      },
-    ];
-  }
-}
+  }}
 

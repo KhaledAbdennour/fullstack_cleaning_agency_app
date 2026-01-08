@@ -5,19 +5,31 @@ import '../logic/cubits/agency_dashboard_cubit.dart';
 import '../logic/cubits/available_jobs_cubit.dart';
 import '../data/models/job_model.dart';
 import '../data/models/cleaner_model.dart';
+import '../data/models/booking_model.dart';
 import 'job_details_bid_page.dart';
+import 'jobdetails.dart';
 import 'cleaner_profile_page.dart';
 import 'add_cleaner_page.dart';
 import 'login.dart';
 import '../data/repositories/profiles/profile_repo.dart';
+import '../data/repositories/bookings/bookings_repo.dart';
 import '../utils/image_helper.dart';
+import '../utils/age_helper.dart';
+import '../widgets/notification_bell_widget.dart';
 
 
 
 
 
 class AgencyDashboardPage extends StatefulWidget {
-  const AgencyDashboardPage({super.key});
+  final int? initialTab;
+  final int? highlightJobId;
+  
+  const AgencyDashboardPage({
+    super.key,
+    this.initialTab,
+    this.highlightJobId,
+  });
 
   @override
   State<AgencyDashboardPage> createState() => _AgencyDashboardPageState();
@@ -28,6 +40,8 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
   TabController? _tabController;
   int? _agencyId;
   int _totalJobsCompleted = 0;
+  final ScrollController _activeListingsScrollController = ScrollController();
+  final ScrollController _pastBookingsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -36,15 +50,25 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
   }
 
   void _initializeTabController() {
-    
     _tabController?.removeListener(_handleTabChange);
     _tabController?.dispose();
     
-    
     final userType = _getUserType();
     final tabCount = userType == 'Individual Cleaner' ? 4 : 4; 
-    _tabController = TabController(length: tabCount, vsync: this);
+    _tabController = TabController(
+      length: tabCount, 
+      vsync: this,
+      initialIndex: widget.initialTab ?? 0,
+    );
     _tabController!.addListener(_handleTabChange);
+    
+    if (widget.initialTab != null && widget.initialTab! < tabCount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _tabController != null && !_tabController!.indexIsChanging) {
+          _tabController!.animateTo(widget.initialTab!);
+        }
+      });
+    }
   }
 
   String _getUserType() {
@@ -117,8 +141,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
 
   @override
   void dispose() {
-    _tabController?.removeListener(_handleTabChange);
+    try {
+      _tabController?.removeListener(_handleTabChange);
+    } catch (_) {}
+    
     _tabController?.dispose();
+    _activeListingsScrollController.dispose();
+    _pastBookingsScrollController.dispose();
     super.dispose();
   }
 
@@ -230,6 +259,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
       ),
       
       actions: [
+        NotificationBellWidget(),
         IconButton(
           icon: const Icon(Icons.logout, color: Color(0xFF6B7280)),
           onPressed: _showLogoutDialog,
@@ -442,7 +472,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
           final cleanerProfile = <String, dynamic>{
             'id': user['id'],
             'name': user['full_name'] as String? ?? 'Unknown',
-            'image': user['avatar_url'] as String?,
+            'image': user['picture'] as String?,
             'rating': (user['rating'] as num?)?.toDouble() ?? 4.5,
             'reviews': user['reviews_count'] as int? ?? 0,
             'isVerified': user['is_verified'] as bool? ?? false,
@@ -450,7 +480,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
             'experience': user['experience_years'] != null 
                 ? '${user['experience_years']}+ Years'
                 : '5+ Years',
-            'age': user['age'] != null ? user['age'].toString() : '28',
+            'age': AgeHelper.formatAge(user['birthdate'] as String?),
             'languages': user['languages'] as String? ?? 'Arabic, French',
             'location': _extractLocation(user['address'] as String?),
             'agency': user['agency_name'] as String?,
@@ -578,10 +608,31 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
                 await context.read<ActiveListingsCubit>().refresh(_agencyId!);
               },
               child: ListView.builder(
+                controller: _activeListingsScrollController,
                 padding: const EdgeInsets.all(16),
                 itemCount: state.jobs.length,
                 itemBuilder: (context, index) {
-                  return _buildJobCard(state.jobs[index]);
+                  final job = state.jobs[index];
+                  final highlight = widget.highlightJobId != null && job.id == widget.highlightJobId;
+                  // Check if this job has a pending booking or is assigned to this worker
+                  // Use available job card design for pending/assigned jobs
+                  if (_agencyId != null) {
+                    final isAssigned = job.assignedWorkerId == _agencyId;
+                    if (isAssigned) {
+                      return _buildAvailableJobCard(job, showAssignedStatus: true);
+                    }
+                    return FutureBuilder<bool>(
+                      future: _hasPendingBookingForJob(job.id!, _agencyId!),
+                      builder: (context, snapshot) {
+                        final isPending = snapshot.data ?? false;
+                        if (isPending) {
+                          return _buildAvailableJobCard(job, showPendingStatus: true);
+                        }
+                        return _buildJobCard(job, highlight: highlight);
+                      },
+                    );
+                  }
+                  return _buildJobCard(job, highlight: highlight);
                 },
               ),
             );
@@ -636,10 +687,18 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
                       await context.read<PastBookingsCubit>().refresh(_agencyId!);
                     },
                     child: ListView.builder(
+                      controller: _pastBookingsScrollController,
                       padding: const EdgeInsets.all(16),
                       itemCount: state.jobs.length,
                       itemBuilder: (context, index) {
-                        return _buildPastBookingCard(state.jobs[index]);
+                        final job = state.jobs[index];
+                        final highlight = widget.highlightJobId != null && job.id == widget.highlightJobId;
+                        // Check if job is completed (both client_done and worker_done are true)
+                        final isCompleted = job.clientDone && job.workerDone;
+                        if (isCompleted) {
+                          return _buildAvailableJobCard(job, showDoneStatus: true);
+                        }
+                        return _buildPastBookingCard(job, highlight: highlight);
                       },
                     ),
                   );
@@ -827,7 +886,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
     );
   }
 
-  Widget _buildAvailableJobCard(Job job) {
+  Widget _buildAvailableJobCard(Job job, {bool showPendingStatus = false, bool showAssignedStatus = false, bool showDoneStatus = false}) {
     
     try {
       if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
@@ -845,12 +904,23 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
       child: InkWell(
         onTap: () {
           try {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => JobDetailsBidPage(job: job),
-              ),
-            );
+            // For assigned or completed jobs, use JobDetailsScreen
+            // For pending jobs, use JobDetailsBidPage
+            if (showAssignedStatus || showDoneStatus) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => JobDetailsScreen(job: job),
+                ),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => JobDetailsBidPage(job: job),
+                ),
+              );
+            }
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -873,6 +943,66 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
                 ),
               if (job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty)
                 const SizedBox(height: 12),
+              
+              // Show Done status badge (green) if both parties confirmed completion
+              if (showDoneStatus) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              
+              // Show Assigned status badge (blue) if assigned to this worker
+              if (showAssignedStatus) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Assigned',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              
+              // Show Pending status badge if in Active Listings
+              if (showPendingStatus) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    'Pending',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               
               Text(
                 job.title,
@@ -903,7 +1033,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
                   const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
-                    _formatDate(job.jobDate),
+                    _formatDate(job.postedDate),
                     style: const TextStyle(color: Colors.grey),
                   ),
                 ],
@@ -1021,13 +1151,23 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
     );
   }
 
-  Widget _buildJobCard(Job job) {
+  Widget _buildJobCard(Job job, {bool highlight = false}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: highlight ? 8 : 2,
+      color: highlight ? Colors.blue[50] : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: highlight ? const BorderSide(color: Colors.blue, width: 2) : BorderSide.none,
+      ),
       child: InkWell(
         onTap: () {
-          
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => JobDetailsScreen(job: job),
+            ),
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Column(
@@ -1060,7 +1200,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${_formatDate(job.jobDate)} - ${job.statusLabel}',
+                    '${_formatDate(job.postedDate)} - ${job.statusLabel}',
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                 ],
@@ -1072,7 +1212,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
     );
   }
 
-  Widget _buildPastBookingCard(Job job) {
+  Widget _buildPastBookingCard(Job job, {bool highlight = false}) {
     Color statusColor;
     switch (job.status) {
       case JobStatus.active:
@@ -1090,7 +1230,12 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: highlight ? 8 : 2,
+      color: highlight ? Colors.blue[50] : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: highlight ? const BorderSide(color: Colors.blue, width: 2) : BorderSide.none,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1291,7 +1436,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
                 final cleanerProfile = {
                   'id': profile['id'],
                   'name': profile['full_name'] as String? ?? cleaner.name,
-                  'image': profile['avatar_url'] as String? ?? cleaner.avatarUrl,
+                  'image': profile['picture'] as String? ?? cleaner.avatarUrl,
                   'rating': cleaner.rating,
                   'reviews': profile['reviews_count'] as int? ?? 0,
                   'isVerified': profile['is_verified'] as bool? ?? false,
@@ -1299,7 +1444,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
                   'experience': profile['experience_years'] != null 
                       ? '${profile['experience_years']}+ Years'
                       : '5+ Years',
-                  'age': profile['age'] != null ? profile['age'].toString() : '28',
+                  'age': AgeHelper.formatAge(profile['birthdate'] as String?),
                   'languages': profile['languages'] as String? ?? 'Arabic, French',
                   'location': _extractLocation(profile['address'] as String?),
                   'agency': profile['agency_name'] as String?,
@@ -1515,5 +1660,32 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage>
       return 'Date unavailable';
     }
   }
+
+  void _scrollToJob(List<Job> jobs, int jobId, ScrollController controller) {
+    final index = jobs.indexWhere((job) => job.id == jobId);
+    if (index != -1 && controller.hasClients) {
+      final itemHeight = 150.0; // Approximate height of a job card
+      final offset = index * itemHeight;
+      controller.animateTo(
+        offset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  Future<bool> _hasPendingBookingForJob(int jobId, int providerId) async {
+    try {
+      final bookingsRepo = AbstractBookingsRepo.getInstance();
+      final bookings = await bookingsRepo.getApplicationsForJob(jobId);
+      return bookings.any((booking) => 
+        booking.providerId == providerId && 
+        booking.status == BookingStatus.pending
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
 }
 

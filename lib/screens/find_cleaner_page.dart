@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cleaner_profile_page.dart';
 import '../logic/cubits/search_cubit.dart';
+import '../utils/algerian_addresses.dart';
+import '../l10n/app_localizations.dart';
 
 class FindCleanerPage extends StatefulWidget {
   const FindCleanerPage({super.key});
@@ -12,9 +14,11 @@ class FindCleanerPage extends StatefulWidget {
 
 class _FindCleanerPageState extends State<FindCleanerPage> {
   final TextEditingController _searchController = TextEditingController();
-  String? selectedLocation;
-  String? selectedRating;
-  String? selectedPrice;
+  Set<String> selectedWilayas = {}; // Multiple selection support
+  double? minRating;
+  double? maxRating;
+  double? minPrice;
+  double? maxPrice;
 
   @override
   void initState() {
@@ -43,9 +47,11 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
   void _reloadSearch() {
     context.read<SearchCubit>().loadSearchResults(
       query: _searchController.text.isEmpty ? null : _searchController.text,
-      location: selectedLocation == 'All' ? null : selectedLocation,
-      rating: selectedRating == 'All' ? null : selectedRating,
-      price: selectedPrice == 'All' ? null : selectedPrice,
+      wilayas: selectedWilayas.isEmpty ? null : selectedWilayas.toList(),
+      minRating: minRating,
+      maxRating: maxRating,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
     );
   }
 
@@ -62,8 +68,8 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search for cleaning services',
-                prefixIcon: const Icon(Icons.search, color: Color(0xFF6B7280)),
+                hintText: AppLocalizations.of(context)!.searchForCleaningServices,
+                prefixIcon: const Icon(Icons.search, color: Color(0xFF3B82F6)),
                 filled: true,
                 fillColor: const Color(0xFFF9FAFB),
                 border: OutlineInputBorder(
@@ -83,9 +89,13 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                 Flexible(
                   flex: 1,
                   child: _buildFilterButton(
-                    label: 'Location',
+                    label: AppLocalizations.of(context)!.location,
                     icon: Icons.location_on_outlined,
-                    value: selectedLocation ?? 'All',
+                    value: selectedWilayas.isEmpty 
+                        ? AppLocalizations.of(context)!.all 
+                        : selectedWilayas.length == 1 
+                            ? selectedWilayas.first 
+                            : '${selectedWilayas.length} selected',
                     onTap: () {
                       _showLocationFilter();
                     },
@@ -95,9 +105,11 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                 Flexible(
                   flex: 1,
                   child: _buildFilterButton(
-                    label: 'Rating',
+                    label: AppLocalizations.of(context)!.rating,
                     icon: Icons.star_outline,
-                    value: selectedRating ?? 'All',
+                    value: minRating == null && maxRating == null
+                        ? AppLocalizations.of(context)!.all
+                        : '${minRating ?? 0.0}-${maxRating ?? 5.0}',
                     onTap: () {
                       _showRatingFilter();
                     },
@@ -107,9 +119,11 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                 Flexible(
                   flex: 1,
                   child: _buildFilterButton(
-                    label: 'Price',
+                    label: AppLocalizations.of(context)!.price,
                     icon: Icons.attach_money,
-                    value: selectedPrice ?? 'All',
+                    value: minPrice == null && maxPrice == null
+                        ? AppLocalizations.of(context)!.all
+                        : '${minPrice ?? 0}-${maxPrice ?? "∞"} DZD',
                     onTap: () {
                       _showPriceFilter();
                     },
@@ -123,7 +137,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
             child: BlocBuilder<SearchCubit, SearchState>(
               builder: (context, state) {
                 if (state is SearchLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
                 } else if (state is SearchError) {
                   return Center(
                     child: Column(
@@ -135,9 +149,11 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                           onPressed: () {
                             context.read<SearchCubit>().refresh(
                               query: _searchController.text.isEmpty ? null : _searchController.text,
-                              location: selectedLocation == 'All' ? null : selectedLocation,
-                              rating: selectedRating == 'All' ? null : selectedRating,
-                              price: selectedPrice == 'All' ? null : selectedPrice,
+                              wilayas: selectedWilayas.isEmpty ? null : selectedWilayas.toList(),
+                              minRating: minRating,
+                              maxRating: maxRating,
+                              minPrice: minPrice,
+                              maxPrice: maxPrice,
                             );
                           },
                           child: const Text('Retry'),
@@ -147,10 +163,10 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                   );
                 } else if (state is SearchLoaded) {
                   if (state.results.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text(
-                        'No cleaners found',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                        AppLocalizations.of(context)!.noCleanersFound,
+                        style: const TextStyle(color: Colors.grey, fontSize: 16),
                       ),
                     );
                   }
@@ -190,7 +206,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: const Color(0xFF6B7280)),
+            Icon(icon, size: 14, color: const Color(0xFF3B82F6)),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
@@ -204,7 +220,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, size: 14, color: Color(0xFF6B7280)),
+            const Icon(Icons.keyboard_arrow_down, size: 14, color: Color(0xFF3B82F6)),
           ],
         ),
       ),
@@ -216,7 +232,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
     final name = cleaner['name'] as String? ?? 'Unknown';
     final description = cleaner['description'] as String? ?? '';
     final location = cleaner['location'] as String? ?? 'Unknown';
-    final price = cleaner['price'] as String? ?? 'Contact for pricing';
+    final price = cleaner['price'] as String? ?? AppLocalizations.of(context)!.contactForPricing;
     final rating = cleaner['rating'] as num? ?? 0.0;
     final reviews = cleaner['reviews'] as int? ?? 0;
     final imageUrl = cleaner['image'] as String?;
@@ -365,8 +381,8 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text(
-                'View Profile',
+              child: Text(
+                AppLocalizations.of(context)!.viewProfile,
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -381,53 +397,97 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
   }
 
   void _showLocationFilter() {
+    final allWilayas = AlgerianAddresses.getAllWilayas();
+    
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Select Location',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setModalState) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            height: MediaQuery.of(context).size.height * 0.8,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Select Wilayas (Multiple)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          if (selectedWilayas.length == allWilayas.length) {
+                            selectedWilayas.clear();
+                          } else {
+                            selectedWilayas = allWilayas.toSet();
+                          }
+                        });
+                        setModalState(() {}); // Update modal UI
+                        _reloadSearch();
+                      },
+                  child: Text(
+                    selectedWilayas.length == allWilayas.length
+                        ? AppLocalizations.of(context)!.deselectAll
+                        : AppLocalizations.of(context)!.selectAll,
+                        style: const TextStyle(color: Color(0xFF3B82F6)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: allWilayas.length,
+                    itemBuilder: (context, index) {
+                      final wilaya = allWilayas[index];
+                      final isSelected = selectedWilayas.contains(wilaya);
+                      return CheckboxListTile(
+                        title: Text(wilaya),
+                        value: isSelected,
+                        activeColor: const Color(0xFF3B82F6),
+                        checkColor: Colors.white,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedWilayas.add(wilaya);
+                            } else {
+                              selectedWilayas.remove(wilaya);
+                            }
+                          });
+                          setModalState(() {}); // Update modal UI immediately
+                          _reloadSearch();
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                  ),
+                  child: Text(AppLocalizations.of(context)!.done, style: const TextStyle(color: Colors.white)),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildFilterOption('All', selectedLocation == 'All', () {
-              setState(() => selectedLocation = 'All');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('Algiers', selectedLocation == 'Algiers', () {
-              setState(() => selectedLocation = 'Algiers');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('Oran', selectedLocation == 'Oran', () {
-              setState(() => selectedLocation = 'Oran');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('Constantine', selectedLocation == 'Constantine', () {
-              setState(() => selectedLocation = 'Constantine');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   void _showRatingFilter() {
+    final minController = TextEditingController(text: minRating?.toString() ?? '');
+    final maxController = TextEditingController(text: maxRating?.toString() ?? '');
+    
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
@@ -435,39 +495,104 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Select Minimum Rating',
+            Text(
+              AppLocalizations.of(context)!.ratingRange,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildFilterOption('All', selectedRating == 'All', () {
-              setState(() => selectedRating = 'All');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('4.5+', selectedRating == '4.5+', () {
-              setState(() => selectedRating = '4.5+');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('4.0+', selectedRating == '4.0+', () {
-              setState(() => selectedRating = '4.0+');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('3.5+', selectedRating == '3.5+', () {
-              setState(() => selectedRating = '3.5+');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: minController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.minRating,
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      border: const OutlineInputBorder(),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 2),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextField(
+                    controller: maxController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.maxRating,
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      border: const OutlineInputBorder(),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 2),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        minRating = null;
+                        maxRating = null;
+                        minController.clear();
+                        maxController.clear();
+                      });
+                      _reloadSearch();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF3B82F6)),
+                    ),
+                    child: Text(AppLocalizations.of(context)!.clear, style: const TextStyle(color: Color(0xFF3B82F6))),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        minRating = double.tryParse(minController.text);
+                        maxRating = double.tryParse(maxController.text);
+                        // Validate range
+                        if (minRating != null && (minRating! < 0 || minRating! > 5)) {
+                          minRating = null;
+                        }
+                        if (maxRating != null && (maxRating! < 0 || maxRating! > 5)) {
+                          maxRating = null;
+                        }
+                        if (minRating != null && maxRating != null && minRating! > maxRating!) {
+                          // Swap if min > max
+                          final temp = minRating;
+                          minRating = maxRating;
+                          maxRating = temp;
+                        }
+                      });
+                      _reloadSearch();
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3B82F6),
+                    ),
+                    child: Text(AppLocalizations.of(context)!.apply, style: const TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -475,6 +600,9 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
   }
 
   void _showPriceFilter() {
+    final minController = TextEditingController(text: minPrice?.toString() ?? '');
+    final maxController = TextEditingController(text: maxPrice?.toString() ?? '');
+    
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
@@ -482,39 +610,108 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Select Price Range',
+            Text(
+              AppLocalizations.of(context)!.priceRangeDzd,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildFilterOption('All', selectedPrice == 'All', () {
-              setState(() => selectedPrice = 'All');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('Under 1500 DZD', selectedPrice == 'Under 1500 DZD', () {
-              setState(() => selectedPrice = 'Under 1500 DZD');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('1500-2000 DZD', selectedPrice == '1500-2000 DZD', () {
-              setState(() => selectedPrice = '1500-2000 DZD');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
-            _buildFilterOption('2000+ DZD', selectedPrice == '2000+ DZD', () {
-              setState(() => selectedPrice = '2000+ DZD');
-              _reloadSearch();
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-            }),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: minController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.minPrice,
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      border: const OutlineInputBorder(),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 2),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      prefixText: 'DZD ',
+                      prefixStyle: const TextStyle(color: Colors.grey),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextField(
+                    controller: maxController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.maxPrice,
+                      labelStyle: const TextStyle(color: Colors.grey),
+                      border: const OutlineInputBorder(),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey, width: 2),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      prefixText: 'DZD ',
+                      prefixStyle: const TextStyle(color: Colors.grey),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      setState(() {
+                        minPrice = null;
+                        maxPrice = null;
+                        minController.clear();
+                        maxController.clear();
+                      });
+                      _reloadSearch();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF3B82F6)),
+                    ),
+                    child: Text(AppLocalizations.of(context)!.clear, style: const TextStyle(color: Color(0xFF3B82F6))),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        minPrice = double.tryParse(minController.text);
+                        maxPrice = double.tryParse(maxController.text);
+                        // Validate range
+                        if (minPrice != null && minPrice! < 0) {
+                          minPrice = null;
+                        }
+                        if (maxPrice != null && maxPrice! < 0) {
+                          maxPrice = null;
+                        }
+                        if (minPrice != null && maxPrice != null && minPrice! > maxPrice!) {
+                          // Swap if min > max
+                          final temp = minPrice;
+                          minPrice = maxPrice;
+                          maxPrice = temp;
+                        }
+                      });
+                      _reloadSearch();
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3B82F6),
+                    ),
+                    child: Text(AppLocalizations.of(context)!.apply, style: const TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

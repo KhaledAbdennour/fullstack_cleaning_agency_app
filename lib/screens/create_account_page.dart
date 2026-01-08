@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'homescreen.dart';
 import 'client_profile_page.dart';
 import '../logic/cubits/profiles_cubit.dart';
 import '../utils/validators.dart';
 import '../utils/algerian_addresses.dart';
 import '../utils/role_based_home.dart';
+import '../data/repositories/storage/storage_repo.dart';
+import '../data/repositories/profiles/profile_repo.dart';
+import 'login.dart';
 
 class CreateAccountPage extends StatefulWidget {
   const CreateAccountPage({super.key});
@@ -34,7 +39,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   String _selectedGender = 'Male';
   String? _selectedWilaya;
   String? _selectedBaladiya;
-  
+  final ImagePicker _picker = ImagePicker();
+  XFile? _selectedProfileImage;
+  bool _isUploadingImage = false;
   
   final Set<String> _checkedUsernames = {};
   final Set<String> _checkedEmails = {};
@@ -49,7 +56,16 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         backgroundColor: const Color(0xFFE5E7EB),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const Login()),
+              );
+            }
+          },
         ),
         title: const Text(
           'Create Account Page',
@@ -630,6 +646,109 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     );
   }
 
+  Widget _buildProfilePictureUpload() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Profile Picture (Optional)',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            // Preview image or placeholder
+            GestureDetector(
+              onTap: _pickProfileImage,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: _selectedProfileImage != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          File(_selectedProfileImage!.path),
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.photo_camera_outlined,
+                        color: Color(0xFF6B7280),
+                        size: 32,
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextButton.icon(
+                    onPressed: _isUploadingImage ? null : _pickProfileImage,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Choose Photo'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF3B82F6),
+                    ),
+                  ),
+                  if (_selectedProfileImage != null)
+                    TextButton.icon(
+                      onPressed: _isUploadingImage
+                          ? null
+                          : () {
+                              setState(() {
+                                _selectedProfileImage = null;
+                              });
+                            },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Remove'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _pickProfileImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (image != null && mounted) {
+        setState(() {
+          _selectedProfileImage = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error picking image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildUploadTile({
     required String title,
     required String subtitle,
@@ -831,23 +950,67 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   Widget _buildCreateButton() {
     return BlocListener<ProfilesCubit, ProfilesState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is SignupSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Account created as $selectedRole!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          // Upload profile picture if selected (async, non-blocking)
+          if (_selectedProfileImage != null && state.user['id'] != null) {
+            final userId = state.user['id'] as int;
+            try {
+              setState(() {
+                _isUploadingImage = true;
+              });
+              
+              final storageRepo = AbstractStorageRepo.getInstance();
+              final imageUrl = await storageRepo.uploadProfileImage(
+                userId,
+                _selectedProfileImage!.path,
+              );
+              
+              // Update profile with avatar URL
+              final profileRepo = AbstractProfileRepo.getInstance();
+              await profileRepo.updateAvatarUrl(userId, imageUrl);
+              
+              if (mounted) {
+                setState(() {
+                  _isUploadingImage = false;
+                });
+              }
+            } catch (e) {
+              // Image upload failed, but account is created - show warning
+              if (mounted) {
+                setState(() {
+                  _isUploadingImage = false;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Account created, but profile picture upload failed: $e'),
+                    backgroundColor: Colors.orange,
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+              }
+            }
+          }
           
-          RoleBasedHome.navigateToHome(context, state.user);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Account created as $selectedRole!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            
+            RoleBasedHome.navigateToHome(context, state.user);
+          }
         } else if (state is ProfilesError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       },
       child: BlocBuilder<ProfilesCubit, ProfilesState>(
@@ -857,7 +1020,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             width: double.infinity,
             height: 50,
             child: ElevatedButton(
-              onPressed: isLoading
+              onPressed: (isLoading || _isUploadingImage)
                   ? null
                   : () {
                       if (_formKey.currentState!.validate()) {
@@ -919,7 +1082,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: isLoading
+              child: (isLoading || _isUploadingImage)
                   ? const SizedBox(
                       height: 20,
                       width: 20,

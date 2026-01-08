@@ -92,6 +92,7 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
     try {
       final profileRepo = AbstractProfileRepo.getInstance();
       final allProfiles = await profileRepo.getAllProfiles();
+      if (!mounted) return;
       
       
       final matches = allProfiles.where((profile) {
@@ -172,20 +173,23 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
       
       final cleanersRepo = AbstractCleanersRepo.getInstance();
       final existingCleaners = await cleanersRepo.getCleanersForAgency(widget.agencyId);
+      if (!mounted) return;
       if (existingCleaners.any((c) => c.id == cleanerId)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('This cleaner is already in your team'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('This cleaner is already in your team'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
         return;
       }
 
       
       final cleaner = Cleaner(
         name: profile['full_name'] as String? ?? 'Unknown',
-        avatarUrl: profile['avatar_url'] as String?,
+        avatarUrl: profile['picture'] as String?,
         rating: (profile['rating'] as num?)?.toDouble() ?? 0.0,
         jobsCompleted: 0,
         agencyId: widget.agencyId,
@@ -248,7 +252,7 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
         'bio': 'Professional cleaner',
         'services': _selectedServices.join(', '),
         'experience_years': _getExperienceYears(),
-        'avatar_url': _profileImage?.path,
+        'picture': _profileImage?.path,
       };
 
       

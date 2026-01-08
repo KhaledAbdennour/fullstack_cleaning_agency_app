@@ -7,8 +7,14 @@ import 'cleaner_profile_page.dart';
 import 'add-post.dart';
 import 'manage_job_page.dart';
 import '../logic/cubits/listings_cubit.dart';
+import '../logic/cubits/profiles_cubit.dart';
+import '../logic/cubits/client_jobs_cubit.dart';
 import '../data/models/job_model.dart';
 import '../utils/image_helper.dart';
+import '../widgets/notification_bell_widget.dart';
+import 'data_doctor_page.dart';
+import '../core/debug/debug_logger.dart';
+import '../l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,57 +29,122 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // #region agent log
+    DebugLogger.log('HomeScreen', 'initState', data: {
+      'hypothesisId': 'H1',
+      'initialIndex': _currentIndex,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
     
     context.read<ListingsCubit>().loadListings();
+  }
+  
+  @override
+  void didUpdateWidget(HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // #region agent log
+    DebugLogger.log('HomeScreen', 'didUpdateWidget', data: {
+      'hypothesisId': 'H1',
+      'currentIndex': _currentIndex,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // #region agent log
+    DebugLogger.log('HomeScreen', 'didChangeDependencies', data: {
+      'hypothesisId': 'H1',
+      'currentIndex': _currentIndex,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
   }
 
 
   @override
   Widget build(BuildContext context) {
+    // Hide AppBar when showing profile page (it has its own AppBar)
+    final showAppBar = _currentIndex != 3;
+    
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
+      appBar: showAppBar ? AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.eco,
-                  color: Colors.white,
-                  size: 24,
+        title: GestureDetector(
+          onLongPress: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => DataDoctorPage()),
+            );
+          },
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.eco,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'CleanSpace',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
+              const SizedBox(width: 8),
+              const Text(
+                'CleanSpace',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+              const Spacer(),
+              NotificationBellWidget(),
+            ],
+          ),
         ),
-      ),
+      ) : null,
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: const Color(0xFF3B82F6),
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
         onTap: (index) {
+          // #region agent log
+          DebugLogger.log('HomeScreen', 'BOTTOM_NAV_TAP', data: {
+            'hypothesisId': 'H1',
+            'previousIndex': _currentIndex,
+            'newIndex': index,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          });
+          // #endregion
+          
           setState(() {
             _currentIndex = index;
           });
+          
+          // #region agent log
+          DebugLogger.log('HomeScreen', 'STATE_UPDATED', data: {
+            'hypothesisId': 'H2',
+            'currentIndex': _currentIndex,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          });
+          // #endregion
           
           if (index == 0) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -81,14 +152,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<ListingsCubit>().loadListings();
               }
             });
+          } else if (index == 3) {
+            // Refresh profile page jobs when navigating to profile tab
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                final profilesCubit = context.read<ProfilesCubit>();
+                final profileState = profilesCubit.state;
+                if (profileState is ProfilesLoaded && profileState.currentUser != null) {
+                  final userId = profileState.currentUser!['id'] as int?;
+                  final userType = profileState.currentUser!['user_type'] as String?;
+                  if (userId != null && userType == 'Client') {
+                    context.read<ClientJobsCubit>().loadClientJobs(userId);
+                  }
+                }
+              }
+            });
           }
         },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+        items: [
+          BottomNavigationBarItem(icon: const Icon(Icons.home), label: AppLocalizations.of(context)!.home),
+          BottomNavigationBarItem(icon: const Icon(Icons.search), label: AppLocalizations.of(context)!.search),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline),
-            label: 'Add Post',
+            icon: const Icon(Icons.add_circle_outline),
+            label: AppLocalizations.of(context)!.addPost,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
@@ -100,34 +186,59 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
+    // #region agent log
+    DebugLogger.log('HomeScreen', '_buildBody_CALLED', data: {
+      'hypothesisId': 'H1',
+      'currentIndex': _currentIndex,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
     
-    if (_currentIndex == 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.read<ListingsCubit>().loadListings();
-        }
-      });
-    }
-    
+    Widget bodyWidget;
     switch (_currentIndex) {
       case 0:
-        return _buildHomeContent();
+        bodyWidget = _buildHomeContent();
+        break;
       case 1:
-        return _buildSearchContent();
+        bodyWidget = _buildSearchContent();
+        break;
       case 2:
-        return _buildAddPostContent();
+        bodyWidget = _buildAddPostContent();
+        break;
       case 3:
-        return const ClientProfilePage();
+        bodyWidget = const ClientProfilePage();
+        break;
       default:
-        return _buildHomeContent();
+        bodyWidget = _buildHomeContent();
     }
+    
+    // #region agent log
+    DebugLogger.log('HomeScreen', '_buildBody_RETURN', data: {
+      'hypothesisId': 'H1',
+      'currentIndex': _currentIndex,
+      'bodyWidgetType': bodyWidget.runtimeType.toString(),
+      'isClientProfilePage': bodyWidget is ClientProfilePage,
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+    
+    return bodyWidget;
   }
 
   Widget _buildHomeContent() {
+    // Load listings when home content is first built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<ListingsCubit>().loadListings();
+      }
+    });
+    
     return BlocBuilder<ListingsCubit, ListingsState>(
       builder: (context, state) {
         if (state is ListingsLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
         } else if (state is ListingsError) {
           return Center(
             child: Column(
@@ -299,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   context,
                                   name,
                                   ratingValue,
-                                  cleaner['isVerified'] as bool? ?? true, 
+                                  false, // Remove verified tick - always false 
                                   cleaner['image'] as String?,
                                   cleanerData: cleaner,
                                 );
@@ -549,13 +660,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 builder: (context) => CleanerProfilePage(cleaner: {
                   'name': safeName,
                   'rating': safeRating,
-                  'reviews': agencyData?['jobsCompleted'] as int? ?? 125,
-                  'isVerified': true,
-                  'description': 'Your trusted partner for a cleaner, healthier space. We are a team of dedicated professionals committed to providing top-notch cleaning services for homes and offices.',
-                  'image': logoUrl,
+                  'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
+                  'isVerified': agencyData?['is_verified'] as bool? ?? false,
+                  'description': agencyData?['bio'] as String? ?? 'Professional cleaning service provider.',
+                  'image': logoUrl ?? agencyData?['image'],
                   'type': 'Agency',
                   'location': location,
-                  'price': 'From 2500 DZD/hr',
+                  'price': agencyData?['hourly_rate'] != null 
+                      ? 'From ${agencyData?['hourly_rate']} DZD/hr'
+                      : AppLocalizations.of(context)!.contactForPricing,
+                  'profileData': agencyData,
                 }),
               ),
             );
@@ -662,25 +776,29 @@ class _HomeScreenState extends State<HomeScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
+                  final agencyProfileData = {
+                    'name': safeName,
+                    'rating': safeRating,
+                    'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
+                    'isVerified': agencyData?['is_verified'] as bool? ?? false,
+                    'description': agencyData?['bio'] as String? ?? 'Professional cleaning service provider.',
+                    'image': logoUrl ?? agencyData?['image'],
+                    'type': 'Agency',
+                    'location': location,
+                    'price': agencyData?['hourly_rate'] != null 
+                        ? 'From ${agencyData?['hourly_rate']} DZD/hr'
+                        : AppLocalizations.of(context)!.contactForPricing,
+                    'profileData': agencyData,
+                  };
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CleanerProfilePage(cleaner: {
-                        'name': name,
-                        'rating': rating,
-                        'reviews': 125,
-                        'isVerified': true,
-                        'description': 'Your trusted partner for a cleaner, healthier space. We are a team of dedicated professionals committed to providing top-notch cleaning services for homes and offices.',
-                        'image': logoUrl,
-                        'type': 'Agency',
-                        'location': 'Algiers',
-                        'price': 'From 2500 DZD/hr',
-                      }),
+                      builder: (context) => CleanerProfilePage(cleaner: agencyProfileData),
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: const Color(0xFF3B82F6),
                   minimumSize: const Size(0, 32),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   shape: RoundedRectangleBorder(
@@ -720,17 +838,38 @@ class _HomeScreenState extends State<HomeScreen> {
       final location = cleanerData?['location'] as String? ?? 'Algiers';
       
       
-      final data = cleanerData ?? {
+      // Use real data from cleanerData if available, otherwise minimal fallback
+      final data = cleanerData != null ? {
+        ...cleanerData,
         'name': safeName,
         'rating': safeRating,
-        'reviews': 23,
-        'isVerified': isVerified,
-        'description': 'Experienced residential & office cleaning specialist.',
+        'reviews': cleanerData['jobsCompleted'] as int? ?? 0,
+        'isVerified': cleanerData['is_verified'] as bool? ?? false,
+        'description': cleanerData['bio'] as String? ?? 'Professional cleaning service provider.',
         'location': location,
-        'price': 'From 1500 DZD/hr',
+        'price': cleanerData['hourly_rate'] != null 
+            ? 'From ${cleanerData['hourly_rate']} DZD/hr'
+            : 'Contact for pricing',
+        'image': imageUrl ?? cleanerData['image'],
+        'type': 'Individual',
+        'aboutMe': cleanerData['bio'] as String? ?? 'Professional cleaning service provider.',
+        'experience': cleanerData['experience_years'] != null
+            ? '${cleanerData['experience_years']}+ Years'
+            : '5+ Years',
+        'age': cleanerData['age']?.toString() ?? '28',
+        'languages': cleanerData['languages'] as String? ?? 'Arabic, French',
+        'profileData': cleanerData,
+      } : {
+        'name': safeName,
+        'rating': safeRating,
+        'reviews': 0,
+        'isVerified': false,
+        'description': 'Professional cleaning service provider.',
+        'location': location,
+        'price': AppLocalizations.of(context)!.contactForPricing,
         'image': imageUrl,
         'type': 'Individual',
-        'aboutMe': 'With over 5 years of experience, I am a dedicated and meticulous cleaner passionate about creating spotless and healthy environments for my clients.',
+        'aboutMe': 'Professional cleaning service provider.',
         'experience': '5+ Years',
         'age': '28',
         'languages': 'Arabic, French',
@@ -788,23 +927,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : const Icon(Icons.person, size: 35, color: Colors.grey),
                   ),
                 ),
-                if (isVerified)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(3),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF3B82F6),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 14,
-                      ),
-                    ),
-                  ),
+                // Removed verified tick - user requirement
               ],
             ),
             const SizedBox(height: 6),
@@ -855,7 +978,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: const Color(0xFF3B82F6),
                   minimumSize: const Size(0, 32),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   shape: RoundedRectangleBorder(

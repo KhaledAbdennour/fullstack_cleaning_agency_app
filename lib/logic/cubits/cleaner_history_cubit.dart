@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/cleaning_history_item.dart';
-import '../../data/repositories/cleaning_history/cleaning_history_repo.dart';
+import '../../data/models/job_model.dart';
+import '../../data/repositories/jobs/jobs_repo.dart';
 
 
 abstract class CleanerHistoryState {}
@@ -11,10 +12,8 @@ class CleanerHistoryLoading extends CleanerHistoryState {}
 
 class CleanerHistoryLoaded extends CleanerHistoryState {
   final List<CleaningHistoryItem> items;
-  final bool hasMore;
-  final int currentPage;
   
-  CleanerHistoryLoaded(this.items, {this.hasMore = true, this.currentPage = 1});
+  CleanerHistoryLoaded(this.items);
 }
 
 class CleanerHistoryError extends CleanerHistoryState {
@@ -23,8 +22,7 @@ class CleanerHistoryError extends CleanerHistoryState {
 }
 
 class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
-  final AbstractCleaningHistoryRepo _historyRepo = AbstractCleaningHistoryRepo.getInstance();
-  static const int _pageSize = 10;
+  final AbstractJobsRepo _jobsRepo = AbstractJobsRepo.getInstance();
 
   CleanerHistoryCubit() : super(CleanerHistoryInitial());
 
@@ -35,43 +33,45 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
     }
 
     try {
-      final page = state is CleanerHistoryLoaded 
-          ? (state as CleanerHistoryLoaded).currentPage + 1
-          : 1;
+      // Get completed jobs where both client_done and worker_done are true
+      final completedJobs = await _jobsRepo.getCompletedJobsForWorker(cleanerId);
       
-      final items = await _historyRepo.getCleaningHistoryForCleaner(
-        cleanerId,
-        page: page,
-        limit: _pageSize,
-      );
-
-      if (state is CleanerHistoryLoaded && !refresh) {
-        final currentState = state as CleanerHistoryLoaded;
-        final allItems = [...currentState.items, ...items];
-        emit(CleanerHistoryLoaded(
-          allItems,
-          hasMore: items.length == _pageSize,
-          currentPage: page,
-        ));
-      } else {
-        emit(CleanerHistoryLoaded(
-          items,
-          hasMore: items.length == _pageSize,
-          currentPage: page,
-        ));
-      }
+      // Convert jobs to CleaningHistoryItem
+      final items = completedJobs.map((job) {
+        // Determine cleaning type from required_services
+        CleaningHistoryType type = CleaningHistoryType.apartment; // default
+        if (job.requiredServices != null && job.requiredServices!.isNotEmpty) {
+          final services = job.requiredServices!.join(',').toLowerCase();
+          if (services.contains('office') || services.contains('commercial')) {
+            type = CleaningHistoryType.office;
+          } else if (services.contains('villa')) {
+            type = CleaningHistoryType.villa;
+          } else if (services.contains('house') || services.contains('home') || services.contains('residential')) {
+            type = CleaningHistoryType.house;
+          } else if (services.contains('industrial')) {
+            type = CleaningHistoryType.commercial;
+          } else {
+            type = CleaningHistoryType.apartment;
+          }
+        }
+        
+        // Use updated_at as completion date (set when job is completed)
+        // This represents when both parties confirmed completion
+        final completionDate = job.updatedAt ?? job.postedDate;
+        
+        return CleaningHistoryItem(
+          cleanerId: cleanerId,
+          title: job.title,
+          date: completionDate,
+          description: job.description,
+          type: type,
+          jobId: job.id,
+        );
+      }).toList();
+      
+      emit(CleanerHistoryLoaded(items));
     } catch (e) {
       emit(CleanerHistoryError('Failed to load history: $e'));
-    }
-  }
-
-  
-  Future<void> loadMore(int cleanerId) async {
-    if (state is CleanerHistoryLoaded) {
-      final currentState = state as CleanerHistoryLoaded;
-      if (currentState.hasMore) {
-        await loadHistory(cleanerId);
-      }
     }
   }
 

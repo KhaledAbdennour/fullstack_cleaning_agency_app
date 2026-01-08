@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
 import 'create_account_page.dart';
 import 'feature_page.dart';
 import 'experience_page.dart';
 import 'launch_page.dart';
+import '../core/debug/debug_logger.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -22,17 +24,54 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     LaunchPage(),
   ];
 
-  void _nextPage() {
+  void _nextPage() async {
     if (_currentPage < _pages.length - 1) {
       _controller.nextPage(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const CreateAccountPage()),
-      );
+      // #region agent log
+      DebugLogger.log('OnboardingScreen', '_nextPage_COMPLETED', data: {
+        'hypothesisId': 'H5',
+        'currentPage': _currentPage,
+        'totalPages': _pages.length,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      });
+      // #endregion
+      
+      // Mark onboarding as seen when user completes it
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('has_seen_onboarding', true);
+        
+        // #region agent log
+        final verified = prefs.getBool('has_seen_onboarding') ?? false;
+        DebugLogger.log('OnboardingScreen', '_nextPage_MARKED_SEEN', data: {
+          'hypothesisId': 'H5',
+          'hasSeenOnboarding': verified,
+          'verified': verified,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
+      } catch (e) {
+        // #region agent log
+        DebugLogger.error('OnboardingScreen', '_nextPage_SET_FLAG_ERROR', e, StackTrace.current, data: {
+          'hypothesisId': 'H5',
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        });
+        // #endregion
+      }
+      
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const CreateAccountPage()),
+        );
+      }
     }
   }
 
@@ -55,11 +94,46 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  void _skipToLogin() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const Login()),
-    );
+  void _skipToLogin() async {
+    // #region agent log
+    DebugLogger.log('OnboardingScreen', '_skipToLogin_CALLED', data: {
+      'hypothesisId': 'H5',
+      'sessionId': 'debug-session',
+      'runId': 'run1',
+    });
+    // #endregion
+    
+    // Mark onboarding as seen
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('has_seen_onboarding', true);
+      
+      // #region agent log
+      final verified = prefs.getBool('has_seen_onboarding') ?? false;
+      DebugLogger.log('OnboardingScreen', '_skipToLogin_MARKED_SEEN', data: {
+        'hypothesisId': 'H5',
+        'hasSeenOnboarding': verified,
+        'verified': verified,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      });
+      // #endregion
+    } catch (e) {
+      // #region agent log
+      DebugLogger.error('OnboardingScreen', '_skipToLogin_SET_FLAG_ERROR', e, StackTrace.current, data: {
+        'hypothesisId': 'H5',
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      });
+      // #endregion
+    }
+    
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Login()),
+      );
+    }
   }
 
   @override

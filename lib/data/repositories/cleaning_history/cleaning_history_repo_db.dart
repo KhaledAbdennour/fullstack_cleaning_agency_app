@@ -47,7 +47,7 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
       
       return snapshot.docs.map((doc) {
         final docData = doc.data();
-        final data = docData != null ? Map<String, dynamic>.from(docData) : <String, dynamic>{};
+        final data = docData != null ? Map<String, dynamic>.from(docData as Map) : <String, dynamic>{};
         data['id'] = int.tryParse(doc.id) ?? 0;
         return CleaningHistoryItem.fromMap(data);
       }).toList();

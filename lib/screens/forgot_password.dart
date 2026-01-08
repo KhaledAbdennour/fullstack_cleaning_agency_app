@@ -10,6 +10,12 @@ class ForgotPasswordPage extends StatefulWidget {
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _emailOrPhoneController = TextEditingController();
 
+  @override
+  void dispose() {
+    _emailOrPhoneController.dispose();
+    super.dispose();
+  }
+
   void _handleSendResetLink() {
     final input = _emailOrPhoneController.text.trim();
 
@@ -31,7 +37,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     
     Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+      }
     });
   }
 

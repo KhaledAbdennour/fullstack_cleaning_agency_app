@@ -5,10 +5,13 @@ import '../logic/cubits/cleaner_history_cubit.dart';
 import '../logic/cubits/cleaner_reviews_cubit.dart';
 import '../data/models/cleaning_history_item.dart';
 import '../data/models/cleaner_review.dart';
+import 'EditProfilePage.dart';
 
 
 class CleanerSelfProfilePage extends StatefulWidget {
-  const CleanerSelfProfilePage({super.key});
+  final int? initialTab; // 0=Overview, 1=History, 2=Reviews
+  
+  const CleanerSelfProfilePage({super.key, this.initialTab});
 
   @override
   State<CleanerSelfProfilePage> createState() => _CleanerSelfProfilePageState();
@@ -23,9 +26,22 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
   @override
   void initState() {
     super.initState();
-    _innerTabController = TabController(length: 3, vsync: this);
+    _innerTabController = TabController(
+      length: 3, 
+      vsync: this,
+      initialIndex: widget.initialTab ?? 0,
+    );
     _innerTabController.addListener(_handleInnerTabChange);
     _loadCleanerProfile();
+    
+    // If initialTab is provided, ensure tab is set after first frame
+    if (widget.initialTab != null && widget.initialTab! < 3) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_innerTabController.indexIsChanging) {
+          _innerTabController.animateTo(widget.initialTab!);
+        }
+      });
+    }
   }
 
   void _handleInnerTabChange() {
@@ -44,6 +60,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
   Future<void> _loadCleanerProfile() async {
     final cubit = context.read<ProfilesCubit>();
     await cubit.loadCurrentUser();
+    if (!mounted) return;
     final state = cubit.state;
     if (state is ProfilesLoaded && state.currentUser != null) {
       final user = state.currentUser!;
@@ -51,7 +68,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
         _cleanerId = user['id'] as int?;
         _cleanerProfile = user;
       });
-      if (_cleanerId != null) {
+      if (_cleanerId != null && mounted) {
         
         context.read<CleanerHistoryCubit>().loadHistory(_cleanerId!);
         context.read<CleanerReviewsCubit>().loadReviews(_cleanerId!);
@@ -83,15 +100,25 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
     }
 
     final cleanerName = _cleanerProfile!['full_name'] as String? ?? 'Cleaner';
-    final rating = 4.8; 
-    final reviewCount = 23; 
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
           
-          _buildHeader(cleanerName, rating, reviewCount),
+          BlocBuilder<CleanerReviewsCubit, CleanerReviewsState>(
+            builder: (context, reviewsState) {
+              double rating = 0.0;
+              int reviewCount = 0;
+              
+              if (reviewsState is CleanerReviewsLoaded) {
+                rating = reviewsState.averageRating;
+                reviewCount = reviewsState.reviewCount;
+              }
+              
+              return _buildHeader(cleanerName, rating, reviewCount);
+            },
+          ),
           
           _buildInnerTabBar(),
           
@@ -105,8 +132,6 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
               ],
             ),
           ),
-          
-          _buildBottomActionBar(),
         ],
       ),
     );
@@ -118,14 +143,40 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
+          // Edit button at the top right
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen(),
+                    ),
+                  ).then((_) {
+                    // Refresh profile after editing
+                    if (mounted) {
+                      _loadCleanerProfile();
+                    }
+                  });
+                },
+                icon: const Icon(Icons.edit, size: 18),
+                label: const Text('Edit'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                ),
+              ),
+            ],
+          ),
           
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey[300],
-            backgroundImage: _cleanerProfile!['profile_picture'] != null
-                ? NetworkImage(_cleanerProfile!['profile_picture'] as String)
+            backgroundImage: _cleanerProfile!['picture'] != null
+                ? NetworkImage(_cleanerProfile!['picture'] as String)
                 : null,
-            child: _cleanerProfile!['profile_picture'] == null
+            child: _cleanerProfile!['picture'] == null
                 ? const Icon(Icons.person, size: 50, color: Colors.grey)
                 : null,
           ),
@@ -397,33 +448,12 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
             );
           }
 
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: state.items.length,
-                  itemBuilder: (context, index) {
-                    return _buildHistoryCard(state.items[index]);
-                  },
-                ),
-              ),
-              if (state.hasMore)
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      context.read<CleanerHistoryCubit>().loadMore(_cleanerId!);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[200],
-                      foregroundColor: Colors.black87,
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    child: const Text('Load More'),
-                  ),
-                ),
-            ],
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: state.items.length,
+            itemBuilder: (context, index) {
+              return _buildHistoryCard(state.items[index]);
+            },
           );
         }
         return const SizedBox.shrink();
@@ -463,7 +493,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.type.displayName,
+                  item.title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -519,28 +549,25 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
             ),
           );
         } else if (state is CleanerReviewsLoaded) {
-          return Column(
-            children: [
-              
-              _buildReviewsFilters(state),
-              
-              Expanded(
-                child: state.filteredReviews.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No reviews found.',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: state.filteredReviews.length,
-                        itemBuilder: (context, index) {
-                          return _buildReviewCard(state.filteredReviews[index]);
-                        },
-                      ),
+          if (state.allReviews.isEmpty) {
+            return const Center(
+              child: Text(
+                'No reviews yet.',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
-            ],
+            );
+          }
+          
+          // Sort by recency (most recent first)
+          final sortedReviews = List<CleanerReview>.from(state.allReviews);
+          sortedReviews.sort((a, b) => b.date.compareTo(a.date));
+          
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: sortedReviews.length,
+            itemBuilder: (context, index) {
+              return _buildReviewCard(sortedReviews[index]);
+            },
           );
         }
         return const SizedBox.shrink();
@@ -548,152 +575,6 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
     );
   }
 
-  Widget _buildReviewsFilters(CleanerReviewsLoaded state) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'All Reviews',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _showSortDialog(state),
-                  icon: const Icon(Icons.sort, size: 16),
-                  label: Text('Sort by: ${state.sortBy == 'recency' ? 'Recency' : state.sortBy == 'highest' ? 'Highest Rating' : 'Lowest Rating'}'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[100],
-                    foregroundColor: Colors.black87,
-                    elevation: 0,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              
-              ElevatedButton.icon(
-                onPressed: () {
-                  
-                },
-                icon: const Icon(Icons.filter_list, size: 16),
-                label: const Text('Filter'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[100],
-                  foregroundColor: Colors.black87,
-                  elevation: 0,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          
-          Wrap(
-            spacing: 8,
-            children: [
-              _buildRatingChip(state, 5),
-              _buildRatingChip(state, 4),
-              _buildRatingChip(state, 3),
-              _buildPhotosChip(state),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRatingChip(CleanerReviewsLoaded state, int rating) {
-    final isSelected = state.ratingFilter == rating;
-    return FilterChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.star, size: 16, color: Colors.amber),
-          const SizedBox(width: 4),
-          Text('$rating'),
-        ],
-      ),
-      selected: isSelected,
-      onSelected: (selected) {
-        context.read<CleanerReviewsCubit>().updateRatingFilter(
-          selected ? rating : null,
-          _cleanerId!,
-        );
-      },
-      selectedColor: Colors.blue[50],
-      checkmarkColor: Colors.blue,
-    );
-  }
-
-  Widget _buildPhotosChip(CleanerReviewsLoaded state) {
-    return FilterChip(
-      label: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.camera_alt, size: 16),
-          SizedBox(width: 4),
-          Text('With Photos'),
-        ],
-      ),
-      selected: state.withPhotosOnly,
-      onSelected: (selected) {
-        context.read<CleanerReviewsCubit>().togglePhotosFilter(selected, _cleanerId!);
-      },
-      selectedColor: Colors.blue[50],
-      checkmarkColor: Colors.blue,
-    );
-  }
-
-  void _showSortDialog(CleanerReviewsLoaded state) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Sort by',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text('Recency'),
-              trailing: state.sortBy == 'recency' ? const Icon(Icons.check, color: Colors.green) : null,
-              onTap: () {
-                context.read<CleanerReviewsCubit>().updateSort('recency', _cleanerId!);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('Highest Rating'),
-              trailing: state.sortBy == 'highest' ? const Icon(Icons.check, color: Colors.green) : null,
-              onTap: () {
-                context.read<CleanerReviewsCubit>().updateSort('highest', _cleanerId!);
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('Lowest Rating'),
-              trailing: state.sortBy == 'lowest' ? const Icon(Icons.check, color: Colors.green) : null,
-              onTap: () {
-                context.read<CleanerReviewsCubit>().updateSort('lowest', _cleanerId!);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildReviewCard(CleanerReview review) {
     return Container(
@@ -747,12 +628,14 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
           
           Row(
             children: List.generate(5, (index) {
-              return Icon(
-                Icons.star,
-                size: 16,
-                color: index < review.rating.floor()
-                    ? Colors.amber
-                    : Colors.grey[300],
+              return Text(
+                '☆',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: index < review.rating.floor()
+                      ? Colors.amber
+                      : Colors.grey[300],
+                ),
               );
             }),
           ),
@@ -786,69 +669,5 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
     );
   }
 
-  Widget _buildBottomActionBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Chat feature coming soon')),
-                );
-              },
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                side: BorderSide(color: Colors.grey[300]!),
-              ),
-              child: const Text(
-                'Chat',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Booking feature coming soon')),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                'Book Now',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
