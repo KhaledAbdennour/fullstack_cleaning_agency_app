@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "636141062102",
+    "project_id": "cleanspace-8214c",
+    "storage_bucket": "cleanspace-8214c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:636141062102:android:f8c7be93676529b3e18677",
+        "android_client_info": {
+          "package_name": "com.example.mob_dev_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFLVaFdmAd9Fg34iIMZfw0B5-2HMf6Xqo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
