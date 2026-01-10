@@ -22,4 +22,3 @@ abstract class AbstractProfileRepo {
     return _instance!;
   }
 }
-

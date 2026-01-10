@@ -9,7 +9,6 @@ import '../data/models/booking_model.dart';
 import 'job_details_bid_page.dart';
 import 'jobdetails.dart';
 import 'cleaner_profile_page.dart';
-import 'add_cleaner_page.dart';
 import 'login.dart';
 import '../data/repositories/profiles/profile_repo.dart';
 import '../data/repositories/bookings/bookings_repo.dart';
@@ -21,19 +20,11 @@ import 'settings_page.dart';
 import 'cleaner_team_page.dart';
 import '../utils/algerian_addresses.dart';
 
-
-
-
-
 class AgencyDashboardPage extends StatefulWidget {
   final int? initialTab;
   final int? highlightJobId;
-  
-  const AgencyDashboardPage({
-    super.key,
-    this.initialTab,
-    this.highlightJobId,
-  });
+
+  const AgencyDashboardPage({super.key, this.initialTab, this.highlightJobId});
 
   @override
   State<AgencyDashboardPage> createState() => _AgencyDashboardPageState();
@@ -42,10 +33,10 @@ class AgencyDashboardPage extends StatefulWidget {
 class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   int _currentIndex = 0;
   int? _agencyId;
-  int _totalJobsCompleted = 0;
+  final int _totalJobsCompleted = 0;
   final ScrollController _activeListingsScrollController = ScrollController();
   final ScrollController _pastBookingsScrollController = ScrollController();
-  
+
   // Filter state for available jobs
   Set<String> _selectedWilayas = {};
   double? _minPrice;
@@ -70,10 +61,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     setState(() {
       _currentIndex = index;
     });
-    
+
     if (_agencyId != null) {
       final userType = _getUserType();
-      
+
       if (userType == 'Individual Cleaner') {
         switch (index) {
           case 0:
@@ -82,7 +73,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           case 1:
             context.read<AvailableJobsCubit>().loadAvailableJobs(
               _agencyId!,
-              wilayas: _selectedWilayas.isEmpty ? null : _selectedWilayas.toList(),
+              wilayas: _selectedWilayas.isEmpty
+                  ? null
+                  : _selectedWilayas.toList(),
               minPrice: _minPrice,
               maxPrice: _maxPrice,
             );
@@ -95,16 +88,16 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         }
       } else {
         switch (index) {
-          case 0: 
+          case 0:
             context.read<ActiveListingsCubit>().loadActiveListings(_agencyId!);
             break;
-          case 1: 
+          case 1:
             context.read<AvailableJobsCubit>().loadAvailableJobs(_agencyId!);
             break;
-          case 2: 
+          case 2:
             context.read<PastBookingsCubit>().loadPastBookings(_agencyId!);
             break;
-          case 3: 
+          case 3:
             // Profile tab - will show agency profile page
             break;
         }
@@ -122,7 +115,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         _agencyId = state.currentUser!['id'] as int?;
       });
       if (_agencyId != null && mounted) {
-        
         context.read<ActiveListingsCubit>().loadActiveListings(_agencyId!);
       }
     }
@@ -139,12 +131,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   Widget build(BuildContext context) {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, profileState) {
-        if (profileState is ProfilesLoaded && profileState.currentUser != null) {
+        if (profileState is ProfilesLoaded &&
+            profileState.currentUser != null) {
           final user = profileState.currentUser!;
-          final agencyName = user['agency_name'] as String? ?? 
-                            user['full_name'] as String? ?? 
-                            'CleanSpace';
-          
+          final agencyName =
+              user['agency_name'] as String? ??
+              user['full_name'] as String? ??
+              'CleanSpace';
+
           return Scaffold(
             backgroundColor: Colors.grey[50],
             appBar: _buildAppBar(agencyName),
@@ -154,14 +148,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           );
         }
         return const Scaffold(
-          body: Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))),
+          body: Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          ),
         );
       },
     );
   }
 
-  
-  
   PreferredSizeWidget _buildAppBar(String agencyName) {
     return AppBar(
       backgroundColor: Colors.white,
@@ -177,11 +171,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Center(
-              child: Icon(
-                Icons.eco,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: Icon(Icons.eco, color: Colors.white, size: 24),
             ),
           ),
           const SizedBox(width: 8),
@@ -197,7 +187,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           ),
         ],
       ),
-      
+
       actions: [
         NotificationBellWidget(),
         if (_getUserType() == 'Agency')
@@ -217,9 +207,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         IconButton(
           icon: const Icon(Icons.settings, color: Color(0xFF6B7280)),
           onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SettingsPage()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
           },
           tooltip: AppLocalizations.of(context)!.settings,
         ),
@@ -233,8 +223,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -252,10 +247,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               const Text(
                 'Are you sure you want to log out of your CleanSpace account?',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF6B7280),
-                ),
+                style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -270,7 +262,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         (route) => false,
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(AppLocalizations.of(context)!.loggedOutSuccessfully)),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context)!.loggedOutSuccessfully,
+                          ),
+                        ),
                       );
                     });
                   },
@@ -383,9 +379,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, state) {
         if (state is ProfilesLoading || state is ProfilesInitial) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         }
-        
+
         if (state is ProfilesError) {
           return Center(
             child: Column(
@@ -417,11 +415,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             ),
           );
         }
-        
+
         if (state is! ProfilesLoaded) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         }
-        
+
         if (state.currentUser == null) {
           return Center(
             child: Text(
@@ -430,10 +430,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             ),
           );
         }
-        
+
         try {
           final user = state.currentUser!;
-          
+
           if (user['id'] == null) {
             return const Center(
               child: Text(
@@ -442,16 +442,21 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               ),
             );
           }
-          
+
           final agencyProfile = <String, dynamic>{
             'id': user['id'],
-            'name': user['agency_name'] as String? ?? user['full_name'] as String? ?? 'Unknown',
+            'name':
+                user['agency_name'] as String? ??
+                user['full_name'] as String? ??
+                'Unknown',
             'image': user['picture'] as String?,
             'rating': (user['rating'] as num?)?.toDouble() ?? 4.5,
             'reviews': user['reviews_count'] as int? ?? 0,
             'isVerified': user['is_verified'] as bool? ?? false,
-            'aboutMe': user['bio'] as String? ?? 'Professional cleaning service provider.',
-            'experience': user['experience_years'] != null 
+            'aboutMe':
+                user['bio'] as String? ??
+                'Professional cleaning service provider.',
+            'experience': user['experience_years'] != null
                 ? '${user['experience_years']}+ Years'
                 : '5+ Years',
             'age': AgeHelper.formatAge(user['birthdate'] as String?),
@@ -462,7 +467,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             'userType': 'Agency',
             'profileData': user,
           };
-          
+
           if (agencyProfile['id'] == null || agencyProfile['name'] == null) {
             return const Center(
               child: Text(
@@ -471,11 +476,8 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               ),
             );
           }
-          
-          return CleanerProfilePage(
-            cleaner: agencyProfile,
-            isOwnProfile: true,
-          );
+
+          return CleanerProfilePage(cleaner: agencyProfile, isOwnProfile: true);
         } catch (e, stackTrace) {
           print('Error building agency profile tab: $e');
           print('Stack trace: $stackTrace');
@@ -518,11 +520,12 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   Widget _buildCleanerProfileTab() {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, state) {
-        
         if (state is ProfilesLoading || state is ProfilesInitial) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         }
-        
+
         if (state is ProfilesError) {
           return Center(
             child: Column(
@@ -554,26 +557,25 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             ),
           );
         }
-        
-        
+
         if (state is! ProfilesLoaded) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         }
-        
-        
+
         if (state.currentUser == null) {
-              return Center(
-                child: Text(
+          return Center(
+            child: Text(
               AppLocalizations.of(context)!.noUserDataAvailable,
               style: TextStyle(color: Colors.grey),
             ),
           );
         }
-        
+
         try {
           final user = state.currentUser!;
-          
-          
+
           if (user['id'] == null) {
             return const Center(
               child: Text(
@@ -582,8 +584,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               ),
             );
           }
-          
-          
+
           final cleanerProfile = <String, dynamic>{
             'id': user['id'],
             'name': user['full_name'] as String? ?? 'Unknown',
@@ -591,8 +592,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             'rating': (user['rating'] as num?)?.toDouble() ?? 4.5,
             'reviews': user['reviews_count'] as int? ?? 0,
             'isVerified': user['is_verified'] as bool? ?? false,
-            'aboutMe': user['bio'] as String? ?? 'Professional cleaning service provider.',
-            'experience': user['experience_years'] != null 
+            'aboutMe':
+                user['bio'] as String? ??
+                'Professional cleaning service provider.',
+            'experience': user['experience_years'] != null
                 ? '${user['experience_years']}+ Years'
                 : '5+ Years',
             'age': AgeHelper.formatAge(user['birthdate'] as String?),
@@ -603,8 +606,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             'userType': user['user_type'],
             'profileData': user,
           };
-          
-          
+
           if (cleanerProfile['id'] == null || cleanerProfile['name'] == null) {
             return const Center(
               child: Text(
@@ -613,8 +615,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               ),
             );
           }
-          
-          
+
           return CleanerProfilePage(
             cleaner: cleanerProfile,
             isOwnProfile: true,
@@ -659,150 +660,166 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   }
 
   String _extractLocation(String? address) {
-    if (address == null || address.isEmpty) return AppLocalizations.of(context)!.unknown;
-    
+    if (address == null || address.isEmpty)
+      return AppLocalizations.of(context)!.unknown;
+
     final parts = address.split(',');
     return parts.isNotEmpty ? parts.first.trim() : address;
   }
 
-
   Widget _buildActiveListingsTab() {
     if (_agencyId == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+      );
     }
-
 
     return BlocBuilder<ActiveListingsCubit, ActiveListingsState>(
       builder: (context, state) {
-          if (state is ActiveListingsLoading) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
-          } else if (state is ActiveListingsError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(state.message),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<ActiveListingsCubit>().refresh(_agencyId!);
-                    },
-                    child: Text(AppLocalizations.of(context)!.retry),
-                  ),
-                ],
-              ),
-            );
-          } else if (state is ActiveListingsLoaded) {
-            if (state.jobs.isEmpty) {
-              return Center(
-                child: Text(
-                  AppLocalizations.of(context)!.noActiveListings,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+        if (state is ActiveListingsLoading) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
+        } else if (state is ActiveListingsError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(state.message),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<ActiveListingsCubit>().refresh(_agencyId!);
+                  },
+                  child: Text(AppLocalizations.of(context)!.retry),
                 ),
-              );
-            }
-            return RefreshIndicator(
-              onRefresh: () async {
-                await context.read<ActiveListingsCubit>().refresh(_agencyId!);
-              },
-              child: ListView.builder(
-                controller: _activeListingsScrollController,
-                padding: const EdgeInsets.all(16),
-                itemCount: state.jobs.length,
-                itemBuilder: (context, index) {
-                  final job = state.jobs[index];
-                  final highlight = widget.highlightJobId != null && job.id == widget.highlightJobId;
-                  // Check if this job has a pending booking or is assigned to this worker
-                  // Use available job card design for pending/assigned jobs
-                  if (_agencyId != null) {
-                    final isAssigned = job.assignedWorkerId == _agencyId;
-                    if (isAssigned) {
-                      return _buildAvailableJobCard(job, showAssignedStatus: true);
-                    }
-                    return FutureBuilder<bool>(
-                      future: _hasPendingBookingForJob(job.id!, _agencyId!),
-                      builder: (context, snapshot) {
-                        final isPending = snapshot.data ?? false;
-                        if (isPending) {
-                          return _buildAvailableJobCard(job, showPendingStatus: true);
-                        }
-                        return _buildJobCard(job, highlight: highlight);
-                      },
-                    );
-                  }
-                  return _buildJobCard(job, highlight: highlight);
-                },
+              ],
+            ),
+          );
+        } else if (state is ActiveListingsLoaded) {
+          if (state.jobs.isEmpty) {
+            return Center(
+              child: Text(
+                AppLocalizations.of(context)!.noActiveListings,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
             );
           }
-          return const SizedBox.shrink();
-        },
+          return RefreshIndicator(
+            onRefresh: () async {
+              await context.read<ActiveListingsCubit>().refresh(_agencyId!);
+            },
+            child: ListView.builder(
+              controller: _activeListingsScrollController,
+              padding: const EdgeInsets.all(16),
+              itemCount: state.jobs.length,
+              itemBuilder: (context, index) {
+                final job = state.jobs[index];
+                final highlight =
+                    widget.highlightJobId != null &&
+                    job.id == widget.highlightJobId;
+                // Check if this job has a pending booking or is assigned to this worker
+                // Use available job card design for pending/assigned jobs
+                if (_agencyId != null) {
+                  final isAssigned = job.assignedWorkerId == _agencyId;
+                  if (isAssigned) {
+                    return _buildAvailableJobCard(
+                      job,
+                      showAssignedStatus: true,
+                    );
+                  }
+                  return FutureBuilder<bool>(
+                    future: _hasPendingBookingForJob(job.id!, _agencyId!),
+                    builder: (context, snapshot) {
+                      final isPending = snapshot.data ?? false;
+                      if (isPending) {
+                        return _buildAvailableJobCard(
+                          job,
+                          showPendingStatus: true,
+                        );
+                      }
+                      return _buildJobCard(job, highlight: highlight);
+                    },
+                  );
+                }
+                return _buildJobCard(job, highlight: highlight);
+              },
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 
   Widget _buildPastBookingsTab() {
     if (_agencyId == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+      );
     }
-
 
     return Column(
       children: [
-          _buildPastBookingsHeader(),
-          Expanded(
-            child: BlocBuilder<PastBookingsCubit, PastBookingsState>(
-              builder: (context, state) {
-                if (state is PastBookingsLoading) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
-                } else if (state is PastBookingsError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(state.message),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.read<PastBookingsCubit>().refresh(_agencyId!);
-                          },
-                          child: Text(AppLocalizations.of(context)!.retry),
-                        ),
-                      ],
-                    ),
-                  );
-                } else if (state is PastBookingsLoaded) {
-                  if (state.jobs.isEmpty) {
-              return Center(
-                child: Text(
-                        AppLocalizations.of(context)!.noPastBookingsYet,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+        _buildPastBookingsHeader(),
+        Expanded(
+          child: BlocBuilder<PastBookingsCubit, PastBookingsState>(
+            builder: (context, state) {
+              if (state is PastBookingsLoading) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                );
+              } else if (state is PastBookingsError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(state.message),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<PastBookingsCubit>().refresh(_agencyId!);
+                        },
+                        child: Text(AppLocalizations.of(context)!.retry),
                       ),
-                    );
-                  }
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      await context.read<PastBookingsCubit>().refresh(_agencyId!);
-                    },
-                    child: ListView.builder(
-                      controller: _pastBookingsScrollController,
-                      padding: const EdgeInsets.all(16),
-                      itemCount: state.jobs.length,
-                      itemBuilder: (context, index) {
-                        final job = state.jobs[index];
-                        final highlight = widget.highlightJobId != null && job.id == widget.highlightJobId;
-                        // Use the same card builder for all jobs in history
-                        return _buildPastBookingCard(job, highlight: highlight);
-                      },
+                    ],
+                  ),
+                );
+              } else if (state is PastBookingsLoaded) {
+                if (state.jobs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      AppLocalizations.of(context)!.noPastBookingsYet,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
                     ),
                   );
                 }
-                return const SizedBox.shrink();
-              },
-            ),
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await context.read<PastBookingsCubit>().refresh(_agencyId!);
+                  },
+                  child: ListView.builder(
+                    controller: _pastBookingsScrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: state.jobs.length,
+                    itemBuilder: (context, index) {
+                      final job = state.jobs[index];
+                      final highlight =
+                          widget.highlightJobId != null &&
+                          job.id == widget.highlightJobId;
+                      // Use the same card builder for all jobs in history
+                      return _buildPastBookingCard(job, highlight: highlight);
+                    },
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
-        ],
+        ),
+      ],
     );
   }
 
@@ -812,7 +829,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
 
   Widget _buildAvailableJobsTab() {
     if (_agencyId == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+      );
     }
 
     return Column(
@@ -827,11 +846,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                 child: _buildFilterButton(
                   label: AppLocalizations.of(context)!.location,
                   icon: Icons.location_on_outlined,
-                  value: _selectedWilayas.isEmpty 
-                      ? AppLocalizations.of(context)!.all 
-                      : _selectedWilayas.length == 1 
-                          ? _selectedWilayas.first 
-                          : '${_selectedWilayas.length} ${AppLocalizations.of(context)!.all.toLowerCase()}',
+                  value: _selectedWilayas.isEmpty
+                      ? AppLocalizations.of(context)!.all
+                      : _selectedWilayas.length == 1
+                      ? _selectedWilayas.first
+                      : '${_selectedWilayas.length} ${AppLocalizations.of(context)!.all.toLowerCase()}',
                   onTap: () {
                     _showLocationFilter();
                   },
@@ -859,7 +878,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             builder: (context, state) {
               try {
                 if (state is AvailableJobsLoading) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                  );
                 } else if (state is AvailableJobsError) {
                   return Center(
                     child: Column(
@@ -879,7 +900,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                             try {
                               context.read<AvailableJobsCubit>().refresh(
                                 _agencyId!,
-                                wilayas: _selectedWilayas.isEmpty ? null : _selectedWilayas.toList(),
+                                wilayas: _selectedWilayas.isEmpty
+                                    ? null
+                                    : _selectedWilayas.toList(),
                                 minPrice: _minPrice,
                                 maxPrice: _maxPrice,
                               );
@@ -907,7 +930,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       try {
                         await context.read<AvailableJobsCubit>().refresh(
                           _agencyId!,
-                          wilayas: _selectedWilayas.isEmpty ? null : _selectedWilayas.toList(),
+                          wilayas: _selectedWilayas.isEmpty
+                              ? null
+                              : _selectedWilayas.toList(),
                           minPrice: _minPrice,
                           maxPrice: _maxPrice,
                         );
@@ -924,8 +949,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                             return const SizedBox.shrink();
                           }
                           final job = state.jobs[index];
-                          
-                          if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
+
+                          if (job.title.isEmpty ||
+                              job.city.isEmpty ||
+                              job.country.isEmpty) {
                             return const SizedBox.shrink();
                           }
                           return _buildAvailableJobCard(job);
@@ -938,7 +965,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     ),
                   );
                 }
-                return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                );
               } catch (e, stackTrace) {
                 print('Error in _buildAvailableJobsTab: $e');
                 print('Stack trace: $stackTrace');
@@ -953,7 +982,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                           try {
                             context.read<AvailableJobsCubit>().refresh(
                               _agencyId!,
-                              wilayas: _selectedWilayas.isEmpty ? null : _selectedWilayas.toList(),
+                              wilayas: _selectedWilayas.isEmpty
+                                  ? null
+                                  : _selectedWilayas.toList(),
                               minPrice: _minPrice,
                               maxPrice: _maxPrice,
                             );
@@ -974,7 +1005,12 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     );
   }
 
-  Widget _buildAvailableJobCard(Job job, {bool showPendingStatus = false, bool showAssignedStatus = false, bool showDoneStatus = false}) {
+  Widget _buildAvailableJobCard(
+    Job job, {
+    bool showPendingStatus = false,
+    bool showAssignedStatus = false,
+    bool showDoneStatus = false,
+  }) {
     try {
       if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
         return const SizedBox.shrink();
@@ -1016,10 +1052,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         if (difference.inMinutes == 0) {
           timeAgoText = AppLocalizations.of(context)!.justNow;
         } else {
-          timeAgoText = AppLocalizations.of(context)!.minutesAgo(difference.inMinutes);
+          timeAgoText = AppLocalizations.of(
+            context,
+          )!.minutesAgo(difference.inMinutes);
         }
       } else {
-        timeAgoText = AppLocalizations.of(context)!.hoursAgo(difference.inHours);
+        timeAgoText = AppLocalizations.of(
+          context,
+        )!.hoursAgo(difference.inHours);
       }
     } else if (difference.inDays == 1) {
       timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1079,8 +1119,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             children: [
               // Cover image
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child:
+                    job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
                     ? _buildJobImage(job.coverImageUrl!, height: 180)
                     : _buildPlaceholderImage(height: 180),
               ),
@@ -1109,7 +1152,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
@@ -1142,13 +1188,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       future: _getWorkerBidPriceForJob(job.id),
                       builder: (context, snapshot) {
                         final bidPrice = snapshot.data;
-                        final budgetText = job.budgetMin != null && job.budgetMax != null
+                        final budgetText =
+                            job.budgetMin != null && job.budgetMax != null
                             ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                             : job.budgetMin != null
-                                ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                                : job.budgetMax != null
-                                    ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                                    : AppLocalizations.of(context)!.budgetNegotiable;
+                            ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                            : job.budgetMax != null
+                            ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                            : AppLocalizations.of(context)!.budgetNegotiable;
                         final displayText = bidPrice != null
                             ? '$budgetText (${AppLocalizations.of(context)!.bid}: DA ${bidPrice.toStringAsFixed(0)})'
                             : budgetText;
@@ -1156,7 +1203,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             children: [
-                              const Icon(Icons.account_balance_wallet_outlined, size: 16, color: Color(0xFF3B82F6)),
+                              const Icon(
+                                Icons.account_balance_wallet_outlined,
+                                size: 16,
+                                color: Color(0xFF3B82F6),
+                              ),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -1178,7 +1229,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF3B82F6)),
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -1196,7 +1251,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     // Date with blue icon and time ago
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF3B82F6)),
+                        const Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: Color(0xFF3B82F6),
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -1220,8 +1279,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     } catch (e, stackTrace) {
       print('Error building available job card: $e');
       print('Stack trace: $stackTrace');
-      print('Job data: id=${job.id}, title=${job.title}, city=${job.city}, country=${job.country}');
-      
+      print(
+        'Job data: id=${job.id}, title=${job.title}, city=${job.city}, country=${job.country}',
+      );
+
       return Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
@@ -1235,7 +1296,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                job.title.isNotEmpty ? job.title : AppLocalizations.of(context)!.untitledJob,
+                job.title.isNotEmpty
+                    ? job.title
+                    : AppLocalizations.of(context)!.untitledJob,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1258,58 +1321,60 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     }
   }
 
-
   Widget _buildCleanerTeamTab() {
     if (_agencyId == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+      );
     }
-
 
     return BlocBuilder<CleanerTeamCubit, CleanerTeamState>(
       builder: (context, state) {
-          if (state is CleanerTeamLoading) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
-          } else if (state is CleanerTeamError) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(state.message),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<CleanerTeamCubit>().refresh(_agencyId!);
-                    },
-                    child: Text(AppLocalizations.of(context)!.retry),
-                  ),
-                ],
-              ),
-            );
-          } else if (state is CleanerTeamLoaded) {
-            if (state.cleaners.isEmpty) {
-              return Center(
-                child: Text(
-                  AppLocalizations.of(context)!.noCleanersInTeamYet,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
+        if (state is CleanerTeamLoading) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
+        } else if (state is CleanerTeamError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(state.message),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    context.read<CleanerTeamCubit>().refresh(_agencyId!);
+                  },
+                  child: Text(AppLocalizations.of(context)!.retry),
                 ),
-              );
-            }
-            return RefreshIndicator(
-              onRefresh: () async {
-                await context.read<CleanerTeamCubit>().refresh(_agencyId!);
-              },
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: state.cleaners.length,
-                itemBuilder: (context, index) {
-                  return _buildCleanerCard(state.cleaners[index]);
-                },
+              ],
+            ),
+          );
+        } else if (state is CleanerTeamLoaded) {
+          if (state.cleaners.isEmpty) {
+            return Center(
+              child: Text(
+                AppLocalizations.of(context)!.noCleanersInTeamYet,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             );
           }
-          return const SizedBox.shrink();
-        },
+          return RefreshIndicator(
+            onRefresh: () async {
+              await context.read<CleanerTeamCubit>().refresh(_agencyId!);
+            },
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: state.cleaners.length,
+              itemBuilder: (context, index) {
+                return _buildCleanerCard(state.cleaners[index]);
+              },
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 
@@ -1352,10 +1417,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         if (difference.inMinutes == 0) {
           timeAgoText = AppLocalizations.of(context)!.justNow;
         } else {
-          timeAgoText = AppLocalizations.of(context)!.minutesAgo(difference.inMinutes);
+          timeAgoText = AppLocalizations.of(
+            context,
+          )!.minutesAgo(difference.inMinutes);
         }
       } else {
-        timeAgoText = AppLocalizations.of(context)!.hoursAgo(difference.inHours);
+        timeAgoText = AppLocalizations.of(
+          context,
+        )!.hoursAgo(difference.inHours);
       }
     } else if (difference.inDays == 1) {
       timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1369,9 +1438,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => JobDetailsScreen(job: job),
-          ),
+          MaterialPageRoute(builder: (context) => JobDetailsScreen(job: job)),
         );
       },
       borderRadius: BorderRadius.circular(12),
@@ -1394,7 +1461,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           children: [
             // Cover image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12),
+              ),
               child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
                   ? _buildJobImage(job.coverImageUrl!, height: 180)
                   : _buildPlaceholderImage(height: 180),
@@ -1424,7 +1493,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
@@ -1457,13 +1529,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     future: _getWorkerBidPriceForJob(job.id),
                     builder: (context, snapshot) {
                       final bidPrice = snapshot.data;
-                      final budgetText = job.budgetMin != null && job.budgetMax != null
+                      final budgetText =
+                          job.budgetMin != null && job.budgetMax != null
                           ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                           : job.budgetMin != null
-                              ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                              : job.budgetMax != null
-                                  ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                                  : AppLocalizations.of(context)!.budgetNegotiable;
+                          ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                          : job.budgetMax != null
+                          ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                          : AppLocalizations.of(context)!.budgetNegotiable;
                       final displayText = bidPrice != null
                           ? '$budgetText (Bid: DA ${bidPrice.toStringAsFixed(0)})'
                           : budgetText;
@@ -1471,7 +1544,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
                           children: [
-                            const Icon(Icons.account_balance_wallet_outlined, size: 16, color: Color(0xFF3B82F6)),
+                            const Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 16,
+                              color: Color(0xFF3B82F6),
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -1493,7 +1570,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
                       children: [
-                        const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF3B82F6)),
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 16,
+                          color: Color(0xFF3B82F6),
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -1511,7 +1592,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                   // Date with blue icon and time ago
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF3B82F6)),
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 16,
+                        color: Color(0xFF3B82F6),
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -1562,7 +1647,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
 
     // Use updatedAt (when job was done) or postedDate as fallback
     final dateToUse = job.updatedAt ?? job.postedDate;
-    
+
     // Calculate time ago
     final now = DateTime.now();
     final difference = now.difference(dateToUse);
@@ -1572,10 +1657,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         if (difference.inMinutes == 0) {
           timeAgoText = AppLocalizations.of(context)!.justNow;
         } else {
-          timeAgoText = AppLocalizations.of(context)!.minutesAgo(difference.inMinutes);
+          timeAgoText = AppLocalizations.of(
+            context,
+          )!.minutesAgo(difference.inMinutes);
         }
       } else {
-        timeAgoText = AppLocalizations.of(context)!.hoursAgo(difference.inHours);
+        timeAgoText = AppLocalizations.of(
+          context,
+        )!.hoursAgo(difference.inHours);
       }
     } else if (difference.inDays == 1) {
       timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1584,10 +1673,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     } else {
       timeAgoText = '${dateToUse.day}/${dateToUse.month}/${dateToUse.year}';
     }
-    
+
     // Status label - use "Done" for completed jobs
     String statusLabel = job.statusLabel;
-    if (job.status == JobStatus.completed || (job.clientDone && job.workerDone)) {
+    if (job.status == JobStatus.completed ||
+        (job.clientDone && job.workerDone)) {
       statusLabel = 'Done';
     }
 
@@ -1621,8 +1711,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               children: [
                 // Cover image
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child:
+                      job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
                       ? _buildJobImage(job.coverImageUrl!, height: 180)
                       : _buildPlaceholderImage(height: 180),
                 ),
@@ -1651,7 +1744,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                           ),
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
@@ -1684,7 +1780,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
                           children: [
-                            const Icon(Icons.account_balance_wallet_outlined, size: 16, color: Color(0xFF3B82F6)),
+                            const Icon(
+                              Icons.account_balance_wallet_outlined,
+                              size: 16,
+                              color: Color(0xFF3B82F6),
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -1704,7 +1804,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
                           children: [
-                            const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF3B82F6)),
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 16,
+                              color: Color(0xFF3B82F6),
+                            ),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -1722,7 +1826,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       // Date with blue icon and time ago (using updatedAt)
                       Row(
                         children: [
-                          const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF3B82F6)),
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -1754,7 +1862,8 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       final applications = await bookingsRepo.getApplicationsForJob(jobId);
       // Find the accepted booking (status is inProgress or completed)
       for (final booking in applications) {
-        if (booking.status == BookingStatus.inProgress || booking.status == BookingStatus.completed) {
+        if (booking.status == BookingStatus.inProgress ||
+            booking.status == BookingStatus.completed) {
           return booking;
         }
       }
@@ -1778,11 +1887,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     final budgetText = job.budgetMin != null && job.budgetMax != null
         ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
         : job.budgetMin != null
-            ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-            : job.budgetMax != null
-                ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                : 'Budget negotiable';
-    
+        ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+        : job.budgetMax != null
+        ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+        : 'Budget negotiable';
+
     if (bidPrice != null) {
       return '$budgetText (${AppLocalizations.of(context)!.bid}: DA ${bidPrice.toStringAsFixed(0)})';
     }
@@ -1792,24 +1901,20 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   List<Widget> _buildActionButtons(Job job) {
     List<Widget> buttons = [];
 
-    
     buttons.add(
       Expanded(
         child: OutlinedButton(
-          onPressed: () {
-            
-          },
+          onPressed: () {},
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: Colors.grey[300]!),
           ),
-                  child: Text(AppLocalizations.of(context)!.edit),
+          child: Text(AppLocalizations.of(context)!.edit),
         ),
       ),
     );
 
     const SizedBox(width: 8);
 
-    
     if (job.status == JobStatus.active) {
       buttons.add(const SizedBox(width: 8));
       buttons.add(
@@ -1818,10 +1923,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             onPressed: () {
               if (_agencyId != null && job.id != null) {
                 context.read<PastBookingsCubit>().changeJobStatus(
-                      job.id!,
-                      JobStatus.paused,
-                      _agencyId!,
-                    );
+                  job.id!,
+                  JobStatus.paused,
+                  _agencyId!,
+                );
               }
             },
             style: OutlinedButton.styleFrom(
@@ -1839,10 +1944,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             onPressed: () {
               if (_agencyId != null && job.id != null) {
                 context.read<PastBookingsCubit>().changeJobStatus(
-                      job.id!,
-                      JobStatus.active,
-                      _agencyId!,
-                    );
+                  job.id!,
+                  JobStatus.active,
+                  _agencyId!,
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -1856,7 +1961,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
 
     buttons.add(const SizedBox(width: 8));
 
-    
     buttons.add(
       Expanded(
         child: OutlinedButton(
@@ -1866,10 +1970,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: Colors.red),
           ),
-          child: const Text(
-            'Delete',
-            style: TextStyle(color: Colors.red),
-          ),
+          child: const Text('Delete', style: TextStyle(color: Colors.red)),
         ),
       ),
     );
@@ -1882,7 +1983,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.deleteJob),
-        content: Text(AppLocalizations.of(context)!.areYouSureDeleteJob(job.title)),
+        content: Text(
+          AppLocalizations.of(context)!.areYouSureDeleteJob(job.title),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -1892,13 +1995,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             onPressed: () {
               Navigator.pop(context);
               if (job.id != null && job.agencyId != null) {
-                context.read<PastBookingsCubit>().deleteJob(job.id!, job.agencyId!);
+                context.read<PastBookingsCubit>().deleteJob(
+                  job.id!,
+                  job.agencyId!,
+                );
               }
             },
-            child: const Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -1911,14 +2014,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () async {
-          
           if (cleaner.id != null) {
-            
             final profileRepo = AbstractProfileRepo.getInstance();
             try {
               final profile = await profileRepo.getProfileById(cleaner.id!);
               if (profile != null && mounted) {
-                
                 final cleanerProfile = {
                   'id': profile['id'],
                   'name': profile['full_name'] as String? ?? cleaner.name,
@@ -1926,23 +2026,27 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                   'rating': cleaner.rating,
                   'reviews': profile['reviews_count'] as int? ?? 0,
                   'isVerified': profile['is_verified'] as bool? ?? false,
-                  'aboutMe': profile['bio'] as String? ?? 'Professional cleaning service provider.',
-                  'experience': profile['experience_years'] != null 
+                  'aboutMe':
+                      profile['bio'] as String? ??
+                      'Professional cleaning service provider.',
+                  'experience': profile['experience_years'] != null
                       ? '${profile['experience_years']}+ Years'
                       : '5+ Years',
                   'age': AgeHelper.formatAge(profile['birthdate'] as String?),
-                  'languages': profile['languages'] as String? ?? 'Arabic, French',
+                  'languages':
+                      profile['languages'] as String? ?? 'Arabic, French',
                   'location': _extractLocation(profile['address'] as String?),
                   'agency': profile['agency_name'] as String?,
                   'type': 'Individual',
                   'userType': profile['user_type'],
                   'profileData': profile,
                 };
-                
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CleanerProfilePage(cleaner: cleanerProfile),
+                    builder: (context) =>
+                        CleanerProfilePage(cleaner: cleanerProfile),
                   ),
                 );
               }
@@ -1963,11 +2067,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              
               CircleAvatar(
                 radius: 30,
                 backgroundColor: Colors.grey[200],
-                child: cleaner.avatarUrl != null && cleaner.avatarUrl!.isNotEmpty
+                child:
+                    cleaner.avatarUrl != null && cleaner.avatarUrl!.isNotEmpty
                     ? ClipOval(
                         child: AppImage(
                           imageUrl: cleaner.avatarUrl!,
@@ -1999,7 +2103,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       ),
               ),
               const SizedBox(width: 16),
-              
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2080,36 +2184,20 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       height: height ?? 200,
       width: double.infinity,
       color: Colors.grey[200],
-      child: const Icon(
-        Icons.image,
-        size: 64,
-        color: Colors.grey,
-      ),
+      child: const Icon(Icons.image, size: 64, color: Colors.grey),
     );
   }
 
-  
-  
-  
-  
-  
   Widget _buildFloatingActionButton() {
     final userType = _getUserType();
     final currentTabIndex = _currentIndex;
-    
-    
+
     if (userType == 'Client') {
       return const SizedBox.shrink();
     }
-    
-    
-    
+
     // Floating action button removed from profile tab - now accessible via person icon in AppBar
-    
-    
-    
-    
-    
+
     return const SizedBox.shrink();
   }
 
@@ -2139,9 +2227,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     try {
       final bookingsRepo = AbstractBookingsRepo.getInstance();
       final bookings = await bookingsRepo.getApplicationsForJob(jobId);
-      return bookings.any((booking) => 
-        booking.providerId == providerId && 
-        booking.status == BookingStatus.pending
+      return bookings.any(
+        (booking) =>
+            booking.providerId == providerId &&
+            booking.status == BookingStatus.pending,
       );
     } catch (e) {
       return false;
@@ -2188,7 +2277,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down, size: 14, color: Color(0xFF3B82F6)),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 14,
+              color: Color(0xFF3B82F6),
+            ),
           ],
         ),
       ),
@@ -2197,7 +2290,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
 
   void _showLocationFilter() {
     final allWilayas = AlgerianAddresses.getAllWilayas();
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -2213,7 +2306,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                   children: [
                     Text(
                       AppLocalizations.of(context)!.selectWilayasMultiple,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
@@ -2273,7 +2369,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3B82F6),
                   ),
-                  child: Text(AppLocalizations.of(context)!.done, style: const TextStyle(color: Colors.white)),
+                  child: Text(
+                    AppLocalizations.of(context)!.done,
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -2284,9 +2383,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   }
 
   void _showPriceFilter() {
-    final minController = TextEditingController(text: _minPrice?.toString() ?? '');
-    final maxController = TextEditingController(text: _maxPrice?.toString() ?? '');
-    
+    final minController = TextEditingController(
+      text: _minPrice?.toString() ?? '',
+    );
+    final maxController = TextEditingController(
+      text: _maxPrice?.toString() ?? '',
+    );
+
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
@@ -2359,7 +2462,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFF3B82F6)),
                     ),
-                    child: Text(AppLocalizations.of(context)!.clear, style: const TextStyle(color: Color(0xFF3B82F6))),
+                    child: Text(
+                      AppLocalizations.of(context)!.clear,
+                      style: const TextStyle(color: Color(0xFF3B82F6)),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -2376,7 +2482,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         if (_maxPrice != null && _maxPrice! < 0) {
                           _maxPrice = null;
                         }
-                        if (_minPrice != null && _maxPrice != null && _minPrice! > _maxPrice!) {
+                        if (_minPrice != null &&
+                            _maxPrice != null &&
+                            _minPrice! > _maxPrice!) {
                           // Swap if min > max
                           final temp = _minPrice;
                           _minPrice = _maxPrice;
@@ -2391,7 +2499,10 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
                     ),
-                    child: Text(AppLocalizations.of(context)!.apply, style: const TextStyle(color: Colors.white)),
+                    child: Text(
+                      AppLocalizations.of(context)!.apply,
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
@@ -2412,6 +2523,4 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       );
     }
   }
-
 }
-

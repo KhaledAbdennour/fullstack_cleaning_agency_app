@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LocaleService {
   static const String _localeKey = 'app_locale';
-  
+
   /// Get saved locale from SharedPreferences
   static Future<Locale?> getSavedLocale() async {
     try {
@@ -40,4 +40,3 @@ class LocaleService {
     return locale.languageCode == 'ar';
   }
 }
-

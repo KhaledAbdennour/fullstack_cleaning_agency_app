@@ -27,20 +27,37 @@ class FeaturePage extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
-          _feature(context, Icons.verified_outlined, localizations.findVerifiedCleaners,
-              localizations.browseTrustedProfessionals),
+          _feature(
+            context,
+            Icons.verified_outlined,
+            localizations.findVerifiedCleaners,
+            localizations.browseTrustedProfessionals,
+          ),
           const SizedBox(height: 24),
-          _feature(context, Icons.calendar_today_outlined, localizations.easyBooking,
-              localizations.postYourJob),
+          _feature(
+            context,
+            Icons.calendar_today_outlined,
+            localizations.easyBooking,
+            localizations.postYourJob,
+          ),
           const SizedBox(height: 24),
-          _feature(context, Icons.work_outline, localizations.jobOpportunities,
-              localizations.findStableWork),
+          _feature(
+            context,
+            Icons.work_outline,
+            localizations.jobOpportunities,
+            localizations.findStableWork,
+          ),
         ],
       ),
     );
   }
 
-  Widget _feature(BuildContext context, IconData icon, String title, String subtitle) {
+  Widget _feature(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
     return Row(
       children: [
         Container(
@@ -56,12 +73,18 @@ class FeaturePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(subtitle,
-                  style: const TextStyle(color: Colors.black54, fontSize: 14)),
+              Text(
+                subtitle,
+                style: const TextStyle(color: Colors.black54, fontSize: 14),
+              ),
             ],
           ),
         ),
@@ -69,5 +92,3 @@ class FeaturePage extends StatelessWidget {
     );
   }
 }
-
-

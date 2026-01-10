@@ -169,5 +169,3 @@ class BookingDetailsScreen extends StatelessWidget {
     );
   }
 }
-
-

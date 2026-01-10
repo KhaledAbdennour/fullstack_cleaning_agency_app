@@ -34,20 +34,37 @@ class ExperiencePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          _infoCard(context, Icons.verified, localizations.verifiedProfessionals,
-              localizations.everyCleanerPasses),
+          _infoCard(
+            context,
+            Icons.verified,
+            localizations.verifiedProfessionals,
+            localizations.everyCleanerPasses,
+          ),
           const SizedBox(height: 16),
-          _infoCard(context, Icons.star_border, localizations.smartMatching,
-              localizations.browseCuratedLists),
+          _infoCard(
+            context,
+            Icons.star_border,
+            localizations.smartMatching,
+            localizations.browseCuratedLists,
+          ),
           const SizedBox(height: 16),
-          _infoCard(context, Icons.attach_money_outlined, localizations.transparentPricing,
-              localizations.seeClearHourlyRates),
+          _infoCard(
+            context,
+            Icons.attach_money_outlined,
+            localizations.transparentPricing,
+            localizations.seeClearHourlyRates,
+          ),
         ],
       ),
     );
   }
 
-  Widget _infoCard(BuildContext context, IconData icon, String title, String desc) {
+  Widget _infoCard(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String desc,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -58,7 +75,7 @@ class ExperiencePage extends StatelessWidget {
             color: Colors.black12.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 4),
-          )
+          ),
         ],
       ),
       child: Row(
@@ -77,13 +94,18 @@ class ExperiencePage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(desc,
-                    style:
-                        const TextStyle(color: Colors.black54, fontSize: 13)),
+                Text(
+                  desc,
+                  style: const TextStyle(color: Colors.black54, fontSize: 13),
+                ),
               ],
             ),
           ),
@@ -92,5 +114,3 @@ class ExperiencePage extends StatelessWidget {
     );
   }
 }
-
-

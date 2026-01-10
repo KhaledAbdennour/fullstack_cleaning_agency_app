@@ -3,7 +3,6 @@ import '../../data/repositories/profiles/profile_repo.dart';
 import '../../data/repositories/jobs/jobs_repo.dart';
 import '../../core/debug/debug_logger.dart';
 
-
 abstract class ProfilesState {}
 
 class ProfilesInitial extends ProfilesState {}
@@ -32,7 +31,6 @@ class SignupSuccess extends ProfilesState {
 
 class LogoutSuccess extends ProfilesState {}
 
-
 class ProfilesCubit extends Cubit<ProfilesState> {
   final AbstractProfileRepo _repo = AbstractProfileRepo.getInstance();
   bool _isLoading = false;
@@ -47,23 +45,27 @@ class ProfilesCubit extends Cubit<ProfilesState> {
     if (_isLoading) {
       return;
     }
-    
+
     // If already loaded with the same user, don't reload
     if (state is ProfilesLoaded) {
       return;
     }
-    
+
     _isLoading = true;
     emit(ProfilesLoading());
     try {
       final user = await _repo.getCurrentUser();
-      DebugLogger.log('ProfilesCubit', 'loadCurrentUser', data: {
-        'userId': user?['id'],
-        'userIdType': user?['id']?.runtimeType.toString(),
-        'userType': user?['user_type'],
-        'storageKey': 'current_user_id',
-        'source': 'SharedPreferences via ProfileRepo.getCurrentUser()',
-      });
+      DebugLogger.log(
+        'ProfilesCubit',
+        'loadCurrentUser',
+        data: {
+          'userId': user?['id'],
+          'userIdType': user?['id']?.runtimeType.toString(),
+          'userType': user?['user_type'],
+          'storageKey': 'current_user_id',
+          'source': 'SharedPreferences via ProfileRepo.getCurrentUser()',
+        },
+      );
       emit(ProfilesLoaded(user));
     } catch (e, stack) {
       DebugLogger.error('ProfilesCubit', 'loadCurrentUser failed', e, stack);
@@ -81,20 +83,33 @@ class ProfilesCubit extends Cubit<ProfilesState> {
         return;
       }
 
-      DebugLogger.log('ProfilesCubit', 'login START', data: {'username': username});
+      DebugLogger.log(
+        'ProfilesCubit',
+        'login START',
+        data: {'username': username},
+      );
       final user = await _repo.login(username, password);
       if (user != null) {
-        DebugLogger.log('ProfilesCubit', 'login SUCCESS', data: {
-          'userId': user['id'],
-          'userIdType': user['id']?.runtimeType.toString(),
-          'userType': user['user_type'],
-          'storageKey': 'current_user_id',
-          'source': 'SharedPreferences set via ProfileRepo.login() -> setCurrentUser()',
-        });
+        DebugLogger.log(
+          'ProfilesCubit',
+          'login SUCCESS',
+          data: {
+            'userId': user['id'],
+            'userIdType': user['id']?.runtimeType.toString(),
+            'userType': user['user_type'],
+            'storageKey': 'current_user_id',
+            'source':
+                'SharedPreferences set via ProfileRepo.login() -> setCurrentUser()',
+          },
+        );
         emit(LoginSuccess(user));
         emit(ProfilesLoaded(user));
       } else {
-        DebugLogger.log('ProfilesCubit', 'login FAILED', data: {'reason': 'Invalid credentials'});
+        DebugLogger.log(
+          'ProfilesCubit',
+          'login FAILED',
+          data: {'reason': 'Invalid credentials'},
+        );
         emit(ProfilesError('Incorrect username or password, try again'));
       }
     } catch (e, stack) {
@@ -106,24 +121,22 @@ class ProfilesCubit extends Cubit<ProfilesState> {
   Future<void> signup(Map<String, dynamic> profileData) async {
     emit(ProfilesLoading());
     try {
-      
-      if (profileData['username'] == null || 
+      if (profileData['username'] == null ||
           (profileData['username'] as String).isEmpty) {
         emit(ProfilesError('Username is required'));
         return;
       }
-      if (profileData['password'] == null || 
+      if (profileData['password'] == null ||
           (profileData['password'] as String).isEmpty) {
         emit(ProfilesError('Password is required'));
         return;
       }
-      if (profileData['full_name'] == null || 
+      if (profileData['full_name'] == null ||
           (profileData['full_name'] as String).isEmpty) {
         emit(ProfilesError('Full name is required'));
         return;
       }
 
-      
       final existingUsername = await _repo.getProfileByUsername(
         profileData['username'] as String,
       );
@@ -132,8 +145,8 @@ class ProfilesCubit extends Cubit<ProfilesState> {
         return;
       }
 
-      
-      if (profileData['email'] != null && (profileData['email'] as String).isNotEmpty) {
+      if (profileData['email'] != null &&
+          (profileData['email'] as String).isNotEmpty) {
         final existingEmail = await _repo.getProfileByEmail(
           profileData['email'] as String,
         );
@@ -143,8 +156,8 @@ class ProfilesCubit extends Cubit<ProfilesState> {
         }
       }
 
-      
-      if (profileData['phone'] != null && (profileData['phone'] as String).isNotEmpty) {
+      if (profileData['phone'] != null &&
+          (profileData['phone'] as String).isNotEmpty) {
         final existingPhone = await _repo.getProfileByPhone(
           profileData['phone'] as String,
         );
@@ -154,7 +167,6 @@ class ProfilesCubit extends Cubit<ProfilesState> {
         }
       }
 
-      
       profileData['created_at'] = DateTime.now().toIso8601String();
 
       final success = await _repo.insertProfile(profileData);
@@ -187,12 +199,12 @@ class ProfilesCubit extends Cubit<ProfilesState> {
       }
 
       // Validate email uniqueness if email is being changed
-      if (profileData['email'] != null && 
-          profileData['email'] is String && 
+      if (profileData['email'] != null &&
+          profileData['email'] is String &&
           (profileData['email'] as String).isNotEmpty) {
         final newEmail = profileData['email'] as String;
         final currentEmail = currentUser['email'] as String?;
-        
+
         // Only check if email is different from current email
         if (newEmail != currentEmail) {
           final existingEmail = await _repo.getProfileByEmail(newEmail);
@@ -204,12 +216,12 @@ class ProfilesCubit extends Cubit<ProfilesState> {
       }
 
       // Validate phone uniqueness if phone is being changed
-      if (profileData['phone'] != null && 
-          profileData['phone'] is String && 
+      if (profileData['phone'] != null &&
+          profileData['phone'] is String &&
           (profileData['phone'] as String).isNotEmpty) {
         final newPhone = profileData['phone'] as String;
         final currentPhone = currentUser['phone'] as String?;
-        
+
         // Only check if phone is different from current phone
         if (newPhone != currentPhone) {
           final existingPhone = await _repo.getProfileByPhone(newPhone);
@@ -258,14 +270,14 @@ class ProfilesCubit extends Cubit<ProfilesState> {
       // Mark all user's jobs as deleted
       final jobsRepo = AbstractJobsRepo.getInstance();
       await jobsRepo.markAllClientJobsAsDeleted(userId);
-      
+
       // Delete the profile
       final success = await _repo.deleteProfile(userId);
       if (!success) {
         emit(ProfilesError('Failed to delete account'));
         return;
       }
-      
+
       // Clear current user session
       await _repo.clearCurrentUser();
       emit(LogoutSuccess());
@@ -275,4 +287,3 @@ class ProfilesCubit extends Cubit<ProfilesState> {
     }
   }
 }
-

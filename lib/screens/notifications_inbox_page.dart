@@ -7,7 +7,6 @@ import '../data/models/notification_item.dart';
 import '../l10n/app_localizations.dart';
 import '../core/services/notification_router.dart';
 import '../core/debug/debug_flags.dart';
-import '../data/repositories/notifications/notifications_repo.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationsInboxPage extends StatefulWidget {
@@ -20,20 +19,20 @@ class NotificationsInboxPage extends StatefulWidget {
 class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
   Map<String, dynamic>? _diagnostics;
   bool _showDiagnostics = false;
-  
+
   @override
   void initState() {
     super.initState();
     // Refresh inbox when screen opens
     context.read<NotificationsCubit>().refreshInbox();
     _loadDiagnostics();
-    
+
     // Handle notification opened app (when app is in background)
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       NotificationRouter.handleMessage(message);
     });
   }
-  
+
   Future<void> _loadDiagnostics() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -51,7 +50,7 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
       print('Error loading diagnostics: $e');
     }
   }
-  
+
   Widget _buildDiagnosticRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -75,11 +74,11 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFE5E7EB),
       appBar: AppBar(
@@ -116,7 +115,9 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
           if (state is NotificationsLoading) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+            );
           }
 
           if (state is NotificationsError) {
@@ -168,7 +169,10 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
                           child: ExpansionTile(
                             title: const Text(
                               '🔍 Diagnostics (Dev Mode)',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             initiallyExpanded: _showDiagnostics,
                             onExpansionChanged: (expanded) {
@@ -179,44 +183,117 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
                                 _loadDiagnostics();
                               }
                             },
-                          children: [
-                            if (_diagnostics != null)
-                              Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildDiagnosticRow('Current User ID (Prefs)', _diagnostics!['currentUserId_fromPrefs']?.toString() ?? 'null'),
-                                    _buildDiagnosticRow('Current User ID (Query)', _diagnostics!['currentUserId_fromQuery']?.toString() ?? 'null'),
-                                    _buildDiagnosticRow('User Role', _diagnostics!['userType']?.toString() ?? 'Unknown'),
-                                    _buildDiagnosticRow('Total Notifications (all)', _diagnostics!['totalNotifications']?.toString() ?? '0'),
-                                    _buildDiagnosticRow('Unread Count (all)', _diagnostics!['unreadCount_all']?.toString() ?? '0'),
-                                    _buildDiagnosticRow('Filtered Notifications', _diagnostics!['filteredNotifications']?.toString() ?? '0'),
-                                    _buildDiagnosticRow('Unread Count (filtered)', _diagnostics!['unreadCount_filtered']?.toString() ?? '0'),
-                                    _buildDiagnosticRow('Collection Name', _diagnostics!['collectionName']?.toString() ?? 'notifications'),
-                                    if (_diagnostics!['sampleNotification'] != null) ...[
-                                      const Divider(),
-                                      const Text('Sample Notification:', style: TextStyle(fontWeight: FontWeight.bold)),
-                                      _buildDiagnosticRow('  user_id', _diagnostics!['sampleNotification']['user_id']?.toString() ?? 'null'),
-                                      _buildDiagnosticRow('  user_id type', _diagnostics!['sampleNotification']['user_id_type']?.toString() ?? 'null'),
-                                      _buildDiagnosticRow('  type', _diagnostics!['sampleNotification']['type']?.toString() ?? 'null'),
-                                      _buildDiagnosticRow('  read', _diagnostics!['sampleNotification']['read']?.toString() ?? 'null'),
+                            children: [
+                              if (_diagnostics != null)
+                                Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      _buildDiagnosticRow(
+                                        'Current User ID (Prefs)',
+                                        _diagnostics!['currentUserId_fromPrefs']
+                                                ?.toString() ??
+                                            'null',
+                                      ),
+                                      _buildDiagnosticRow(
+                                        'Current User ID (Query)',
+                                        _diagnostics!['currentUserId_fromQuery']
+                                                ?.toString() ??
+                                            'null',
+                                      ),
+                                      _buildDiagnosticRow(
+                                        'User Role',
+                                        _diagnostics!['userType']?.toString() ??
+                                            'Unknown',
+                                      ),
+                                      _buildDiagnosticRow(
+                                        'Total Notifications (all)',
+                                        _diagnostics!['totalNotifications']
+                                                ?.toString() ??
+                                            '0',
+                                      ),
+                                      _buildDiagnosticRow(
+                                        'Unread Count (all)',
+                                        _diagnostics!['unreadCount_all']
+                                                ?.toString() ??
+                                            '0',
+                                      ),
+                                      _buildDiagnosticRow(
+                                        'Filtered Notifications',
+                                        _diagnostics!['filteredNotifications']
+                                                ?.toString() ??
+                                            '0',
+                                      ),
+                                      _buildDiagnosticRow(
+                                        'Unread Count (filtered)',
+                                        _diagnostics!['unreadCount_filtered']
+                                                ?.toString() ??
+                                            '0',
+                                      ),
+                                      _buildDiagnosticRow(
+                                        'Collection Name',
+                                        _diagnostics!['collectionName']
+                                                ?.toString() ??
+                                            'notifications',
+                                      ),
+                                      if (_diagnostics!['sampleNotification'] !=
+                                          null) ...[
+                                        const Divider(),
+                                        const Text(
+                                          'Sample Notification:',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        _buildDiagnosticRow(
+                                          '  user_id',
+                                          _diagnostics!['sampleNotification']['user_id']
+                                                  ?.toString() ??
+                                              'null',
+                                        ),
+                                        _buildDiagnosticRow(
+                                          '  user_id type',
+                                          _diagnostics!['sampleNotification']['user_id_type']
+                                                  ?.toString() ??
+                                              'null',
+                                        ),
+                                        _buildDiagnosticRow(
+                                          '  type',
+                                          _diagnostics!['sampleNotification']['type']
+                                                  ?.toString() ??
+                                              'null',
+                                        ),
+                                        _buildDiagnosticRow(
+                                          '  read',
+                                          _diagnostics!['sampleNotification']['read']
+                                                  ?.toString() ??
+                                              'null',
+                                        ),
+                                      ],
+                                      if (_diagnostics!['error'] != null) ...[
+                                        const Divider(),
+                                        Text(
+                                          'Error: ${_diagnostics!['error']}',
+                                          style: const TextStyle(
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ],
                                     ],
-                                    if (_diagnostics!['error'] != null) ...[
-                                      const Divider(),
-                                      Text('Error: ${_diagnostics!['error']}', style: const TextStyle(color: Colors.red)),
-                                    ],
-                                  ],
+                                  ),
+                                )
+                              else
+                                const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(
+                                    color: Color(0xFF3B82F6),
+                                  ),
                                 ),
-                              )
-                            else
-                              const Padding(
-                                padding: EdgeInsets.all(16),
-                                child: const CircularProgressIndicator(color: Color(0xFF3B82F6)),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -224,8 +301,10 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
             }
 
             // Group notifications by type
-            final groupedNotifications = _groupNotificationsByType(notifications);
-            
+            final groupedNotifications = _groupNotificationsByType(
+              notifications,
+            );
+
             return RefreshIndicator(
               onRefresh: () async {
                 context.read<NotificationsCubit>().refreshInbox();
@@ -250,20 +329,27 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
                           ),
                         ),
                       ),
-                      ...(group['notifications'] as List<NotificationItem>).map((notification) {
-                        return _NotificationTile(
-                          notification: notification,
-                          onTap: () async {
-                            // Mark as read BEFORE navigation
-                            if (!notification.read) {
-                              await context.read<NotificationsCubit>().markAsRead(notification.id);
-                            }
-                            
-                            // Navigate using the enhanced router
-                            await NotificationRouter.navigateFromNotification(context, notification);
-                          },
-                        );
-                      }).toList(),
+                      ...(group['notifications'] as List<NotificationItem>).map(
+                        (notification) {
+                          return _NotificationTile(
+                            notification: notification,
+                            onTap: () async {
+                              // Mark as read BEFORE navigation
+                              if (!notification.read) {
+                                await context
+                                    .read<NotificationsCubit>()
+                                    .markAsRead(notification.id);
+                              }
+
+                              // Navigate using the enhanced router
+                              await NotificationRouter.navigateFromNotification(
+                                context,
+                                notification,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
                   );
                 },
@@ -276,16 +362,18 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
       ),
     );
   }
-  
+
   /// Group notifications by type
-  List<Map<String, dynamic>> _groupNotificationsByType(List<NotificationItem> notifications) {
+  List<Map<String, dynamic>> _groupNotificationsByType(
+    List<NotificationItem> notifications,
+  ) {
     final Map<String, List<NotificationItem>> grouped = {};
-    
+
     for (final notification in notifications) {
       final type = notification.type ?? 'Other';
       grouped.putIfAbsent(type, () => []).add(notification);
     }
-    
+
     // Sort groups by type priority and return as list
     final typeOrder = {
       'job_published': 1,
@@ -294,21 +382,17 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
       'job_completed': 4,
       'review_added': 5,
     };
-    
+
     return grouped.entries.map((entry) {
       final typeName = _getTypeDisplayName(entry.key);
-      return {
-        'type': typeName,
-        'notifications': entry.value,
-      };
-    }).toList()
-      ..sort((a, b) {
-        final aPriority = typeOrder[a['type']] ?? 99;
-        final bPriority = typeOrder[b['type']] ?? 99;
-        return aPriority.compareTo(bPriority);
-      });
+      return {'type': typeName, 'notifications': entry.value};
+    }).toList()..sort((a, b) {
+      final aPriority = typeOrder[a['type']] ?? 99;
+      final bPriority = typeOrder[b['type']] ?? 99;
+      return aPriority.compareTo(bPriority);
+    });
   }
-  
+
   String _getTypeDisplayName(String type) {
     switch (type) {
       case 'job_published':
@@ -331,18 +415,13 @@ class _NotificationTile extends StatelessWidget {
   final NotificationItem notification;
   final VoidCallback onTap;
 
-  const _NotificationTile({
-    required this.notification,
-    required this.onTap,
-  });
+  const _NotificationTile({required this.notification, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
@@ -366,28 +445,18 @@ class _NotificationTile extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               notification.body,
-              style: const TextStyle(
-                color: Color(0xFF6B7280),
-                fontSize: 14,
-              ),
+              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 14),
             ),
             const SizedBox(height: 8),
             Text(
               _formatDate(notification.createdAt),
-              style: const TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
             ),
           ],
         ),
         trailing: notification.read
             ? null
-            : const Icon(
-                Icons.circle,
-                size: 8,
-                color: Color(0xFF3B82F6),
-              ),
+            : const Icon(Icons.circle, size: 8, color: Color(0xFF3B82F6)),
         onTap: onTap,
       ),
     );
@@ -411,7 +480,7 @@ class _NotificationTile extends StatelessWidget {
             : const Color(0xFF3B82F6);
     }
   }
-  
+
   IconData _getTypeIcon(String? type) {
     switch (type) {
       case 'job_published':
@@ -425,7 +494,9 @@ class _NotificationTile extends StatelessWidget {
       case 'review_added':
         return Icons.star_outline;
       default:
-        return notification.read ? Icons.notifications : Icons.notifications_active;
+        return notification.read
+            ? Icons.notifications
+            : Icons.notifications_active;
     }
   }
 
@@ -450,4 +521,3 @@ class _NotificationTile extends StatelessWidget {
     }
   }
 }
-

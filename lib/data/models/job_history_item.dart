@@ -8,7 +8,8 @@ class JobHistoryItem {
   final String role; // 'worker', 'client', or 'agency'
   final DateTime completedAt;
   final String title;
-  final int? otherPartyId; // The other party involved (e.g., client ID if participant is worker)
+  final int?
+  otherPartyId; // The other party involved (e.g., client ID if participant is worker)
   final String? description;
   final double? price;
 
@@ -51,4 +52,3 @@ class JobHistoryItem {
     );
   }
 }
-

@@ -10,7 +10,8 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   static const String collectionName = 'cleaning_history';
 
   // Keep SQL code for reference
-  static const String sqlCode = '''
+  static const String sqlCode =
+      '''
     CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cleaner_id INTEGER NOT NULL,
@@ -25,7 +26,11 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
   ''';
 
   @override
-  Future<List<CleaningHistoryItem>> getCleaningHistoryForCleaner(int cleanerId, {int page = 1, int limit = 10}) async {
+  Future<List<CleaningHistoryItem>> getCleaningHistoryForCleaner(
+    int cleanerId, {
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       // Firestore doesn't support offset, so we use limit with startAfter for pagination
       // For simplicity, we'll just use limit for now (page 1 only)
@@ -35,19 +40,21 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
           .where('cleaner_id', isEqualTo: cleanerId)
           .orderBy('date', descending: true)
           .limit(limit);
-      
+
       // For pages > 1, we would need to store the last document and use startAfter
       // For now, just return first page
       if (page > 1) {
         // TODO: Implement cursor-based pagination
         return [];
       }
-      
+
       final snapshot = await query.get();
-      
+
       return snapshot.docs.map((doc) {
         final docData = doc.data();
-        final data = docData != null ? Map<String, dynamic>.from(docData as Map) : <String, dynamic>{};
+        final data = docData != null
+            ? Map<String, dynamic>.from(docData as Map)
+            : <String, dynamic>{};
         data['id'] = int.tryParse(doc.id) ?? 0;
         return CleaningHistoryItem.fromMap(data);
       }).toList();
@@ -62,7 +69,7 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
     try {
       final itemMap = item.toMap();
       final id = itemMap.remove('id');
-      
+
       String docId;
       if (id != null && id is int) {
         docId = id.toString();
@@ -73,7 +80,7 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
             .orderBy('id', descending: true)
             .limit(1)
             .get();
-        
+
         int newId = 1;
         if (snapshot.docs.isNotEmpty) {
           final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
@@ -82,12 +89,12 @@ class CleaningHistoryDB extends AbstractCleaningHistoryRepo {
         docId = newId.toString();
         itemMap['id'] = newId;
       }
-      
+
       await FirebaseConfig.firestore
           .collection(collectionName)
           .doc(docId)
           .set(itemMap);
-      
+
       final data = Map<String, dynamic>.from(itemMap);
       data['id'] = int.parse(docId);
       return CleaningHistoryItem.fromMap(data);

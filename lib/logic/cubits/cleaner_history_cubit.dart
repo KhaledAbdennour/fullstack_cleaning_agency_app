@@ -1,8 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/cleaning_history_item.dart';
-import '../../data/models/job_model.dart';
 import '../../data/repositories/jobs/jobs_repo.dart';
-
 
 abstract class CleanerHistoryState {}
 
@@ -12,7 +10,7 @@ class CleanerHistoryLoading extends CleanerHistoryState {}
 
 class CleanerHistoryLoaded extends CleanerHistoryState {
   final List<CleaningHistoryItem> items;
-  
+
   CleanerHistoryLoaded(this.items);
 }
 
@@ -26,7 +24,6 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
 
   CleanerHistoryCubit() : super(CleanerHistoryInitial());
 
-  
   Future<void> loadHistory(int cleanerId, {bool refresh = false}) async {
     if (refresh || state is CleanerHistoryInitial) {
       emit(CleanerHistoryLoading());
@@ -34,8 +31,10 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
 
     try {
       // Get completed jobs where both client_done and worker_done are true
-      final completedJobs = await _jobsRepo.getCompletedJobsForWorker(cleanerId);
-      
+      final completedJobs = await _jobsRepo.getCompletedJobsForWorker(
+        cleanerId,
+      );
+
       // Convert jobs to CleaningHistoryItem
       final items = completedJobs.map((job) {
         // Determine cleaning type from required_services
@@ -46,7 +45,9 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
             type = CleaningHistoryType.office;
           } else if (services.contains('villa')) {
             type = CleaningHistoryType.villa;
-          } else if (services.contains('house') || services.contains('home') || services.contains('residential')) {
+          } else if (services.contains('house') ||
+              services.contains('home') ||
+              services.contains('residential')) {
             type = CleaningHistoryType.house;
           } else if (services.contains('industrial')) {
             type = CleaningHistoryType.commercial;
@@ -54,11 +55,11 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
             type = CleaningHistoryType.apartment;
           }
         }
-        
+
         // Use updated_at as completion date (set when job is completed)
         // This represents when both parties confirmed completion
         final completionDate = job.updatedAt ?? job.postedDate;
-        
+
         return CleaningHistoryItem(
           cleanerId: cleanerId,
           title: job.title,
@@ -68,19 +69,14 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
           jobId: job.id,
         );
       }).toList();
-      
+
       emit(CleanerHistoryLoaded(items));
     } catch (e) {
       emit(CleanerHistoryError('Failed to load history: $e'));
     }
   }
 
-  
   Future<void> refresh(int cleanerId) async {
     await loadHistory(cleanerId, refresh: true);
   }
 }
-
-
-
-

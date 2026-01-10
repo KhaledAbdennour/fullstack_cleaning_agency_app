@@ -11,9 +11,8 @@ void setupServiceLocator() {
   getIt.registerLazySingleton<AbstractNotificationsRepo>(
     () => NotificationsRepoDB(),
   );
-  
+
   // Add other repositories here if needed in the future
   // Example:
   // getIt.registerLazySingleton<AbstractProfileRepo>(() => ProfileDB());
 }
-

@@ -17,7 +17,7 @@ import '../l10n/app_localizations.dart';
 import '../main.dart';
 
 class ClientProfilePage extends StatefulWidget {
-  const ClientProfilePage({Key? key}) : super(key: key);
+  const ClientProfilePage({super.key});
 
   @override
   State<ClientProfilePage> createState() => _ClientProfilePageState();
@@ -34,74 +34,92 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   void initState() {
     super.initState();
     // #region agent log
-    DebugLogger.log('ClientProfilePage', 'initState', data: {
-      'hypothesisId': 'H1',
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'ClientProfilePage',
+      'initState',
+      data: {
+        'hypothesisId': 'H1',
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
     _loadClientId();
   }
 
-
   Future<void> _loadClientId() async {
     // #region agent log
-    DebugLogger.log('ClientProfilePage', '_loadClientId_START', data: {
-      'hypothesisId': 'H1',
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'ClientProfilePage',
+      '_loadClientId_START',
+      data: {
+        'hypothesisId': 'H1',
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     final cubit = context.read<ProfilesCubit>();
-    
+
     // Check current state first - avoid reloading if already loaded
     final currentState = cubit.state;
     if (currentState is ProfilesLoaded && currentState.currentUser != null) {
       // User already loaded, use existing state
       final userId = currentState.currentUser!['id'] as int?;
       final userType = currentState.currentUser!['user_type'] as String?;
-      
+
       // #region agent log
-      DebugLogger.log('ClientProfilePage', '_loadClientId_USE_EXISTING', data: {
-        'hypothesisId': 'H1',
-        'userId': userId,
-        'userType': userType,
-        'isClient': userType == 'Client',
-        'sessionId': 'debug-session',
-        'runId': 'run1',
-      });
+      DebugLogger.log(
+        'ClientProfilePage',
+        '_loadClientId_USE_EXISTING',
+        data: {
+          'hypothesisId': 'H1',
+          'userId': userId,
+          'userType': userType,
+          'isClient': userType == 'Client',
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        },
+      );
       // #endregion
-      
+
       if (userId != null && userType == 'Client') {
         setState(() {
           _clientId = userId;
           _avatarUrl = currentState.currentUser!['picture'] as String?;
         });
-        
+
         // #region agent log
-        DebugLogger.log('ClientProfilePage', '_loadClientId_SET_CLIENT_ID', data: {
-          'hypothesisId': 'H1',
-          'clientId': _clientId,
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
+        DebugLogger.log(
+          'ClientProfilePage',
+          '_loadClientId_SET_CLIENT_ID',
+          data: {
+            'hypothesisId': 'H1',
+            'clientId': _clientId,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          },
+        );
         // #endregion
-        
       } else {
         // #region agent log
-        DebugLogger.log('ClientProfilePage', '_loadClientId_NOT_CLIENT', data: {
-          'hypothesisId': 'H1',
-          'userId': userId,
-          'userType': userType,
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
+        DebugLogger.log(
+          'ClientProfilePage',
+          '_loadClientId_NOT_CLIENT',
+          data: {
+            'hypothesisId': 'H1',
+            'userId': userId,
+            'userType': userType,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          },
+        );
         // #endregion
       }
       return;
     }
-    
+
     // Only load if not already loaded
     await cubit.loadCurrentUser();
     if (!mounted) return;
@@ -109,57 +127,71 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     if (state is ProfilesLoaded && state.currentUser != null) {
       final userId = state.currentUser!['id'] as int?;
       final userType = state.currentUser!['user_type'] as String?;
-      
+
       // #region agent log
-      DebugLogger.log('ClientProfilePage', '_loadClientId_USER_DATA', data: {
-        'hypothesisId': 'H1',
-        'userId': userId,
-        'userType': userType,
-        'isClient': userType == 'Client',
-        'sessionId': 'debug-session',
-        'runId': 'run1',
-      });
+      DebugLogger.log(
+        'ClientProfilePage',
+        '_loadClientId_USER_DATA',
+        data: {
+          'hypothesisId': 'H1',
+          'userId': userId,
+          'userType': userType,
+          'isClient': userType == 'Client',
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        },
+      );
       // #endregion
-      
+
       if (userId != null && userType == 'Client') {
         setState(() {
           _clientId = userId;
           _avatarUrl = state.currentUser!['picture'] as String?;
         });
-        
+
         // #region agent log
-        DebugLogger.log('ClientProfilePage', '_loadClientId_SET_CLIENT_ID', data: {
-          'hypothesisId': 'H1',
-          'clientId': _clientId,
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
+        DebugLogger.log(
+          'ClientProfilePage',
+          '_loadClientId_SET_CLIENT_ID',
+          data: {
+            'hypothesisId': 'H1',
+            'clientId': _clientId,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          },
+        );
         // #endregion
-        
       } else {
         // #region agent log
-        DebugLogger.log('ClientProfilePage', '_loadClientId_NOT_CLIENT', data: {
-          'hypothesisId': 'H1',
-          'userId': userId,
-          'userType': userType,
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
+        DebugLogger.log(
+          'ClientProfilePage',
+          '_loadClientId_NOT_CLIENT',
+          data: {
+            'hypothesisId': 'H1',
+            'userId': userId,
+            'userType': userType,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          },
+        );
         // #endregion
       }
     } else {
       // #region agent log
-      DebugLogger.log('ClientProfilePage', '_loadClientId_NO_USER', data: {
-        'hypothesisId': 'H1',
-        'stateType': state.runtimeType.toString(),
-        'sessionId': 'debug-session',
-        'runId': 'run1',
-      });
+      DebugLogger.log(
+        'ClientProfilePage',
+        '_loadClientId_NO_USER',
+        data: {
+          'hypothesisId': 'H1',
+          'stateType': state.runtimeType.toString(),
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        },
+      );
       // #endregion
     }
   }
 
-  
   final List<Map<String, dynamic>> jobPosts = [
     {
       'title': 'Apartment Cleaning',
@@ -178,7 +210,8 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         {
           'name': "Fatima's Cleaning",
           'price': '5000 DZD',
-          'description': 'I have 5 years of experience and can bring my own supplies...',
+          'description':
+              'I have 5 years of experience and can bring my own supplies...',
           'avatar': 'https://api.dicebear.com/7.x/avataaars/png?seed=fatima',
         },
         {
@@ -252,9 +285,9 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         final imageFile = File(image.path);
         final imageBytes = await imageFile.readAsBytes();
         final base64Image = base64Encode(imageBytes);
-        
+
         final extension = image.path.split('.').last.toLowerCase();
-        String mimeType = 'image/jpeg'; 
+        String mimeType = 'image/jpeg';
         if (extension == 'png') {
           mimeType = 'image/png';
         } else if (extension == 'gif') {
@@ -262,17 +295,22 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         } else if (extension == 'webp') {
           mimeType = 'image/webp';
         }
-        
+
         final imageDataUrl = 'data:$mimeType;base64,$base64Image';
 
         if (!mounted) return;
 
         // Update profile with base64 data URL
         final profileRepo = AbstractProfileRepo.getInstance();
-        print('Updating picture field for user $_clientId with base64 data URL');
+        print(
+          'Updating picture field for user $_clientId with base64 data URL',
+        );
         print('Data URL length: ${imageDataUrl.length}');
-        
-        final success = await profileRepo.updateAvatarUrl(_clientId!, imageDataUrl);
+
+        final success = await profileRepo.updateAvatarUrl(
+          _clientId!,
+          imageDataUrl,
+        );
         print('Update picture field result: $success');
 
         if (!success) {
@@ -282,7 +320,9 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Failed to save picture to database. Please try again.'),
+                content: Text(
+                  'Failed to save picture to database. Please try again.',
+                ),
                 backgroundColor: Colors.red,
                 duration: Duration(seconds: 3),
               ),
@@ -303,8 +343,10 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         if (mounted) {
           // Get updated user data from cubit state
           final updatedState = cubit.state;
-          if (updatedState is ProfilesLoaded && updatedState.currentUser != null) {
-            final updatedPicture = updatedState.currentUser!['picture'] as String?;
+          if (updatedState is ProfilesLoaded &&
+              updatedState.currentUser != null) {
+            final updatedPicture =
+                updatedState.currentUser!['picture'] as String?;
             setState(() {
               _avatarUrl = updatedPicture;
               _isUploadingImage = false;
@@ -316,7 +358,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
               _isUploadingImage = false;
             });
           }
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Profile picture updated successfully!'),
@@ -357,17 +399,20 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     }
   }
 
-  
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // #region agent log
-    DebugLogger.log('ClientProfilePage', 'didChangeDependencies', data: {
-      'hypothesisId': 'H1',
-      'clientId': _clientId,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'ClientProfilePage',
+      'didChangeDependencies',
+      data: {
+        'hypothesisId': 'H1',
+        'clientId': _clientId,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
   }
 
@@ -375,25 +420,32 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   void didUpdateWidget(ClientProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     // #region agent log
-    DebugLogger.log('ClientProfilePage', 'didUpdateWidget', data: {
-      'hypothesisId': 'H1',
-      'clientId': _clientId,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'ClientProfilePage',
+      'didUpdateWidget',
+      data: {
+        'hypothesisId': 'H1',
+        'clientId': _clientId,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
   }
-  
+
   @override
   void dispose() {
     // #region agent log
-    DebugLogger.log('ClientProfilePage', 'dispose', data: {
-      'hypothesisId': 'H1',
-      'clientId': _clientId,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'ClientProfilePage',
+      'dispose',
+      data: {
+        'hypothesisId': 'H1',
+        'clientId': _clientId,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
     super.dispose();
   }
@@ -401,14 +453,18 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   @override
   Widget build(BuildContext context) {
     // #region agent log
-    DebugLogger.log('ClientProfilePage', 'build_CALLED', data: {
-      'hypothesisId': 'H1',
-      'clientId': _clientId,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'ClientProfilePage',
+      'build_CALLED',
+      data: {
+        'hypothesisId': 'H1',
+        'clientId': _clientId,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     // Return full Scaffold so profile page can be used standalone or in HomeScreen
     return Scaffold(
       backgroundColor: Colors.white,
@@ -418,27 +474,25 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         automaticallyImplyLeading: false,
         title: GestureDetector(
           onLongPress: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const DataDoctorPage()),
-            );
+            Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const DataDoctorPage()));
           },
           child: const SizedBox.shrink(),
         ),
-        actions: [
-          const NotificationBellWidget(),
-        ],
+        actions: [const NotificationBellWidget()],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-              _buildProfileHeader(),
-              _buildProfileInfo(),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(16),
-                child: _buildSettingsContent(),
-              ),
-              const SizedBox(height: 16),
+            _buildProfileHeader(),
+            _buildProfileInfo(),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: _buildSettingsContent(),
+            ),
+            const SizedBox(height: 16),
           ],
         ),
       ),
@@ -454,13 +508,14 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       builder: (context, state) {
         String displayName = 'New User';
         String? avatarUrl;
-        
+
         if (state is ProfilesLoaded && state.currentUser != null) {
-          displayName = state.currentUser!['full_name'] as String? ?? 
-                       state.currentUser!['username'] as String? ?? 
-                       'New User';
+          displayName =
+              state.currentUser!['full_name'] as String? ??
+              state.currentUser!['username'] as String? ??
+              'New User';
           avatarUrl = state.currentUser!['picture'] as String?;
-          
+
           // Update local avatar URL if different
           if (avatarUrl != _avatarUrl) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -503,11 +558,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                             ),
                           ),
                         )
-                      : const Icon(
-                          Icons.person,
-                          size: 65,
-                          color: Colors.white,
-                        ),
+                      : const Icon(Icons.person, size: 65, color: Colors.white),
                 ),
                 if (_isUploadingImage)
                   Positioned.fill(
@@ -517,7 +568,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                         shape: BoxShape.circle,
                       ),
                       child: const Center(
-                        child: const CircularProgressIndicator(
+                        child: CircularProgressIndicator(
                           color: Color(0xFF3B82F6),
                         ),
                       ),
@@ -598,9 +649,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const SupportPage(),
-              ),
+              MaterialPageRoute(builder: (context) => const SupportPage()),
             );
           },
         ),
@@ -664,8 +713,16 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   void _showLanguageDialog() {
     final currentLocale = Localizations.localeOf(context);
     final languages = [
-      {'locale': const Locale('en', ''), 'name': 'English', 'native': 'English'},
-      {'locale': const Locale('fr', ''), 'name': 'French', 'native': 'Français'},
+      {
+        'locale': const Locale('en', ''),
+        'name': 'English',
+        'native': 'English',
+      },
+      {
+        'locale': const Locale('fr', ''),
+        'name': 'French',
+        'native': 'Français',
+      },
       {'locale': const Locale('ar', ''), 'name': 'Arabic', 'native': 'العربية'},
     ];
 
@@ -673,13 +730,16 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
           title: Text(AppLocalizations.of(context)!.language),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: languages.map((lang) {
               final locale = lang['locale'] as Locale;
-              final isSelected = locale.languageCode == currentLocale.languageCode;
+              final isSelected =
+                  locale.languageCode == currentLocale.languageCode;
               return ListTile(
                 title: Text(lang['native'] as String),
                 subtitle: Text(lang['name'] as String),
@@ -722,9 +782,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       onTap: () async {
         await Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => const EditProfileScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const EditProfileScreen()),
         );
         // Refresh profile after editing
         if (mounted) {
@@ -746,7 +804,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         ),
       ),
       value: _notificationsEnabled,
-      activeColor: const Color(0xFF3B82F6),
+      activeThumbColor: const Color(0xFF3B82F6),
       onChanged: (value) {
         setState(() {
           _notificationsEnabled = value;
@@ -771,9 +829,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           fontWeight: FontWeight.w500,
         ),
       ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 
@@ -783,8 +839,13 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -802,10 +863,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
               Text(
                 AppLocalizations.of(context)!.logOutMessage,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -820,7 +878,11 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
                         (route) => false,
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(AppLocalizations.of(context)!.loggedOutSuccessfully)),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context)!.loggedOutSuccessfully,
+                          ),
+                        ),
                       );
                     });
                   },
@@ -871,5 +933,3 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     );
   }
 }
-
-

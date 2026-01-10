@@ -7,7 +7,7 @@ import '../screens/notifications_inbox_page.dart';
 /// Reusable notification bell icon with unread badge
 /// Shows unread count badge and navigates to notifications inbox when tapped
 class NotificationBellWidget extends StatelessWidget {
-  const NotificationBellWidget({Key? key}) : super(key: key);
+  const NotificationBellWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +21,15 @@ class NotificationBellWidget extends StatelessWidget {
         return Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: Color(0xFF6B7280)),
+              icon: const Icon(
+                Icons.notifications_outlined,
+                color: Color(0xFF6B7280),
+              ),
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsInboxPage()),
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsInboxPage(),
+                  ),
                 );
               },
               tooltip: 'Notifications',
@@ -60,4 +65,3 @@ class NotificationBellWidget extends StatelessWidget {
     );
   }
 }
-

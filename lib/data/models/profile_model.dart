@@ -9,7 +9,7 @@ class ProfileModel {
   final String? address;
   final String? bio;
   final String? gender;
-  final String userType; 
+  final String userType;
   final String? agencyName;
   final String? businessId;
   final String? services;
@@ -93,4 +93,3 @@ class ProfileModel {
     );
   }
 }
-

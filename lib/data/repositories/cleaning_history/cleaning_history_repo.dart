@@ -1,9 +1,12 @@
 import '../../models/cleaning_history_item.dart';
 import 'cleaning_history_repo_db.dart';
 
-
 abstract class AbstractCleaningHistoryRepo {
-  Future<List<CleaningHistoryItem>> getCleaningHistoryForCleaner(int cleanerId, {int page = 1, int limit = 10});
+  Future<List<CleaningHistoryItem>> getCleaningHistoryForCleaner(
+    int cleanerId, {
+    int page = 1,
+    int limit = 10,
+  });
   Future<CleaningHistoryItem> addHistoryItem(CleaningHistoryItem item);
   Future<void> deleteHistoryItem(int itemId);
 
@@ -13,7 +16,3 @@ abstract class AbstractCleaningHistoryRepo {
     return _instance!;
   }
 }
-
-
-
-

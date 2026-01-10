@@ -9,7 +9,7 @@ import 'notifications_state.dart';
 /// Follows teacher's pattern: UI triggers Cubit, Cubit calls repo
 class NotificationsCubit extends Cubit<NotificationsState> {
   final AbstractNotificationsRepo _repo;
-  
+
   AbstractNotificationsRepo get repo => _repo;
 
   NotificationsCubit(this._repo) : super(NotificationsInitial()) {
@@ -19,17 +19,17 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   /// Initialize notifications system
   Future<void> initialize() async {
     emit(NotificationsLoading());
-    
+
     try {
       // Initialize messaging
       await _repo.initMessaging();
-      
+
       // Request permissions
       final permissionGranted = await _repo.requestPermission();
-      
+
       // Get FCM token
       final token = await _repo.getFcmToken();
-      
+
       // Save token to backend if user is logged in
       if (token != null) {
         final prefs = await SharedPreferences.getInstance();
@@ -39,24 +39,26 @@ class NotificationsCubit extends Cubit<NotificationsState> {
           await _repo.saveTokenToBackend(userId.toString(), token, platform);
         }
       }
-      
+
       // Load notifications if user is logged in
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt('current_user_id');
       List<NotificationItem> notifications = [];
       int unreadCount = 0;
-      
+
       if (userId != null) {
         notifications = await _repo.getStoredNotifications(userId.toString());
         unreadCount = await _repo.getUnreadCount(userId.toString());
       }
-      
-      emit(NotificationsReady(
-        permissionGranted: permissionGranted,
-        fcmToken: token,
-        notifications: notifications,
-        unreadCount: unreadCount,
-      ));
+
+      emit(
+        NotificationsReady(
+          permissionGranted: permissionGranted,
+          fcmToken: token,
+          notifications: notifications,
+          unreadCount: unreadCount,
+        ),
+      );
     } catch (e) {
       emit(NotificationsError('Failed to initialize notifications: $e'));
     }
@@ -67,32 +69,41 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt('current_user_id');
-      
+
       if (userId == null) {
-        emit(NotificationsReady(
-          permissionGranted: (state as NotificationsReady?)?.permissionGranted ?? false,
-          fcmToken: (state as NotificationsReady?)?.fcmToken,
-          notifications: [],
-          unreadCount: 0,
-        ));
+        emit(
+          NotificationsReady(
+            permissionGranted:
+                (state as NotificationsReady?)?.permissionGranted ?? false,
+            fcmToken: (state as NotificationsReady?)?.fcmToken,
+            notifications: [],
+            unreadCount: 0,
+          ),
+        );
         return;
       }
-      
-      final notifications = await _repo.getStoredNotifications(userId.toString());
+
+      final notifications = await _repo.getStoredNotifications(
+        userId.toString(),
+      );
       final unreadCount = await _repo.getUnreadCount(userId.toString());
-      
+
       if (state is NotificationsReady) {
         final currentState = state as NotificationsReady;
-        emit(currentState.copyWith(
-          notifications: notifications,
-          unreadCount: unreadCount,
-        ));
+        emit(
+          currentState.copyWith(
+            notifications: notifications,
+            unreadCount: unreadCount,
+          ),
+        );
       } else {
-        emit(NotificationsReady(
-          permissionGranted: true,
-          notifications: notifications,
-          unreadCount: unreadCount,
-        ));
+        emit(
+          NotificationsReady(
+            permissionGranted: true,
+            notifications: notifications,
+            unreadCount: unreadCount,
+          ),
+        );
       }
     } catch (e) {
       emit(NotificationsError('Failed to refresh inbox: $e'));
@@ -114,9 +125,9 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt('current_user_id');
-      
+
       if (userId == null) return;
-      
+
       await _repo.markAllAsRead(userId.toString());
       await refreshInbox();
     } catch (e) {
@@ -142,4 +153,3 @@ class NotificationsCubit extends Cubit<NotificationsState> {
     }
   }
 }
-

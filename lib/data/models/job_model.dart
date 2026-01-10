@@ -10,7 +10,8 @@ class Job {
   final DateTime postedDate;
   final DateTime jobDate;
   final String? coverImageUrl;
-  final List<String>? jobImages; // All job images (up to 5), stored as base64 data URLs
+  final List<String>?
+  jobImages; // All job images (up to 5), stored as base64 data URLs
   final int? clientId;
   final int? agencyId;
   final int? assignedWorkerId; // Worker/cleaner assigned to this job
@@ -76,14 +77,16 @@ class Job {
         return 'Assigned';
     }
   }
-  
+
   /// Check if job is available for workers to apply
   bool get isAvailableForApplication {
-    return (status == JobStatus.open || status == JobStatus.pending || status == JobStatus.active) &&
-           assignedWorkerId == null &&
-           !isDeleted;
+    return (status == JobStatus.open ||
+            status == JobStatus.pending ||
+            status == JobStatus.active) &&
+        assignedWorkerId == null &&
+        !isDeleted;
   }
-  
+
   /// Check if job is completed (both parties confirmed)
   bool get isCompleted {
     return status == JobStatus.completed || (clientDone && workerDone);
@@ -100,7 +103,11 @@ class Job {
       'posted_date': postedDate.toIso8601String(),
       'job_date': jobDate.toIso8601String(),
       'cover_image_url': coverImageUrl,
-      'job_images': jobImages ?? <String>[], // List of base64 data URLs (up to 5 images), empty array if null
+      'job_images':
+          jobImages ??
+          <
+            String
+          >[], // List of base64 data URLs (up to 5 images), empty array if null
       'client_id': clientId,
       'agency_id': agencyId,
       'assigned_worker_id': assignedWorkerId,
@@ -109,7 +116,7 @@ class Job {
       'budget_min': budgetMin,
       'budget_max': budgetMax,
       'estimated_hours': estimatedHours,
-      'required_services': requiredServices != null ? requiredServices!.join(',') : null,
+      'required_services': requiredServices?.join(','),
       // store as bool for Firestore; legacy data may still have int
       'is_deleted': isDeleted,
       'created_at': createdAt?.toIso8601String(),
@@ -151,7 +158,9 @@ class Job {
     } else {
       // Fallback: try parsing as string
       try {
-        postedDate = DateTime.parse(map['posted_date'] as String? ?? DateTime.now().toIso8601String());
+        postedDate = DateTime.parse(
+          map['posted_date'] as String? ?? DateTime.now().toIso8601String(),
+        );
       } catch (e) {
         postedDate = DateTime.now();
       }
@@ -164,7 +173,9 @@ class Job {
     } else {
       // Fallback: try parsing as string
       try {
-        jobDate = DateTime.parse(map['job_date'] as String? ?? DateTime.now().toIso8601String());
+        jobDate = DateTime.parse(
+          map['job_date'] as String? ?? DateTime.now().toIso8601String(),
+        );
       } catch (e) {
         jobDate = DateTime.now();
       }
@@ -180,19 +191,28 @@ class Job {
       postedDate: postedDate,
       jobDate: jobDate,
       coverImageUrl: map['cover_image_url'] as String?,
-      jobImages: map['job_images'] != null 
-          ? (map['job_images'] as List<dynamic>).map((e) => e.toString()).toList()
+      jobImages: map['job_images'] != null
+          ? (map['job_images'] as List<dynamic>)
+                .map((e) => e.toString())
+                .toList()
           : null, // Backward compatible: defaults to null if not present
       clientId: readInt(map['client_id']),
       agencyId: readInt(map['agency_id']),
       assignedWorkerId: readInt(map['assigned_worker_id']),
       clientDone: readBool(map['client_done']),
       workerDone: readBool(map['worker_done']),
-      budgetMin: map['budget_min'] != null ? (map['budget_min'] as num).toDouble() : null,
-      budgetMax: map['budget_max'] != null ? (map['budget_max'] as num).toDouble() : null,
+      budgetMin: map['budget_min'] != null
+          ? (map['budget_min'] as num).toDouble()
+          : null,
+      budgetMax: map['budget_max'] != null
+          ? (map['budget_max'] as num).toDouble()
+          : null,
       estimatedHours: map['estimated_hours'] as int?,
-      requiredServices: map['required_services'] != null 
-          ? (map['required_services'] as String).split(',').where((s) => s.isNotEmpty).toList()
+      requiredServices: map['required_services'] != null
+          ? (map['required_services'] as String)
+                .split(',')
+                .where((s) => s.isNotEmpty)
+                .toList()
           : null,
       isDeleted: readBool(map['is_deleted']),
       createdAt: map['created_at'] != null
@@ -269,17 +289,15 @@ class Job {
 
 enum JobStatus {
   // Job lifecycle states
-  open,        // Job is open and visible to workers (can apply)
-  pending,     // Workers can apply, client reviewing applicants
-  assigned,    // ONE worker accepted (job disappears from others)
-  inProgress,  // Job is in progress
+  open, // Job is open and visible to workers (can apply)
+  pending, // Workers can apply, client reviewing applicants
+  assigned, // ONE worker accepted (job disappears from others)
+  inProgress, // Job is in progress
   completedPendingConfirmation, // One party marked finished, waiting for other
-  completed,   // Both confirmed completion
-  cancelled,   // Job cancelled
-  
+  completed, // Both confirmed completion
+  cancelled, // Job cancelled
   // Legacy states (mapped for backward compatibility)
-  active,      // Maps to 'open'
-  paused,      // Maps to 'cancelled' or 'pending'
-  booked,      // Maps to 'assigned'
+  active, // Maps to 'open'
+  paused, // Maps to 'cancelled' or 'pending'
+  booked, // Maps to 'assigned'
 }
-

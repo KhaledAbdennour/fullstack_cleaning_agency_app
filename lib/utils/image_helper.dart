@@ -2,8 +2,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 
-
-
 class AppImage extends StatelessWidget {
   final String? imageUrl;
   final double? width;
@@ -12,7 +10,7 @@ class AppImage extends StatelessWidget {
   final Widget? placeholder;
   final Widget? errorWidget;
 
-  AppImage({
+  const AppImage({
     super.key,
     required this.imageUrl,
     this.width,
@@ -28,10 +26,8 @@ class AppImage extends StatelessWidget {
       return errorWidget ?? _defaultErrorWidget();
     }
 
-    
     if (imageUrl!.startsWith('data:image')) {
       try {
-        
         final base64String = imageUrl!.split(',').last;
         final imageBytes = base64Decode(base64String);
         return Image.memory(
@@ -48,7 +44,6 @@ class AppImage extends StatelessWidget {
       }
     }
 
-    
     if (imageUrl!.startsWith('/') || imageUrl!.contains('\\')) {
       try {
         final file = File(imageUrl!);
@@ -63,12 +58,9 @@ class AppImage extends StatelessWidget {
             },
           );
         }
-      } catch (e) {
-        
-      }
+      } catch (e) {}
     }
 
-    
     return Image.network(
       imageUrl!,
       width: width,
@@ -91,9 +83,7 @@ class AppImage extends StatelessWidget {
       width: width,
       height: height,
       color: Colors.grey[200],
-      child: const Center(
-        child: CircularProgressIndicator(),
-      ),
+      child: const Center(child: CircularProgressIndicator()),
     );
   }
 
@@ -102,11 +92,7 @@ class AppImage extends StatelessWidget {
       width: width,
       height: height,
       color: Colors.grey[300],
-      child: const Icon(
-        Icons.image,
-        color: Colors.grey,
-      ),
+      child: const Icon(Icons.image, color: Colors.grey),
     );
   }
 }
-

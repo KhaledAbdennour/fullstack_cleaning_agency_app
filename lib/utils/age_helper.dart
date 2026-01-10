@@ -9,7 +9,7 @@ class AgeHelper {
 
     try {
       DateTime birthDate;
-      
+
       // Try mm/dd/yyyy format first (most common in this app)
       if (birthdate.contains('/')) {
         final parts = birthdate.split('/');
@@ -28,13 +28,13 @@ class AgeHelper {
 
       final today = DateTime.now();
       int age = today.year - birthDate.year;
-      
+
       // Adjust if birthday hasn't occurred this year
       if (today.month < birthDate.month ||
           (today.month == birthDate.month && today.day < birthDate.day)) {
         age--;
       }
-      
+
       return age;
     } catch (e) {
       return null;
@@ -50,4 +50,3 @@ class AgeHelper {
     return '$age';
   }
 }
-

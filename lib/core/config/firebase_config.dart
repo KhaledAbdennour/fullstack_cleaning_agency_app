@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 /// Firebase Firestore client singleton
 class FirebaseConfig {
@@ -21,9 +20,7 @@ class FirebaseConfig {
 
   /// Get the Firestore instance
   static FirebaseFirestore get firestore {
-    if (_firestore == null) {
-      _firestore = FirebaseFirestore.instance;
-    }
+    _firestore ??= FirebaseFirestore.instance;
     return _firestore!;
   }
 
@@ -33,8 +30,10 @@ class FirebaseConfig {
   }
 
   /// Get a document reference
-  static DocumentReference<Map<String, dynamic>> doc(String collectionPath, String docId) {
+  static DocumentReference<Map<String, dynamic>> doc(
+    String collectionPath,
+    String docId,
+  ) {
     return firestore.collection(collectionPath).doc(docId);
   }
 }
-

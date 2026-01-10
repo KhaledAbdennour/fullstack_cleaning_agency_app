@@ -4,13 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'homescreen.dart';
-import 'client_profile_page.dart';
 import '../logic/cubits/profiles_cubit.dart';
 import '../utils/validators.dart';
 import '../utils/algerian_addresses.dart';
 import '../utils/role_based_home.dart';
-import '../data/repositories/profiles/profile_repo.dart';
 import '../l10n/app_localizations.dart';
 import 'login.dart';
 
@@ -37,13 +34,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   final TextEditingController _hourlyRateController = TextEditingController();
   String experienceLevel = 'Entry';
   String _selectedGender = 'Male';
-  Set<String> _selectedServices = {};
+  final Set<String> _selectedServices = {};
   String? _selectedWilaya;
   String? _selectedBaladiya;
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedProfileImage;
   bool _isUploadingImage = false;
-  
+
   final Set<String> _checkedUsernames = {};
   final Set<String> _checkedEmails = {};
   final Set<String> _checkedPhones = {};
@@ -110,7 +107,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   _buildTextField(
                     controller: _usernameController,
                     label: 'Username',
@@ -120,7 +117,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     validator: (value) => Validators.validateUsername(value),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   _buildTextField(
                     controller: _passwordController,
                     label: 'Password',
@@ -133,7 +130,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   _buildTextField(
                     controller: _emailController,
                     label: 'Email Address',
@@ -143,7 +140,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     validator: (value) => Validators.validateEmail(value),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   _buildTextField(
                     controller: _fullNameController,
                     label: 'Full Name',
@@ -153,7 +150,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     validator: (value) => Validators.validateFullName(value),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   _buildTextField(
                     controller: _phoneController,
                     label: 'Phone Number',
@@ -163,25 +160,39 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     validator: (value) => Validators.validatePhone(value),
                   ),
                   const SizedBox(height: 20),
-                  
+
                   DropdownButtonFormField<String>(
-                    value: _selectedWilaya,
+                    initialValue: _selectedWilaya,
                     decoration: InputDecoration(
                       labelText: 'Wilaya (Province)',
                       hintText: AppLocalizations.of(context)!.selectYourWilaya,
-                      prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF6B7280)),
-                      floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+                      prefixIcon: const Icon(
+                        Icons.location_on_outlined,
+                        color: Color(0xFF6B7280),
+                      ),
+                      floatingLabelStyle: const TextStyle(
+                        color: Color(0xFF3B82F6),
+                      ),
                       labelStyle: const TextStyle(color: Color(0xFF6B7280)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 16,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                        borderSide: BorderSide(
+                          color: Color(0xFF3B82F6),
+                          width: 1.5,
+                        ),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                        borderSide: const BorderSide(
+                          color: Colors.red,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                     items: AlgerianAddresses.getAllWilayas().map((wilaya) {
@@ -193,7 +204,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     onChanged: (value) {
                       setState(() {
                         _selectedWilaya = value;
-                        _selectedBaladiya = null; 
+                        _selectedBaladiya = null;
                         _addressController.text = value ?? '';
                       });
                     },
@@ -205,36 +216,55 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     },
                   ),
                   const SizedBox(height: 20),
-                  
+
                   if (_selectedWilaya != null)
                     DropdownButtonFormField<String>(
-                      value: _selectedBaladiya,
-                      isExpanded: true, 
+                      initialValue: _selectedBaladiya,
+                      isExpanded: true,
                       decoration: InputDecoration(
                         labelText: 'Baladiya (Municipality)',
                         hintText: 'Select your baladiya (optional)',
                         hintMaxLines: 1,
-                        prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF6B7280)),
-                        floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+                        prefixIcon: const Icon(
+                          Icons.location_city_outlined,
+                          color: Color(0xFF6B7280),
+                        ),
+                        floatingLabelStyle: const TextStyle(
+                          color: Color(0xFF3B82F6),
+                        ),
                         labelStyle: const TextStyle(color: Color(0xFF6B7280)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 16,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         focusedBorder: const OutlineInputBorder(
-                          borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                          borderSide: BorderSide(
+                            color: Color(0xFF3B82F6),
+                            width: 1.5,
+                          ),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                          borderSide: const BorderSide(
+                            color: Colors.red,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                       items: () {
-                        final baladiyat = AlgerianAddresses.getBaladiyatForWilaya(_selectedWilaya!);
-                        if (baladiyat == null) return <DropdownMenuItem<String>>[];
-                        
+                        final baladiyat =
+                            AlgerianAddresses.getBaladiyatForWilaya(
+                              _selectedWilaya!,
+                            );
+                        if (baladiyat == null)
+                          return <DropdownMenuItem<String>>[];
+
                         final uniqueBaladiyat = baladiyat.toSet().toList();
-                        if (_selectedBaladiya != null && !uniqueBaladiyat.contains(_selectedBaladiya)) {
+                        if (_selectedBaladiya != null &&
+                            !uniqueBaladiyat.contains(_selectedBaladiya)) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             if (mounted) {
                               setState(() {
@@ -255,14 +285,18 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                         }).toList();
                       }(),
                       selectedItemBuilder: (BuildContext context) {
-                        final baladiyat = AlgerianAddresses.getBaladiyatForWilaya(_selectedWilaya!);
+                        final baladiyat =
+                            AlgerianAddresses.getBaladiyatForWilaya(
+                              _selectedWilaya!,
+                            );
                         if (baladiyat == null) return <Widget>[];
                         final uniqueBaladiyat = baladiyat.toSet().toList();
                         return uniqueBaladiyat.map((baladiya) {
                           return Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              _selectedBaladiya ?? 'Select your baladiya (optional)',
+                              _selectedBaladiya ??
+                                  'Select your baladiya (optional)',
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                               style: const TextStyle(color: Color(0xFF111827)),
@@ -274,13 +308,14 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                         setState(() {
                           _selectedBaladiya = value;
                           if (value != null && _selectedWilaya != null) {
-                            _addressController.text = '$value, ${_selectedWilaya!}';
+                            _addressController.text =
+                                '$value, ${_selectedWilaya!}';
                           }
                         });
                       },
                     ),
                   if (_selectedWilaya != null) const SizedBox(height: 20),
-                  
+
                   if (_selectedWilaya != null)
                     _buildTextField(
                       controller: _addressController,
@@ -289,15 +324,14 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       icon: Icons.home_outlined,
                       isAddress: true,
                       validator: (value) {
-                        
                         if (_selectedWilaya != null) {
                           final street = value?.trim() ?? '';
                           if (_selectedBaladiya != null) {
-                            _addressController.text = street.isNotEmpty 
+                            _addressController.text = street.isNotEmpty
                                 ? '$street, $_selectedBaladiya, $_selectedWilaya'
                                 : '$_selectedBaladiya, $_selectedWilaya';
                           } else {
-                            _addressController.text = street.isNotEmpty 
+                            _addressController.text = street.isNotEmpty
                                 ? '$street, $_selectedWilaya'
                                 : _selectedWilaya!;
                           }
@@ -307,20 +341,20 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     ),
                   if (_selectedWilaya != null) const SizedBox(height: 20),
                   const SizedBox(height: 20),
-                  
+
                   _buildGenderSelector(),
                   const SizedBox(height: 20),
 
                   _buildUploadTile(
                     title: AppLocalizations.of(context)!.uploadProfilePicture,
-                    subtitle: _selectedProfileImage != null 
-                        ? AppLocalizations.of(context)!.photoSelected 
+                    subtitle: _selectedProfileImage != null
+                        ? AppLocalizations.of(context)!.photoSelected
                         : AppLocalizations.of(context)!.uploadAClearPhoto,
                     icon: Icons.photo_camera_outlined,
                     onTap: _pickProfileImage,
                   ),
                   const SizedBox(height: 24),
-                  
+
                   _buildDatePicker(),
                   const SizedBox(height: 20),
 
@@ -336,7 +370,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   _buildRoleSelector(),
                   const SizedBox(height: 24),
 
-                  
                   _buildTextField(
                     controller: _bioController,
                     label: 'Bio',
@@ -369,15 +402,15 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     _usernameController.dispose();
     _passwordController.dispose();
     _fullNameController.dispose();
-        _emailController.dispose();
-        _phoneController.dispose();
-        _birthdateController.dispose();
-        _addressController.dispose();
-        _bioController.dispose();
-        _agencyNameController.dispose();
-        _businessIdController.dispose();
-        _hourlyRateController.dispose();
-        super.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _birthdateController.dispose();
+    _addressController.dispose();
+    _bioController.dispose();
+    _agencyNameController.dispose();
+    _businessIdController.dispose();
+    _hourlyRateController.dispose();
+    super.dispose();
   }
 
   Widget _buildTextField({
@@ -395,7 +428,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     String? Function(String?)? validator,
   }) {
     List<TextInputFormatter>? inputFormatters;
-    
+
     if (isInteger) {
       inputFormatters = [FilteringTextInputFormatter.digitsOnly];
     } else if (isPhone) {
@@ -416,7 +449,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9_]')),
       ];
     }
-    
+
     TextInputType keyboardType;
     if (isInteger || isPhone) {
       keyboardType = TextInputType.number;
@@ -427,12 +460,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     } else {
       keyboardType = TextInputType.text;
     }
-    
+
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      validator: validator ??
+      validator:
+          validator ??
           (minLength != null
               ? (value) {
                   if (value == null || value.isEmpty) {
@@ -455,12 +489,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         prefixIcon: icon != null
             ? Icon(icon, color: const Color(0xFF6B7280))
             : null,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 16,
+        ),
         floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
         labelStyle: const TextStyle(color: Color(0xFF6B7280)),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
         ),
@@ -480,13 +515,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       decoration: InputDecoration(
         labelText: 'Birthdate *',
         hintText: 'mm/dd/yyyy',
-        suffixIcon: const Icon(Icons.calendar_today_outlined,
-            color: Color(0xFF6B7280)),
+        suffixIcon: const Icon(
+          Icons.calendar_today_outlined,
+          color: Color(0xFF6B7280),
+        ),
         floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
         labelStyle: const TextStyle(color: Color(0xFF6B7280)),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         focusedBorder: const OutlineInputBorder(
           borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
         ),
@@ -705,9 +740,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             },
                       icon: const Icon(Icons.delete_outline),
                       label: const Text('Remove'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red,
-                      ),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
                     ),
                 ],
               ),
@@ -772,7 +805,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   Widget _buildServicesCheckboxes() {
     final services = ['Home', 'Office', 'Industrial', 'Specialty'];
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -802,7 +835,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? const Color(0xFF3B82F6).withOpacity(0.1)
@@ -819,7 +855,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                      isSelected
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
                       color: isSelected
                           ? const Color(0xFF3B82F6)
                           : const Color(0xFF9CA3AF),
@@ -830,7 +868,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       service,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
                         color: isSelected
                             ? const Color(0xFF3B82F6)
                             : const Color(0xFF111827),
@@ -914,8 +954,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             onTap: () => setState(() => selectedRole = role),
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
                 color: isSelected
                     ? const Color(0xFF3B82F6).withOpacity(0.1)
@@ -942,8 +981,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     role,
                     style: TextStyle(
                       color: const Color(0xFF111827),
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ],
@@ -989,7 +1029,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             Flexible(
               flex: 1,
               child: DropdownButtonFormField<String>(
-                value: experienceLevel,
+                initialValue: experienceLevel,
                 decoration: InputDecoration(
                   labelText: 'Experience Level',
                   floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
@@ -998,17 +1038,22 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                    borderSide: BorderSide(
+                      color: Color(0xFF3B82F6),
+                      width: 1.5,
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 16,
+                  ),
                 ),
                 items: const [
                   DropdownMenuItem(value: 'Entry', child: Text('Entry')),
                   DropdownMenuItem(value: 'Mid', child: Text('Mid')),
                   DropdownMenuItem(value: 'Senior', child: Text('Senior')),
                 ],
-                onChanged: (value) =>
-                    setState(() => experienceLevel = value!),
+                onChanged: (value) => setState(() => experienceLevel = value!),
               ),
             ),
             const SizedBox(width: 8),
@@ -1049,7 +1094,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             Flexible(
               flex: 1,
               child: DropdownButtonFormField<String>(
-                value: experienceLevel,
+                initialValue: experienceLevel,
                 decoration: InputDecoration(
                   labelText: 'Experience Level',
                   floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
@@ -1058,17 +1103,22 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                    borderSide: BorderSide(
+                      color: Color(0xFF3B82F6),
+                      width: 1.5,
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 16,
+                  ),
                 ),
                 items: const [
                   DropdownMenuItem(value: 'Entry', child: Text('Entry')),
                   DropdownMenuItem(value: 'Mid', child: Text('Mid')),
                   DropdownMenuItem(value: 'Senior', child: Text('Senior')),
                 ],
-                onChanged: (value) =>
-                    setState(() => experienceLevel = value!),
+                onChanged: (value) => setState(() => experienceLevel = value!),
               ),
             ),
             const SizedBox(width: 8),
@@ -1101,7 +1151,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 backgroundColor: Colors.green,
               ),
             );
-            
+
             RoleBasedHome.navigateToHome(context, state.user);
           }
         } else if (state is ProfilesError) {
@@ -1126,9 +1176,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   ? null
                   : () async {
                       if (_formKey.currentState!.validate()) {
-                        
-                        final fullName = _fullNameController.text.trim().replaceAll(RegExp(r'\s+'), ' ');
-                        
+                        final fullName = _fullNameController.text
+                            .trim()
+                            .replaceAll(RegExp(r'\s+'), ' ');
+
                         // Convert profile picture to base64 if selected
                         String? pictureDataUrl;
                         if (_selectedProfileImage != null) {
@@ -1136,13 +1187,16 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             setState(() {
                               _isUploadingImage = true;
                             });
-                            
+
                             final imageFile = File(_selectedProfileImage!.path);
                             final imageBytes = await imageFile.readAsBytes();
                             final base64Image = base64Encode(imageBytes);
-                            
-                            final extension = _selectedProfileImage!.path.split('.').last.toLowerCase();
-                            String mimeType = 'image/jpeg'; 
+
+                            final extension = _selectedProfileImage!.path
+                                .split('.')
+                                .last
+                                .toLowerCase();
+                            String mimeType = 'image/jpeg';
                             if (extension == 'png') {
                               mimeType = 'image/png';
                             } else if (extension == 'gif') {
@@ -1150,9 +1204,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             } else if (extension == 'webp') {
                               mimeType = 'image/webp';
                             }
-                            
-                            pictureDataUrl = 'data:$mimeType;base64,$base64Image';
-                            
+
+                            pictureDataUrl =
+                                'data:$mimeType;base64,$base64Image';
+
                             setState(() {
                               _isUploadingImage = false;
                             });
@@ -1163,7 +1218,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Error processing profile picture: $e'),
+                                  content: Text(
+                                    'Error processing profile picture: $e',
+                                  ),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -1171,7 +1228,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             return;
                           }
                         }
-                        
+
                         final profileData = <String, dynamic>{
                           'username': _usernameController.text.trim(),
                           'password': _passwordController.text,
@@ -1179,68 +1236,87 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                           'full_name': fullName,
                           'phone': _phoneController.text.trim(),
                           'birthdate': _birthdateController.text,
-                          'address': _addressController.text.trim().replaceAll(RegExp(r'\s+'), ' '),
+                          'address': _addressController.text.trim().replaceAll(
+                            RegExp(r'\s+'),
+                            ' ',
+                          ),
                           'gender': _selectedGender,
                           'bio': _bioController.text.trim(),
                           'user_type': selectedRole,
                         };
-                        
+
                         // Add profile picture if available
                         if (pictureDataUrl != null) {
                           profileData['picture'] = pictureDataUrl;
                         }
 
                         if (selectedRole == 'Agency') {
-                          profileData['agency_name'] =
-                              _agencyNameController.text.trim();
-                          profileData['business_id'] =
-                              _businessIdController.text.trim();
-                          profileData['services'] =
-                              _selectedServices.join(', ');
+                          profileData['agency_name'] = _agencyNameController
+                              .text
+                              .trim();
+                          profileData['business_id'] = _businessIdController
+                              .text
+                              .trim();
+                          profileData['services'] = _selectedServices.join(
+                            ', ',
+                          );
                           profileData['experience_level'] = experienceLevel;
-                          profileData['hourly_rate'] =
-                              _hourlyRateController.text.trim();
-                          
-                          if (profileData['bio'] == null || (profileData['bio'] as String).isEmpty) {
+                          profileData['hourly_rate'] = _hourlyRateController
+                              .text
+                              .trim();
+
+                          if (profileData['bio'] == null ||
+                              (profileData['bio'] as String).isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Bio is required for Agency accounts'),
+                                content: Text(
+                                  'Bio is required for Agency accounts',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );
                             return;
                           }
-                          
+
                           if (_selectedServices.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Please select at least one service'),
+                                content: Text(
+                                  'Please select at least one service',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );
                             return;
                           }
                         } else if (selectedRole == 'Individual Cleaner') {
-                          profileData['services'] =
-                              _selectedServices.join(', ');
+                          profileData['services'] = _selectedServices.join(
+                            ', ',
+                          );
                           profileData['experience_level'] = experienceLevel;
-                          profileData['hourly_rate'] =
-                              _hourlyRateController.text.trim();
-                          
-                          if (profileData['bio'] == null || (profileData['bio'] as String).isEmpty) {
+                          profileData['hourly_rate'] = _hourlyRateController
+                              .text
+                              .trim();
+
+                          if (profileData['bio'] == null ||
+                              (profileData['bio'] as String).isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Bio is required for Individual Cleaner accounts'),
+                                content: Text(
+                                  'Bio is required for Individual Cleaner accounts',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );
                             return;
                           }
-                          
+
                           if (_selectedServices.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Please select at least one service'),
+                                content: Text(
+                                  'Please select at least one service',
+                                ),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -1253,7 +1329,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3B82F6),
-                disabledBackgroundColor: const Color(0xFF3B82F6).withOpacity(0.6),
+                disabledBackgroundColor: const Color(
+                  0xFF3B82F6,
+                ).withOpacity(0.6),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1265,8 +1343,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
                   : const Text(
@@ -1284,5 +1361,3 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     );
   }
 }
-
-

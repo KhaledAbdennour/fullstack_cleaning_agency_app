@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../logic/cubits/profiles_cubit.dart';
 import '../logic/cubits/agency_dashboard_cubit.dart';
 import '../data/repositories/cleaners/cleaners_repo.dart';
 import '../data/models/cleaner_model.dart';
@@ -24,20 +23,21 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _searchProfileController = TextEditingController();
-  
+  final TextEditingController _searchProfileController =
+      TextEditingController();
+
   final ImagePicker _picker = ImagePicker();
   XFile? _profileImage;
   String _selectedExperienceLevel = 'Beginner';
-  Set<String> _selectedServices = {};
-  
+  final Set<String> _selectedServices = {};
+
   final List<String> _availableServices = [
     'Residential Cleaning',
     'Office Cleaning',
     'Deep Cleaning',
     'Window Cleaning',
   ];
-  
+
   final List<String> _experienceLevels = [
     'Beginner',
     'Intermediate',
@@ -93,8 +93,7 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
       final profileRepo = AbstractProfileRepo.getInstance();
       final allProfiles = await profileRepo.getAllProfiles();
       if (!mounted) return;
-      
-      
+
       final matches = allProfiles.where((profile) {
         final name = (profile['full_name'] as String? ?? '').toLowerCase();
         final email = (profile['email'] as String? ?? '').toLowerCase();
@@ -112,7 +111,6 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
         return;
       }
 
-      
       if (matches.length == 1) {
         await _addCleanerFromProfile(matches.first);
       } else {
@@ -170,9 +168,10 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
         return;
       }
 
-      
       final cleanersRepo = AbstractCleanersRepo.getInstance();
-      final existingCleaners = await cleanersRepo.getCleanersForAgency(widget.agencyId);
+      final existingCleaners = await cleanersRepo.getCleanersForAgency(
+        widget.agencyId,
+      );
       if (!mounted) return;
       if (existingCleaners.any((c) => c.id == cleanerId)) {
         if (mounted) {
@@ -186,7 +185,6 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
         return;
       }
 
-      
       final cleaner = Cleaner(
         name: profile['full_name'] as String? ?? 'Unknown',
         avatarUrl: profile['picture'] as String?,
@@ -199,9 +197,8 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
       await cleanersRepo.addCleaner(cleaner);
 
       if (mounted) {
-        
         context.read<CleanerTeamCubit>().refresh(widget.agencyId);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Cleaner added successfully!'),
@@ -238,13 +235,11 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
     }
 
     try {
-      
       final profileRepo = AbstractProfileRepo.getInstance();
-      
-      
+
       final profileData = {
         'username': _emailController.text.trim().split('@').first,
-        'password': 'temp123', 
+        'password': 'temp123',
         'email': _emailController.text.trim(),
         'full_name': _fullNameController.text.trim(),
         'phone': _phoneController.text.trim(),
@@ -255,10 +250,8 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
         'picture': _profileImage?.path,
       };
 
-      
-      
       final cleanersRepo = AbstractCleanersRepo.getInstance();
-      
+
       final cleaner = Cleaner(
         name: _fullNameController.text.trim(),
         avatarUrl: _profileImage?.path,
@@ -271,9 +264,8 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
       await cleanersRepo.addCleaner(cleaner);
 
       if (mounted) {
-        
         context.read<CleanerTeamCubit>().refresh(widget.agencyId);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Cleaner added successfully!'),
@@ -338,11 +330,9 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
                 _buildProfilePictureSection(),
                 const SizedBox(height: 24),
 
-                
                 _buildSectionTitle('Personal Information'),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -372,7 +362,6 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
                 ),
                 const SizedBox(height: 24),
 
-                
                 _buildSectionTitle('Professional Details'),
                 const SizedBox(height: 16),
                 _buildServicesSection(),
@@ -380,13 +369,11 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
                 _buildExperienceDropdown(),
                 const SizedBox(height: 24),
 
-                
                 _buildSectionTitle('Existing Profile'),
                 const SizedBox(height: 16),
                 _buildLinkExistingProfileSection(),
                 const SizedBox(height: 32),
 
-                
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -435,11 +422,7 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
                       fit: BoxFit.cover,
                     ),
                   )
-                : const Icon(
-                    Icons.person,
-                    size: 60,
-                    color: Colors.grey,
-                  ),
+                : const Icon(Icons.person, size: 60, color: Colors.grey),
           ),
           Positioned(
             bottom: 0,
@@ -514,7 +497,10 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
           hintText: hint,
           prefixIcon: Icon(icon, color: Colors.grey),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       ),
     );
@@ -573,12 +559,9 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
-        value: _selectedExperienceLevel,
+        initialValue: _selectedExperienceLevel,
         items: _experienceLevels.map((level) {
-          return DropdownMenuItem<String>(
-            value: level,
-            child: Text(level),
-          );
+          return DropdownMenuItem<String>(value: level, child: Text(level));
         }).toList(),
         onChanged: (value) {
           setState(() {
@@ -617,7 +600,10 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
                   decoration: const InputDecoration(
                     hintText: 'Search by name or email',
                     border: OutlineInputBorder(),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ),
@@ -626,7 +612,10 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
                 onPressed: _linkExistingProfile,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF3B82F6),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                 ),
                 child: const Text('Link'),
               ),
@@ -637,4 +626,3 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
     );
   }
 }
-

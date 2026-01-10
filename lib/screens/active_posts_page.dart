@@ -29,8 +29,11 @@ class ActivePostsPage extends StatelessWidget {
       ),
       body: BlocBuilder<ProfilesCubit, ProfilesState>(
         builder: (context, profileState) {
-          if (profileState is! ProfilesLoaded || profileState.currentUser == null) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          if (profileState is! ProfilesLoaded ||
+              profileState.currentUser == null) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+            );
           }
 
           final userId = profileState.currentUser!['id'] as int?;
@@ -43,10 +46,7 @@ class ActivePostsPage extends StatelessWidget {
                 child: Text(
                   'Active Posts is only available for clients.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF6B7280),
-                  ),
+                  style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
                 ),
               ),
             );
@@ -62,7 +62,9 @@ class ActivePostsPage extends StatelessWidget {
           return BlocBuilder<ClientJobsCubit, ClientJobsState>(
             builder: (context, state) {
               if (state is ClientJobsLoading && state is! ClientJobsLoaded) {
-                return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                );
               } else if (state is ClientJobsError) {
                 return Center(
                   child: Column(
@@ -81,10 +83,12 @@ class ActivePostsPage extends StatelessWidget {
                 );
               } else if (state is ClientJobsLoaded) {
                 // Filter out completed jobs and deleted jobs - ONLY show active posts
-                final activeJobs = state.jobs.where((job) => 
-                  job.status != JobStatus.completed && 
-                  !job.isDeleted
-                ).toList();
+                final activeJobs = state.jobs
+                    .where(
+                      (job) =>
+                          job.status != JobStatus.completed && !job.isDeleted,
+                    )
+                    .toList();
 
                 if (activeJobs.isEmpty) {
                   return Center(
@@ -116,7 +120,9 @@ class ActivePostsPage extends StatelessWidget {
                   child: Column(
                     children: sortedJobs.map((job) {
                       try {
-                        if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
+                        if (job.title.isEmpty ||
+                            job.city.isEmpty ||
+                            job.country.isEmpty) {
                           return const SizedBox.shrink();
                         }
                         return _buildJobPostCard(context, job);
@@ -162,7 +168,8 @@ class ActivePostsPage extends StatelessWidget {
       } else if (difference.inDays < 7) {
         timeAgoText = '${difference.inDays}d ago';
       } else {
-        timeAgoText = '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
+        timeAgoText =
+            '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
       }
 
       // Get status color
@@ -197,9 +204,7 @@ class ActivePostsPage extends StatelessWidget {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => ManageJobPage(job: job),
-            ),
+            MaterialPageRoute(builder: (context) => ManageJobPage(job: job)),
           );
         },
         borderRadius: BorderRadius.circular(12),
@@ -222,8 +227,11 @@ class ActivePostsPage extends StatelessWidget {
             children: [
               // Cover image
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child:
+                    job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
                     ? AppImage(
                         imageUrl: job.coverImageUrl!,
                         height: 180,
@@ -233,14 +241,22 @@ class ActivePostsPage extends StatelessWidget {
                           height: 180,
                           width: double.infinity,
                           color: Colors.grey[200],
-                          child: const Icon(Icons.image, size: 48, color: Colors.grey),
+                          child: const Icon(
+                            Icons.image,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                         ),
                       )
                     : Container(
                         height: 180,
                         width: double.infinity,
                         color: Colors.grey[200],
-                        child: const Icon(Icons.image, size: 48, color: Colors.grey),
+                        child: const Icon(
+                          Icons.image,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                       ),
               ),
               // Content
@@ -268,7 +284,10 @@ class ActivePostsPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
@@ -301,17 +320,21 @@ class ActivePostsPage extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.account_balance_wallet_outlined, size: 16, color: Color(0xFF3B82F6)),
+                          const Icon(
+                            Icons.account_balance_wallet_outlined,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               job.budgetMin != null && job.budgetMax != null
                                   ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                                   : job.budgetMin != null
-                                      ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                                      : job.budgetMax != null
-                                          ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                                          : 'Budget negotiable',
+                                  ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                                  : job.budgetMax != null
+                                  ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                  : 'Budget negotiable',
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF6B7280),
@@ -327,7 +350,11 @@ class ActivePostsPage extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF3B82F6)),
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -345,7 +372,11 @@ class ActivePostsPage extends StatelessWidget {
                     // Date with blue icon and time ago in parentheses - under location
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF3B82F6)),
+                        const Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: Color(0xFF3B82F6),
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(

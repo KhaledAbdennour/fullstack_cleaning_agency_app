@@ -33,17 +33,16 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
         elevation: 0,
         title: const Text(
           'All Agencies',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
       body: BlocBuilder<ListingsCubit, ListingsState>(
         builder: (context, state) {
           if (state is ListingsLoading) {
-            return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+            );
           } else if (state is ListingsError) {
             return Center(
               child: Column(
@@ -62,7 +61,9 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
             );
           } else if (state is ListingsLoaded) {
             // Get all agencies and sort by rating descending
-            final allAgencies = List<Map<String, dynamic>>.from(state.topAgencies);
+            final allAgencies = List<Map<String, dynamic>>.from(
+              state.topAgencies,
+            );
             allAgencies.sort((a, b) {
               final ratingA = (a['rating'] as num?)?.toDouble() ?? 0.0;
               final ratingB = (b['rating'] as num?)?.toDouble() ?? 0.0;
@@ -95,7 +96,8 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
 
   Widget _buildAgencyCard(BuildContext context, Map<String, dynamic> agency) {
     final name = agency['name'] as String? ?? 'Unknown Agency';
-    final description = agency['bio'] as String? ?? 'Professional cleaning service provider.';
+    final description =
+        agency['bio'] as String? ?? 'Professional cleaning service provider.';
     final location = agency['location'] as String? ?? 'Unknown';
     final priceValue = agency['hourly_rate'];
     final price = priceValue != null && priceValue.toString().isNotEmpty
@@ -104,7 +106,7 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
     final rating = (agency['rating'] as num?)?.toDouble() ?? 0.0;
     final reviews = agency['jobsCompleted'] as int? ?? 0;
     final imageUrl = agency['image'] as String?;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -140,13 +142,21 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
-                          errorWidget: const Icon(Icons.business, size: 30, color: Color(0xFF9CA3AF)),
+                          errorWidget: const Icon(
+                            Icons.business,
+                            size: 30,
+                            color: Color(0xFF9CA3AF),
+                          ),
                         )
-                      : const Icon(Icons.business, size: 30, color: Color(0xFF9CA3AF)),
+                      : const Icon(
+                          Icons.business,
+                          size: 30,
+                          color: Color(0xFF9CA3AF),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +180,7 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -192,7 +202,7 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -214,7 +224,7 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -238,7 +248,7 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -246,18 +256,20 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CleanerProfilePage(cleaner: {
-                      'name': name,
-                      'rating': rating,
-                      'reviews': reviews,
-                      'isVerified': agency['is_verified'] as bool? ?? false,
-                      'description': description,
-                      'image': imageUrl,
-                      'type': 'Agency',
-                      'location': location,
-                      'price': price,
-                      'profileData': agency,
-                    }),
+                    builder: (context) => CleanerProfilePage(
+                      cleaner: {
+                        'name': name,
+                        'rating': rating,
+                        'reviews': reviews,
+                        'isVerified': agency['is_verified'] as bool? ?? false,
+                        'description': description,
+                        'image': imageUrl,
+                        'type': 'Agency',
+                        'location': location,
+                        'price': price,
+                        'profileData': agency,
+                      },
+                    ),
                   ),
                 );
               },

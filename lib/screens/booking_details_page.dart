@@ -38,7 +38,6 @@ class BookingDetailsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Text(
                 job['title'] ?? 'Job Title',
                 style: const TextStyle(
@@ -50,17 +49,15 @@ class BookingDetailsPage extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 job['client'] ?? 'Fatima Zohra',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 8),
 
-              
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E7FF),
                   borderRadius: BorderRadius.circular(8),
@@ -101,19 +98,19 @@ class BookingDetailsPage extends StatelessWidget {
               _buildDetailTile(
                 icon: Icons.location_on_outlined,
                 title: 'Location',
-                value: job['location'] ??
+                value:
+                    job['location'] ??
                     '123 Rue Didouche Mourad, Algiers, Algeria',
               ),
               const SizedBox(height: 16),
               _buildDetailTile(
                 icon: Icons.notes_outlined,
                 title: 'Notes',
-                value: job['notes'] ??
-                    'Please focus on the kitchen and bathroom.',
+                value:
+                    job['notes'] ?? 'Please focus on the kitchen and bathroom.',
               ),
               const SizedBox(height: 40),
 
-              
               _buildActionButton(
                 text: 'Mark as Complete',
                 color: const Color(0xFF16A34A),
@@ -121,9 +118,8 @@ class BookingDetailsPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const ReviewPage(
-                        bookingTitle: "CleanSpace Pro",
-                      ),
+                      builder: (context) =>
+                          const ReviewPage(bookingTitle: "CleanSpace Pro"),
                     ),
                   );
                 },
@@ -135,7 +131,8 @@ class BookingDetailsPage extends StatelessWidget {
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Booking cancellation requested!')),
+                      content: Text('Booking cancellation requested!'),
+                    ),
                   );
                 },
               ),
@@ -169,10 +166,7 @@ class BookingDetailsPage extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 4),
               Text(
@@ -202,8 +196,9 @@ class BookingDetailsPage extends StatelessWidget {
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           elevation: 0,
         ),
         child: Text(
@@ -218,7 +213,3 @@ class BookingDetailsPage extends StatelessWidget {
     );
   }
 }
-
-
-
-

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'welcome_inside.dart';
 import 'create_account_page.dart';
 import 'forgot_password.dart';
 import '../logic/cubits/profiles_cubit.dart';
@@ -25,7 +24,6 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
-  
   void _handleLogin() {
     final cubit = context.read<ProfilesCubit>();
     final username = _emailController.text.trim();
@@ -34,7 +32,6 @@ class _LoginState extends State<Login> {
     cubit.login(username, password);
   }
 
-  
   void _handleForgotPassword() {
     Navigator.push(
       context,
@@ -42,14 +39,12 @@ class _LoginState extends State<Login> {
     );
   }
 
-  
-void _handleCreateAccount() {
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const CreateAccountPage()),
-  );
-}
-
+  void _handleCreateAccount() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CreateAccountPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +54,6 @@ void _handleCreateAccount() {
         child: BlocListener<ProfilesCubit, ProfilesState>(
           listener: (context, state) {
             if (state is LoginSuccess) {
-              
               RoleBasedHome.navigateToHome(context, state.user);
             } else if (state is ProfilesError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +97,6 @@ void _handleCreateAccount() {
     );
   }
 
-  
   Widget _buildLogo() {
     return Container(
       width: 120,
@@ -115,11 +108,7 @@ void _handleCreateAccount() {
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.eco,
-            color: Colors.white,
-            size: 32,
-          ),
+          Icon(Icons.eco, color: Colors.white, size: 32),
           SizedBox(height: 8),
           Text(
             'Clean Space',
@@ -134,7 +123,6 @@ void _handleCreateAccount() {
     );
   }
 
-  
   Widget _buildWelcomeText() {
     return const Text(
       'Welcome Back!',
@@ -146,7 +134,6 @@ void _handleCreateAccount() {
     );
   }
 
-  
   Widget _buildEmailField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,10 +151,7 @@ void _handleCreateAccount() {
           controller: _emailController,
           decoration: InputDecoration(
             hintText: 'Enter your email or username',
-            hintStyle: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 14,
-            ),
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
             filled: true,
             fillColor: const Color(0xFFF7FAFC),
             border: OutlineInputBorder(
@@ -185,7 +169,6 @@ void _handleCreateAccount() {
     );
   }
 
-  
   Widget _buildPasswordField() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,10 +187,7 @@ void _handleCreateAccount() {
           obscureText: !_isPasswordVisible,
           decoration: InputDecoration(
             hintText: 'Enter your password',
-            hintStyle: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 14,
-            ),
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
             filled: true,
             fillColor: const Color(0xFFF7FAFC),
             border: OutlineInputBorder(
@@ -237,27 +217,23 @@ void _handleCreateAccount() {
     );
   }
 
-
-  
   Widget _buildForgotPassword() {
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: _handleForgotPassword,
-          child: const Text(
-            'Forgot Password?',
-            style: TextStyle(
-              color: Color(0xFF3B82F6),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+        child: const Text(
+          'Forgot Password?',
+          style: TextStyle(
+            color: Color(0xFF3B82F6),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
+        ),
       ),
     );
   }
 
-
-  
   Widget _buildLoginButton(bool isLoading) {
     return SizedBox(
       width: double.infinity,
@@ -266,9 +242,7 @@ void _handleCreateAccount() {
         onPressed: isLoading ? null : _handleLogin,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3B82F6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
         ),
         child: isLoading
@@ -292,17 +266,13 @@ void _handleCreateAccount() {
     );
   }
 
-  
   Widget _buildCreateAccountText() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
           "Don't have an account? ",
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.grey[600], fontSize: 14),
         ),
         TextButton(
           onPressed: _handleCreateAccount,

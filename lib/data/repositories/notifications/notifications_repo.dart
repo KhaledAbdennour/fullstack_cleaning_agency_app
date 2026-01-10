@@ -30,13 +30,13 @@ abstract class AbstractNotificationsRepo {
 
   /// Get stored notifications for user (uses role-based selector)
   Future<List<NotificationItem>> getStoredNotifications(String userId);
-  
+
   /// Get notifications for Worker role
   Future<List<NotificationItem>> getNotificationsForWorker(String userId);
-  
+
   /// Get notifications for Agency role
   Future<List<NotificationItem>> getNotificationsForAgency(String userId);
-  
+
   /// Get notifications for Client role
   Future<List<NotificationItem>> getNotificationsForClient(String userId);
 
@@ -54,8 +54,7 @@ abstract class AbstractNotificationsRepo {
 
   /// Unsubscribe from topic
   Future<void> unsubscribeFromTopic(String topic);
-  
+
   /// Get diagnostics info for debugging (dev mode only)
   Future<Map<String, dynamic>> getDiagnostics(String userId);
 }
-

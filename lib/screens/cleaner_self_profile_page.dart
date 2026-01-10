@@ -10,10 +10,9 @@ import '../utils/image_helper.dart';
 import '../l10n/app_localizations.dart';
 import 'EditProfilePage.dart';
 
-
 class CleanerSelfProfilePage extends StatefulWidget {
   final int? initialTab; // 0=Overview, 1=History, 2=Reviews
-  
+
   const CleanerSelfProfilePage({super.key, this.initialTab});
 
   @override
@@ -30,13 +29,13 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
   void initState() {
     super.initState();
     _innerTabController = TabController(
-      length: 3, 
+      length: 3,
       vsync: this,
       initialIndex: widget.initialTab ?? 0,
     );
     _innerTabController.addListener(_handleInnerTabChange);
     _loadCleanerProfile();
-    
+
     // If initialTab is provided, ensure tab is set after first frame
     if (widget.initialTab != null && widget.initialTab! < 3) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -50,10 +49,10 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
   void _handleInnerTabChange() {
     if (!_innerTabController.indexIsChanging && _cleanerId != null) {
       switch (_innerTabController.index) {
-        case 1: 
+        case 1:
           context.read<CleanerHistoryCubit>().loadHistory(_cleanerId!);
           break;
-        case 2: 
+        case 2:
           context.read<CleanerReviewsCubit>().loadReviews(_cleanerId!);
           break;
       }
@@ -72,7 +71,6 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
         _cleanerProfile = user;
       });
       if (_cleanerId != null && mounted) {
-        
         context.read<CleanerHistoryCubit>().loadHistory(_cleanerId!);
         context.read<CleanerReviewsCubit>().loadReviews(_cleanerId!);
       }
@@ -88,8 +86,18 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
 
   String _formatDate(DateTime date) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
@@ -98,7 +106,9 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
   Widget build(BuildContext context) {
     if (_cleanerProfile == null || _cleanerId == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+        ),
       );
     }
 
@@ -108,23 +118,22 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
-          
           BlocBuilder<CleanerReviewsCubit, CleanerReviewsState>(
             builder: (context, reviewsState) {
               double rating = 0.0;
               int reviewCount = 0;
-              
+
               if (reviewsState is CleanerReviewsLoaded) {
                 rating = reviewsState.averageRating;
                 reviewCount = reviewsState.reviewCount;
               }
-              
+
               return _buildHeader(cleanerName, rating, reviewCount);
             },
           ),
-          
+
           _buildInnerTabBar(),
-          
+
           Expanded(
             child: TabBarView(
               controller: _innerTabController,
@@ -166,57 +175,56 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                 },
                 icon: const Icon(Icons.edit, size: 18),
                 label: Text(AppLocalizations.of(context)!.edit),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.blue,
-                ),
+                style: TextButton.styleFrom(foregroundColor: Colors.blue),
               ),
             ],
           ),
-          
+
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey[300],
-            child: _cleanerProfile!['picture'] != null && (_cleanerProfile!['picture'] as String).isNotEmpty
+            child:
+                _cleanerProfile!['picture'] != null &&
+                    (_cleanerProfile!['picture'] as String).isNotEmpty
                 ? ClipOval(
                     child: AppImage(
                       imageUrl: _cleanerProfile!['picture'] as String,
                       width: 100,
                       height: 100,
                       fit: BoxFit.cover,
-                      errorWidget: const Icon(Icons.person, size: 50, color: Colors.grey),
+                      errorWidget: const Icon(
+                        Icons.person,
+                        size: 50,
+                        color: Colors.grey,
+                      ),
                     ),
                   )
                 : const Icon(Icons.person, size: 50, color: Colors.grey),
           ),
           const SizedBox(height: 16),
-          
+
           Text(
             name,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          
+
           if (_cleanerProfile!['agency_name'] != null)
             GestureDetector(
               onTap: () {
-                
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Agency profile coming soon')),
                 );
               },
               child: Text(
-                  AppLocalizations.of(context)!.partOfAgency(_cleanerProfile!['agency_name'] as String),
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.blue,
-                ),
+                AppLocalizations.of(
+                  context,
+                )!.partOfAgency(_cleanerProfile!['agency_name'] as String),
+                style: const TextStyle(fontSize: 14, color: Colors.blue),
               ),
             ),
           const SizedBox(height: 12),
-          
+
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -232,7 +240,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
             ],
           ),
           const SizedBox(height: 8),
-          
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -279,10 +287,13 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
   }
 
   Widget _buildOverviewTab() {
-    final bio = _cleanerProfile!['bio'] as String? ?? 
+    final bio =
+        _cleanerProfile!['bio'] as String? ??
         'With over 5 years of experience, I am a dedicated and meticulous cleaner passionate about creating spotless and healthy environments for my clients. My commitment is to provide excellent, reliable service every time.';
-    final services = _cleanerProfile!['services'] as String? ?? 'Residential Cleaning, Office Cleaning';
-    final experience = '5+ Years'; 
+    final services =
+        _cleanerProfile!['services'] as String? ??
+        'Residential Cleaning, Office Cleaning';
+    final experience = '5+ Years';
     final languages = 'Arabic, French';
     final location = _cleanerProfile!['address'] as String? ?? 'Algiers';
 
@@ -291,30 +302,30 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          
           Text(
             AppLocalizations.of(context)!.aboutMe,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
-          Text(
-            bio,
-            style: const TextStyle(fontSize: 16, height: 1.5),
-          ),
+          Text(bio, style: const TextStyle(fontSize: 16, height: 1.5)),
           const SizedBox(height: 24),
 
-          
           Row(
             children: [
               Expanded(
-                child: _buildInfoCard(Icons.work_outline, AppLocalizations.of(context)!.experience, experience),
+                child: _buildInfoCard(
+                  Icons.work_outline,
+                  AppLocalizations.of(context)!.experience,
+                  experience,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoCard(Icons.person_outline, AppLocalizations.of(context)!.age, '28'),
+                child: _buildInfoCard(
+                  Icons.person_outline,
+                  AppLocalizations.of(context)!.age,
+                  '28',
+                ),
               ),
             ],
           ),
@@ -322,23 +333,27 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
           Row(
             children: [
               Expanded(
-                child: _buildInfoCard(Icons.location_on_outlined, AppLocalizations.of(context)!.location, location.split(',').first),
+                child: _buildInfoCard(
+                  Icons.location_on_outlined,
+                  AppLocalizations.of(context)!.location,
+                  location.split(',').first,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoCard(Icons.language_outlined, AppLocalizations.of(context)!.languages, languages),
+                child: _buildInfoCard(
+                  Icons.language_outlined,
+                  AppLocalizations.of(context)!.languages,
+                  languages,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
 
-          
           Text(
             AppLocalizations.of(context)!.servicesOffered,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -365,20 +380,11 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
         children: [
           Icon(icon, color: Colors.green, size: 32),
           const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
-          ),
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -387,7 +393,8 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
 
   Widget _buildServiceCard(String service) {
     IconData icon;
-    if (service.toLowerCase().contains('residential') || service.toLowerCase().contains('home')) {
+    if (service.toLowerCase().contains('residential') ||
+        service.toLowerCase().contains('home')) {
       icon = Icons.home_outlined;
     } else if (service.toLowerCase().contains('office')) {
       icon = Icons.business_outlined;
@@ -411,10 +418,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
           const SizedBox(width: 8),
           Text(
             service,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -423,13 +427,17 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
 
   Widget _buildHistoryTab() {
     if (_cleanerId == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+      );
     }
 
     return BlocBuilder<CleanerHistoryCubit, CleanerHistoryState>(
       builder: (context, state) {
         if (state is CleanerHistoryLoading && state is! CleanerHistoryLoaded) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         } else if (state is CleanerHistoryError) {
           return Center(
             child: Column(
@@ -480,7 +488,6 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
       ),
       child: Row(
         children: [
-          
           Container(
             width: 48,
             height: 48,
@@ -488,14 +495,10 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
               color: item.type.iconBackgroundColor,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              item.type.icon,
-              color: item.type.iconColor,
-              size: 24,
-            ),
+            child: Icon(item.type.icon, color: item.type.iconColor, size: 24),
           ),
           const SizedBox(width: 16),
-          
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,18 +513,12 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                 const SizedBox(height: 4),
                 Text(
                   _formatDate(item.date),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   item.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -533,13 +530,17 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
 
   Widget _buildReviewsTab() {
     if (_cleanerId == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+      );
     }
 
     return BlocBuilder<CleanerReviewsCubit, CleanerReviewsState>(
       builder: (context, state) {
         if (state is CleanerReviewsLoading && state is! CleanerReviewsLoaded) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         } else if (state is CleanerReviewsError) {
           return Center(
             child: Column(
@@ -565,11 +566,11 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
               ),
             );
           }
-          
+
           // Sort by recency (most recent first)
           final sortedReviews = List<CleanerReview>.from(state.allReviews);
           sortedReviews.sort((a, b) => b.date.compareTo(a.date));
-          
+
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: sortedReviews.length,
@@ -582,7 +583,6 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
       },
     );
   }
-
 
   Widget _buildReviewCard(CleanerReview review) {
     return Container(
@@ -598,10 +598,11 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
         children: [
           Row(
             children: [
-              
               FutureBuilder<Map<String, dynamic>?>(
                 future: review.reviewerId != null
-                    ? AbstractProfileRepo.getInstance().getProfileById(review.reviewerId!)
+                    ? AbstractProfileRepo.getInstance().getProfileById(
+                        review.reviewerId!,
+                      )
                     : Future.value(null),
                 builder: (context, snapshot) {
                   final reviewerPicture = snapshot.data?['picture'] as String?;
@@ -629,7 +630,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                 },
               ),
               const SizedBox(width: 12),
-              
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -643,10 +644,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                     ),
                     Text(
                       _formatDate(review.date),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                 ),
@@ -654,7 +652,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
             ],
           ),
           const SizedBox(height: 12),
-          
+
           Row(
             children: List.generate(5, (index) {
               return Text(
@@ -669,13 +667,15 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
             }),
           ),
           const SizedBox(height: 12),
-          
+
           Text(
             review.comment,
             style: const TextStyle(fontSize: 14, height: 1.5),
           ),
-          
-          if (review.hasPhotos && review.photoUrls != null && review.photoUrls!.isNotEmpty)
+
+          if (review.hasPhotos &&
+              review.photoUrls != null &&
+              review.photoUrls!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Row(
@@ -697,6 +697,4 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
       ),
     );
   }
-
 }
-

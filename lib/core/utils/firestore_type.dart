@@ -34,12 +34,12 @@ bool readBool(dynamic v, {bool defaultValue = false}) {
 /// Handles: Timestamp, int (milliseconds), String (ISO format)
 DateTime? readDate(dynamic v) {
   if (v == null) return null;
-  
+
   // Handle Firestore Timestamp
   if (v is Timestamp) {
     return v.toDate();
   }
-  
+
   // Handle int (milliseconds since epoch)
   if (v is int) {
     try {
@@ -48,7 +48,7 @@ DateTime? readDate(dynamic v) {
       return null;
     }
   }
-  
+
   // Handle String (ISO format)
   if (v is String) {
     try {
@@ -57,12 +57,12 @@ DateTime? readDate(dynamic v) {
       return null;
     }
   }
-  
+
   // Handle DateTime (already parsed)
   if (v is DateTime) {
     return v;
   }
-  
+
   return null;
 }
 
@@ -83,4 +83,3 @@ double? readDouble(dynamic v) {
   }
   return null;
 }
-

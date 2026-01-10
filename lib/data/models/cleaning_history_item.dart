@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class CleaningHistoryItem {
   final int? id;
   final int cleanerId;
@@ -8,7 +7,7 @@ class CleaningHistoryItem {
   final DateTime date;
   final String description;
   final CleaningHistoryType type;
-  final int? jobId; 
+  final int? jobId;
 
   CleaningHistoryItem({
     this.id,
@@ -48,13 +47,7 @@ class CleaningHistoryItem {
   }
 }
 
-enum CleaningHistoryType {
-  office,
-  apartment,
-  villa,
-  house,
-  commercial,
-}
+enum CleaningHistoryType { office, apartment, villa, house, commercial }
 
 extension CleaningHistoryTypeExtension on CleaningHistoryType {
   String get displayName {
@@ -83,7 +76,8 @@ extension CleaningHistoryTypeExtension on CleaningHistoryType {
       case CleaningHistoryType.house:
         return Icons.home_outlined;
       case CleaningHistoryType.commercial:
-        return Icons.cleaning_services_outlined; // For industrial/commercial cleaning
+        return Icons
+            .cleaning_services_outlined; // For industrial/commercial cleaning
     }
   }
 
@@ -97,4 +91,3 @@ extension CleaningHistoryTypeExtension on CleaningHistoryType {
     return Colors.blue.shade50;
   }
 }
-

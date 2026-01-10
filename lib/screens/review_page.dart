@@ -10,9 +10,9 @@ class ReviewPage extends StatefulWidget {
   final String bookingTitle;
   final int? jobId;
   final int? cleanerId;
-  
+
   const ReviewPage({
-    super.key, 
+    super.key,
     required this.bookingTitle,
     this.jobId,
     this.cleanerId,
@@ -53,7 +53,7 @@ class _ReviewPageState extends State<ReviewPage> {
     try {
       final jobsRepo = AbstractJobsRepo.getInstance();
       final job = await jobsRepo.getJobById(widget.jobId!);
-      
+
       if (mounted) {
         setState(() {
           _job = job;
@@ -61,9 +61,11 @@ class _ReviewPageState extends State<ReviewPage> {
           if (job == null) {
             _jobStatusError = 'Job not found';
           } else if (job.status != JobStatus.completed) {
-            _jobStatusError = 'Job is not completed yet. Current status: ${job.status.name}. Please wait until both parties confirm completion.';
+            _jobStatusError =
+                'Job is not completed yet. Current status: ${job.status.name}. Please wait until both parties confirm completion.';
           } else if (!job.clientDone || !job.workerDone) {
-            _jobStatusError = 'Job is not fully completed yet. Both parties must confirm completion before leaving a review.';
+            _jobStatusError =
+                'Job is not fully completed yet. Both parties must confirm completion before leaving a review.';
           }
         });
       }
@@ -97,10 +99,7 @@ class _ReviewPageState extends State<ReviewPage> {
         ),
         title: const Text(
           'Leave a Review',
-          style: TextStyle(
-            color: Colors.black87,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -110,7 +109,6 @@ class _ReviewPageState extends State<ReviewPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Row(
                 children: [
                   const CircleAvatar(
@@ -137,7 +135,7 @@ class _ReviewPageState extends State<ReviewPage> {
                 const Center(
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: const CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                    child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
                   ),
                 )
               else if (_jobStatusError != null)
@@ -163,7 +161,6 @@ class _ReviewPageState extends State<ReviewPage> {
                   ),
                 ),
 
-              
               const Text(
                 "How would you rate your experience?",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -192,7 +189,6 @@ class _ReviewPageState extends State<ReviewPage> {
               ),
               const SizedBox(height: 24),
 
-              
               const Text(
                 "Share your feedback",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -207,114 +203,151 @@ class _ReviewPageState extends State<ReviewPage> {
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                    borderSide: const BorderSide(
+                      color: Color(0xFFE5E7EB),
+                      width: 1,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: 32),
 
-              
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: (_isSubmitting || _rating == 0 || widget.cleanerId == null || _isLoadingJob || _jobStatusError != null) ? null : () async {
-                    setState(() => _isSubmitting = true);
-                    
-                    try {
-                      // Get current user
-                      final profilesCubit = context.read<ProfilesCubit>();
-                      await profilesCubit.loadCurrentUser();
-                      final state = profilesCubit.state;
-                      
-                      if (state is ProfilesLoaded && state.currentUser != null) {
-                        final reviewerId = state.currentUser!['id'] as int?;
-                        final reviewerName = state.currentUser!['full_name'] as String? ?? 'Anonymous';
-                        
-                        if (reviewerId == null) {
-                          throw Exception('User ID not found');
-                        }
-                        
-                        // Verify job is completed before allowing review
-                        if (widget.jobId != null) {
-                          final jobsRepo = AbstractJobsRepo.getInstance();
-                          final job = await jobsRepo.getJobById(widget.jobId!);
-                          if (job == null) {
-                            throw Exception('Job not found');
+                  onPressed:
+                      (_isSubmitting ||
+                          _rating == 0 ||
+                          widget.cleanerId == null ||
+                          _isLoadingJob ||
+                          _jobStatusError != null)
+                      ? null
+                      : () async {
+                          setState(() => _isSubmitting = true);
+
+                          try {
+                            // Get current user
+                            final profilesCubit = context.read<ProfilesCubit>();
+                            await profilesCubit.loadCurrentUser();
+                            final state = profilesCubit.state;
+
+                            if (state is ProfilesLoaded &&
+                                state.currentUser != null) {
+                              final reviewerId =
+                                  state.currentUser!['id'] as int?;
+                              final reviewerName =
+                                  state.currentUser!['full_name'] as String? ??
+                                  'Anonymous';
+
+                              if (reviewerId == null) {
+                                throw Exception('User ID not found');
+                              }
+
+                              // Verify job is completed before allowing review
+                              if (widget.jobId != null) {
+                                final jobsRepo = AbstractJobsRepo.getInstance();
+                                final job = await jobsRepo.getJobById(
+                                  widget.jobId!,
+                                );
+                                if (job == null) {
+                                  throw Exception('Job not found');
+                                }
+                                DebugLogger.log(
+                                  'ReviewPage',
+                                  'PRE_SUBMIT_JOB_STATUS',
+                                  data: {
+                                    'jobId': widget.jobId,
+                                    'status': job.status.name,
+                                    'client_done': job.clientDone,
+                                    'worker_done': job.workerDone,
+                                  },
+                                );
+                                if (job.status != JobStatus.completed) {
+                                  throw Exception(
+                                    'Reviews can only be added for completed jobs. Current job status: ${job.status.name}. Please wait until both parties confirm completion.',
+                                  );
+                                }
+                                if (!job.clientDone || !job.workerDone) {
+                                  throw Exception(
+                                    'Job is not fully completed yet. Both parties must confirm completion before leaving a review.',
+                                  );
+                                }
+                              }
+
+                              // Submit review using new reviews repository
+                              if (widget.cleanerId == null ||
+                                  widget.jobId == null) {
+                                throw Exception(
+                                  'Cleaner ID or Job ID is missing',
+                                );
+                              }
+
+                              final reviewsRepo =
+                                  AbstractReviewsRepo.getInstance();
+                              await reviewsRepo.addReview(
+                                jobId: widget.jobId!,
+                                revieweeId: widget.cleanerId!.toString(),
+                                rating: _rating,
+                                comment: _feedbackController.text.trim(),
+                              );
+
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Review submitted successfully!',
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+
+                                // Refresh reviews in cleaner profile if viewing it
+                                // The review will automatically appear when the profile is viewed
+                                Navigator.pop(
+                                  context,
+                                  true,
+                                ); // Return true to indicate success
+                              }
+                            } else {
+                              throw Exception('User not logged in');
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              // Safely format error message (avoid encoding FieldValue or showing type cast errors)
+                              String errorMsg = 'Error submitting review';
+                              try {
+                                final errorStr = e.toString();
+                                if (errorStr.contains(
+                                  'is not a subtype of type',
+                                )) {
+                                  errorMsg =
+                                      'Data type error. Please try again or contact support.';
+                                } else if (errorStr.contains('FieldValue')) {
+                                  errorMsg =
+                                      'Invalid data format. Please try again.';
+                                } else {
+                                  errorMsg = errorStr.length > 100
+                                      ? '${errorStr.substring(0, 100)}...'
+                                      : errorStr;
+                                }
+                              } catch (_) {
+                                errorMsg = 'An unexpected error occurred';
+                              }
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(errorMsg),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isSubmitting = false);
+                            }
                           }
-                          DebugLogger.log('ReviewPage', 'PRE_SUBMIT_JOB_STATUS', data: {
-                            'jobId': widget.jobId,
-                            'status': job.status.name,
-                            'client_done': job.clientDone,
-                            'worker_done': job.workerDone,
-                          });
-                          if (job.status != JobStatus.completed) {
-                            throw Exception('Reviews can only be added for completed jobs. Current job status: ${job.status.name}. Please wait until both parties confirm completion.');
-                          }
-                          if (!job.clientDone || !job.workerDone) {
-                            throw Exception('Job is not fully completed yet. Both parties must confirm completion before leaving a review.');
-                          }
-                        }
-                        
-                        // Submit review using new reviews repository
-                        if (widget.cleanerId == null || widget.jobId == null) {
-                          throw Exception('Cleaner ID or Job ID is missing');
-                        }
-                        
-                        final reviewsRepo = AbstractReviewsRepo.getInstance();
-                        await reviewsRepo.addReview(
-                          jobId: widget.jobId!,
-                          revieweeId: widget.cleanerId!.toString(),
-                          rating: _rating,
-                          comment: _feedbackController.text.trim(),
-                        );
-                        
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Review submitted successfully!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                          
-                          // Refresh reviews in cleaner profile if viewing it
-                          // The review will automatically appear when the profile is viewed
-                          Navigator.pop(context, true); // Return true to indicate success
-                        }
-                      } else {
-                        throw Exception('User not logged in');
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        // Safely format error message (avoid encoding FieldValue or showing type cast errors)
-                        String errorMsg = 'Error submitting review';
-                        try {
-                          final errorStr = e.toString();
-                          if (errorStr.contains('is not a subtype of type')) {
-                            errorMsg = 'Data type error. Please try again or contact support.';
-                          } else if (errorStr.contains('FieldValue')) {
-                            errorMsg = 'Invalid data format. Please try again.';
-                          } else {
-                            errorMsg = errorStr.length > 100 ? '${errorStr.substring(0, 100)}...' : errorStr;
-                          }
-                        } catch (_) {
-                          errorMsg = 'An unexpected error occurred';
-                        }
-                        
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(errorMsg),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    } finally {
-                      if (mounted) {
-                        setState(() => _isSubmitting = false);
-                      }
-                    }
-                  },
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF3B82F6),
                     disabledBackgroundColor: Colors.grey[300],
@@ -326,7 +359,7 @@ class _ReviewPageState extends State<ReviewPage> {
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: const CircularProgressIndicator(
+                          child: CircularProgressIndicator(
                             strokeWidth: 2,
                             color: Color(0xFF3B82F6),
                           ),
@@ -334,9 +367,9 @@ class _ReviewPageState extends State<ReviewPage> {
                       : const Text(
                           "Submit Review",
                           style: TextStyle(
-                              fontSize: 16, 
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                 ),

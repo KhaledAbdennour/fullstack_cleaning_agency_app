@@ -37,7 +37,7 @@ class Cleaner {
   }
 
   factory Cleaner.fromMap(Map<String, dynamic> map) {
-    DateTime? _parseDate(dynamic v) {
+    DateTime? parseDate(dynamic v) {
       if (v == null) return null;
       if (v is DateTime) return v;
       if (v is String) {
@@ -47,7 +47,7 @@ class Cleaner {
           return null;
         }
       }
-      if (v is dynamic && v.runtimeType.toString() == 'Timestamp') {
+      if (v.runtimeType.toString() == 'Timestamp') {
         try {
           return v.toDate();
         } catch (_) {
@@ -57,19 +57,19 @@ class Cleaner {
       return null;
     }
 
-    bool _parseBool(dynamic v) {
+    bool parseBool(dynamic v) {
       if (v is bool) return v;
       if (v is int) return v == 1;
       return false;
     }
 
-    int _parseInt(dynamic v) {
+    int parseInt(dynamic v) {
       if (v is int) return v;
       if (v is String) return int.tryParse(v) ?? 0;
       return 0;
     }
 
-    double _parseDouble(dynamic v) {
+    double parseDouble(dynamic v) {
       if (v is num) return v.toDouble();
       if (v is String) return double.tryParse(v) ?? 0;
       return 0;
@@ -79,12 +79,12 @@ class Cleaner {
       id: map['id'] as int?,
       name: map['name'] as String? ?? 'Unknown',
       avatarUrl: map['avatar_url'] as String?,
-      rating: _parseDouble(map['rating']),
-      jobsCompleted: _parseInt(map['jobs_completed']),
-      agencyId: _parseInt(map['agency_id']),
-      isActive: _parseBool(map['is_active'] ?? true),
-      createdAt: _parseDate(map['created_at']),
-      updatedAt: _parseDate(map['updated_at']),
+      rating: parseDouble(map['rating']),
+      jobsCompleted: parseInt(map['jobs_completed']),
+      agencyId: parseInt(map['agency_id']),
+      isActive: parseBool(map['is_active'] ?? true),
+      createdAt: parseDate(map['created_at']),
+      updatedAt: parseDate(map['updated_at']),
     );
   }
 
@@ -112,4 +112,3 @@ class Cleaner {
     );
   }
 }
-

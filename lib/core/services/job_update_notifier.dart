@@ -8,17 +8,16 @@ class JobUpdateNotifier {
   JobUpdateNotifier._internal();
 
   final _jobUpdateController = StreamController<int>.broadcast();
-  
+
   /// Stream of worker IDs whose active jobs should be refreshed
   Stream<int> get workerJobsUpdateStream => _jobUpdateController.stream;
-  
+
   /// Notify that a worker's active jobs should be refreshed
   void notifyWorkerJobsUpdate(int workerId) {
     _jobUpdateController.add(workerId);
   }
-  
+
   void dispose() {
     _jobUpdateController.close();
   }
 }
-

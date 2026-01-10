@@ -1,5 +1,5 @@
 /// Environment variable helper for Firebase configuration
-/// 
+///
 /// Currently not needed as Firebase uses google-services.json/google-services.plist
 /// This file is kept for future use if environment variables are needed
 class EnvHelper {

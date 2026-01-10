@@ -19,7 +19,7 @@ import '../l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   final int? initialTabIndex;
-  
+
   const HomeScreen({super.key, this.initialTabIndex});
 
   @override
@@ -28,7 +28,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
-  
+
   bool _showAgenciesList = false;
   bool _showIndividualsList = false;
   bool _showAddPost = false;
@@ -43,109 +43,124 @@ class _HomeScreenState extends State<HomeScreen> {
       _currentIndex = widget.initialTabIndex!;
     }
     // #region agent log
-    DebugLogger.log('HomeScreen', 'initState', data: {
-      'hypothesisId': 'H1',
-      'initialIndex': _currentIndex,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'HomeScreen',
+      'initState',
+      data: {
+        'hypothesisId': 'H1',
+        'initialIndex': _currentIndex,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     context.read<ListingsCubit>().loadListings();
   }
-  
+
   @override
   void didUpdateWidget(HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     // #region agent log
-    DebugLogger.log('HomeScreen', 'didUpdateWidget', data: {
-      'hypothesisId': 'H1',
-      'currentIndex': _currentIndex,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'HomeScreen',
+      'didUpdateWidget',
+      data: {
+        'hypothesisId': 'H1',
+        'currentIndex': _currentIndex,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // #region agent log
-    DebugLogger.log('HomeScreen', 'didChangeDependencies', data: {
-      'hypothesisId': 'H1',
-      'currentIndex': _currentIndex,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'HomeScreen',
+      'didChangeDependencies',
+      data: {
+        'hypothesisId': 'H1',
+        'currentIndex': _currentIndex,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
   }
-
 
   @override
   Widget build(BuildContext context) {
     // Hide AppBar when showing profile page (it has its own AppBar)
     final showAppBar = _currentIndex != 3;
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: showAppBar ? AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: GestureDetector(
-          onLongPress: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => DataDoctorPage()),
-            );
-          },
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3B82F6),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.eco,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+      appBar: showAppBar
+          ? AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0,
+              automaticallyImplyLeading: false,
+              title: GestureDetector(
+                onLongPress: () {
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => DataDoctorPage()));
+                },
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF3B82F6),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.eco, color: Colors.white, size: 24),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'CleanSpace',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    NotificationBellWidget(),
+                  ],
                 ),
               ),
-              const SizedBox(width: 8),
-              const Text(
-                'CleanSpace',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              NotificationBellWidget(),
-            ],
-          ),
-        ),
-      ) : null,
+            )
+          : null,
       body: _buildBody(),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF3B82F6),
         unselectedItemColor: Colors.grey,
-        currentIndex: _showActivePosts ? 0 : _currentIndex, // Highlight home when showing active posts
+        currentIndex: _showActivePosts
+            ? 0
+            : _currentIndex, // Highlight home when showing active posts
         onTap: (index) {
           // #region agent log
-          DebugLogger.log('HomeScreen', 'BOTTOM_NAV_TAP', data: {
-            'hypothesisId': 'H1',
-            'previousIndex': _currentIndex,
-            'newIndex': index,
-            'sessionId': 'debug-session',
-            'runId': 'run1',
-          });
+          DebugLogger.log(
+            'HomeScreen',
+            'BOTTOM_NAV_TAP',
+            data: {
+              'hypothesisId': 'H1',
+              'previousIndex': _currentIndex,
+              'newIndex': index,
+              'sessionId': 'debug-session',
+              'runId': 'run1',
+            },
+          );
           // #endregion
-          
+
           setState(() {
             _currentIndex = index;
             // Reset active posts flag when navigating away from home (unless staying on home)
@@ -153,16 +168,20 @@ class _HomeScreenState extends State<HomeScreen> {
               _showActivePosts = false;
             }
           });
-          
+
           // #region agent log
-          DebugLogger.log('HomeScreen', 'STATE_UPDATED', data: {
-            'hypothesisId': 'H2',
-            'currentIndex': _currentIndex,
-            'sessionId': 'debug-session',
-            'runId': 'run1',
-          });
+          DebugLogger.log(
+            'HomeScreen',
+            'STATE_UPDATED',
+            data: {
+              'hypothesisId': 'H2',
+              'currentIndex': _currentIndex,
+              'sessionId': 'debug-session',
+              'runId': 'run1',
+            },
+          );
           // #endregion
-          
+
           if (index == 0) {
             // Reset agencies, individuals list view, add post, and active posts when going back to home
             setState(() {
@@ -180,16 +199,19 @@ class _HomeScreenState extends State<HomeScreen> {
             // Reset add post flag and active posts flag when navigating to My Posts tab via bottom nav
             setState(() {
               _showAddPost = false;
-              _showActivePosts = false; // Reset active posts flag to show all posts
+              _showActivePosts =
+                  false; // Reset active posts flag to show all posts
             });
             // Refresh My Posts when navigating to My Posts tab
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 final profilesCubit = context.read<ProfilesCubit>();
                 final profileState = profilesCubit.state;
-                if (profileState is ProfilesLoaded && profileState.currentUser != null) {
+                if (profileState is ProfilesLoaded &&
+                    profileState.currentUser != null) {
                   final userId = profileState.currentUser!['id'] as int?;
-                  final userType = profileState.currentUser!['user_type'] as String?;
+                  final userType =
+                      profileState.currentUser!['user_type'] as String?;
                   if (userId != null && userType == 'Client') {
                     context.read<ClientJobsCubit>().loadClientJobs(userId);
                   }
@@ -202,9 +224,11 @@ class _HomeScreenState extends State<HomeScreen> {
               if (mounted) {
                 final profilesCubit = context.read<ProfilesCubit>();
                 final profileState = profilesCubit.state;
-                if (profileState is ProfilesLoaded && profileState.currentUser != null) {
+                if (profileState is ProfilesLoaded &&
+                    profileState.currentUser != null) {
                   final userId = profileState.currentUser!['id'] as int?;
-                  final userType = profileState.currentUser!['user_type'] as String?;
+                  final userType =
+                      profileState.currentUser!['user_type'] as String?;
                   if (userId != null && userType == 'Client') {
                     context.read<ClientJobsCubit>().loadClientJobs(userId);
                   }
@@ -214,8 +238,14 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
         items: [
-          BottomNavigationBarItem(icon: const Icon(Icons.home), label: AppLocalizations.of(context)!.home),
-          BottomNavigationBarItem(icon: const Icon(Icons.search), label: AppLocalizations.of(context)!.search),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home),
+            label: AppLocalizations.of(context)!.home,
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.search),
+            label: AppLocalizations.of(context)!.search,
+          ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.article_outlined),
             label: AppLocalizations.of(context)!.myPosts,
@@ -231,48 +261,58 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildBody() {
     // #region agent log
-    DebugLogger.log('HomeScreen', '_buildBody_CALLED', data: {
-      'hypothesisId': 'H1',
-      'currentIndex': _currentIndex,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'HomeScreen',
+      '_buildBody_CALLED',
+      data: {
+        'hypothesisId': 'H1',
+        'currentIndex': _currentIndex,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     Widget bodyWidget;
     // If showing active posts, display it but keep home tab highlighted
     if (_showActivePosts) {
       bodyWidget = _buildActivePostsContent();
     } else {
-    switch (_currentIndex) {
-      case 0:
-        bodyWidget = _buildHomeContent();
-        break;
-      case 1:
-        bodyWidget = _buildSearchContent();
-        break;
-      case 2:
-          bodyWidget = _showAddPost ? _buildAddPostContent() : _buildMyPostsContent();
-        break;
-      case 3:
-        bodyWidget = const ClientProfilePage();
-        break;
-      default:
-        bodyWidget = _buildHomeContent();
+      switch (_currentIndex) {
+        case 0:
+          bodyWidget = _buildHomeContent();
+          break;
+        case 1:
+          bodyWidget = _buildSearchContent();
+          break;
+        case 2:
+          bodyWidget = _showAddPost
+              ? _buildAddPostContent()
+              : _buildMyPostsContent();
+          break;
+        case 3:
+          bodyWidget = const ClientProfilePage();
+          break;
+        default:
+          bodyWidget = _buildHomeContent();
       }
     }
-    
+
     // #region agent log
-    DebugLogger.log('HomeScreen', '_buildBody_RETURN', data: {
-      'hypothesisId': 'H1',
-      'currentIndex': _currentIndex,
-      'bodyWidgetType': bodyWidget.runtimeType.toString(),
-      'isClientProfilePage': bodyWidget is ClientProfilePage,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'HomeScreen',
+      '_buildBody_RETURN',
+      data: {
+        'hypothesisId': 'H1',
+        'currentIndex': _currentIndex,
+        'bodyWidgetType': bodyWidget.runtimeType.toString(),
+        'isClientProfilePage': bodyWidget is ClientProfilePage,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     return bodyWidget;
   }
 
@@ -283,26 +323,28 @@ class _HomeScreenState extends State<HomeScreen> {
         context.read<ListingsCubit>().loadListings();
       }
     });
-    
+
     // Show add post form if flag is set
     if (_showAddPostInHome) {
       return _buildAddPostContent();
     }
-    
+
     // Show agencies list if flag is set
     if (_showAgenciesList) {
       return _buildAgenciesListContent();
     }
-    
+
     // Show individuals list if flag is set
     if (_showIndividualsList) {
       return _buildIndividualsListContent();
     }
-    
+
     return BlocBuilder<ListingsCubit, ListingsState>(
       builder: (context, state) {
         if (state is ListingsLoading) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         } else if (state is ListingsError) {
           return Center(
             child: Column(
@@ -327,14 +369,22 @@ class _HomeScreenState extends State<HomeScreen> {
               final topPadding = 16.0;
               final bottomPadding = 16.0;
               final spacing = 16.0 * 2; // spacing between 3 cards (2 gaps)
-              final totalPaddingAndSpacing = topPadding + bottomPadding + spacing;
-              final cardHeight = (availableHeight - totalPaddingAndSpacing) / 3; // Divide equally among 3 cards
-              
+              final totalPaddingAndSpacing =
+                  topPadding + bottomPadding + spacing;
+              final cardHeight =
+                  (availableHeight - totalPaddingAndSpacing) /
+                  3; // Divide equally among 3 cards
+
               return Padding(
-                padding: EdgeInsets.fromLTRB(16.0, topPadding, 16.0, bottomPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                padding: EdgeInsets.fromLTRB(
+                  16.0,
+                  topPadding,
+                  16.0,
+                  bottomPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     _buildAddPostCard(context, cardHeight),
                     const SizedBox(height: 16),
                     _buildViewAllAgenciesCard(context, cardHeight),
@@ -346,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           );
         }
-                                  return const SizedBox.shrink();
+        return const SizedBox.shrink();
       },
     );
   }
@@ -381,7 +431,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 top: Radius.circular(16),
               ),
               child: AppImage(
-                imageUrl: 'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&auto=format&fit=crop',
+                imageUrl:
+                    'https://images.unsplash.com/photo-1551650975-87deedd944c3?w=800&auto=format&fit=crop',
                 height: coverHeight,
                 width: double.infinity,
                 fit: BoxFit.cover,
@@ -438,7 +489,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final coverHeight = cardHeight * 0.75; // 75% for cover, 25% for text
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, profileState) {
-        if (profileState is! ProfilesLoaded || profileState.currentUser == null) {
+        if (profileState is! ProfilesLoaded ||
+            profileState.currentUser == null) {
           return _buildMyPostsCard(context, cardHeight, coverHeight);
         }
 
@@ -479,7 +531,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMyPostsCard(BuildContext context, double cardHeight, double coverHeight) {
+  Widget _buildMyPostsCard(
+    BuildContext context,
+    double cardHeight,
+    double coverHeight,
+  ) {
     return Container(
       width: double.infinity,
       height: cardHeight,
@@ -498,11 +554,10 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           // Cover image
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(16),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: AppImage(
-              imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop',
+              imageUrl:
+                  'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop',
               height: coverHeight,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -563,7 +618,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<ListingsCubit, ListingsState>(
       builder: (context, state) {
         if (state is ListingsLoading) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         } else if (state is ListingsError) {
           return Center(
             child: Column(
@@ -588,7 +645,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 return agency['name'] != null;
               })
               .toList();
-          
+
           // Sort by rating descending (highest rating first)
           allAgencies.sort((a, b) {
             final ratingA = (a['rating'] as num?)?.toDouble() ?? 0.0;
@@ -602,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                              'No agencies available',
+                    'No agencies available',
                     style: TextStyle(color: Colors.grey, fontSize: 16),
                   ),
                   const SizedBox(height: 16),
@@ -622,20 +679,24 @@ class _HomeScreenState extends State<HomeScreen> {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: allAgencies.length,
-                            itemBuilder: (context, index) {
+            itemBuilder: (context, index) {
               final agency = allAgencies[index];
               return _buildAgencyListCard(context, agency);
             },
           );
         }
-                                  return const SizedBox.shrink();
+        return const SizedBox.shrink();
       },
     );
   }
 
-  Widget _buildAgencyListCard(BuildContext context, Map<String, dynamic> agency) {
+  Widget _buildAgencyListCard(
+    BuildContext context,
+    Map<String, dynamic> agency,
+  ) {
     final name = agency['name'] as String? ?? 'Unknown Agency';
-    final description = agency['bio'] as String? ?? 'Professional cleaning service provider.';
+    final description =
+        agency['bio'] as String? ?? 'Professional cleaning service provider.';
     final location = agency['location'] as String? ?? 'Unknown';
     final priceValue = agency['hourly_rate'];
     final price = priceValue != null && priceValue.toString().isNotEmpty
@@ -644,7 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final rating = (agency['rating'] as num?)?.toDouble() ?? 0.0;
     final reviews = agency['jobsCompleted'] as int? ?? 0;
     final imageUrl = agency['image'] as String?;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -680,13 +741,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
-                          errorWidget: const Icon(Icons.business, size: 30, color: Color(0xFF9CA3AF)),
+                          errorWidget: const Icon(
+                            Icons.business,
+                            size: 30,
+                            color: Color(0xFF9CA3AF),
+                          ),
                         )
-                      : const Icon(Icons.business, size: 30, color: Color(0xFF9CA3AF)),
+                      : const Icon(
+                          Icons.business,
+                          size: 30,
+                          color: Color(0xFF9CA3AF),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -710,7 +779,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -732,7 +801,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -754,7 +823,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -778,26 +847,28 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.push(
-                                  context,
+                  context,
                   MaterialPageRoute(
-                    builder: (context) => CleanerProfilePage(cleaner: {
-                      'name': name,
-                      'rating': rating,
-                      'reviews': reviews,
-                      'isVerified': agency['is_verified'] as bool? ?? false,
-                      'description': description,
-                      'image': imageUrl,
-                      'type': 'Agency',
-                      'location': location,
-                      'price': price,
-                      'profileData': agency,
-                    }),
+                    builder: (context) => CleanerProfilePage(
+                      cleaner: {
+                        'name': name,
+                        'rating': rating,
+                        'reviews': reviews,
+                        'isVerified': agency['is_verified'] as bool? ?? false,
+                        'description': description,
+                        'image': imageUrl,
+                        'type': 'Agency',
+                        'location': location,
+                        'price': price,
+                        'profileData': agency,
+                      },
+                    ),
                   ),
                 );
               },
@@ -826,7 +897,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildViewAllIndividualsCard(BuildContext context, double cardHeight) {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, profileState) {
-        if (profileState is! ProfilesLoaded || profileState.currentUser == null) {
+        if (profileState is! ProfilesLoaded ||
+            profileState.currentUser == null) {
           // Show placeholder while loading
           return _buildPlaceholderCard(cardHeight);
         }
@@ -848,7 +920,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return BlocBuilder<ClientJobsCubit, ClientJobsState>(
           builder: (context, state) {
-            if (state is ClientJobsLoading || state is! ClientJobsLoaded || state.jobs.isEmpty) {
+            if (state is ClientJobsLoading ||
+                state is! ClientJobsLoaded ||
+                state.jobs.isEmpty) {
               // Show placeholder while loading or if no jobs
               return _buildPlaceholderCard(cardHeight);
             }
@@ -862,7 +936,7 @@ class _HomeScreenState extends State<HomeScreen> {
             });
 
             final latestJob = sortedJobs.first;
-            
+
             // Build the job card constrained to cardHeight
             return _buildLatestJobCard(latestJob, cardHeight);
           },
@@ -949,17 +1023,22 @@ class _HomeScreenState extends State<HomeScreen> {
           if (difference.inMinutes == 0) {
             timeAgoText = AppLocalizations.of(context)!.justNow;
           } else {
-            timeAgoText = AppLocalizations.of(context)!.minutesAgo(difference.inMinutes);
+            timeAgoText = AppLocalizations.of(
+              context,
+            )!.minutesAgo(difference.inMinutes);
           }
         } else {
-          timeAgoText = AppLocalizations.of(context)!.hoursAgo(difference.inHours);
+          timeAgoText = AppLocalizations.of(
+            context,
+          )!.hoursAgo(difference.inHours);
         }
       } else if (difference.inDays == 1) {
         timeAgoText = AppLocalizations.of(context)!.yesterday;
       } else if (difference.inDays < 7) {
         timeAgoText = AppLocalizations.of(context)!.daysAgo(difference.inDays);
       } else {
-        timeAgoText = '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
+        timeAgoText =
+            '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
       }
 
       // Get status color
@@ -998,9 +1077,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => ManageJobPage(job: job),
-            ),
+            MaterialPageRoute(builder: (context) => ManageJobPage(job: job)),
           );
         },
         borderRadius: BorderRadius.circular(16),
@@ -1024,8 +1101,11 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // Cover image
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+                child:
+                    job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
                     ? AppImage(
                         imageUrl: job.coverImageUrl!,
                         height: imageHeight,
@@ -1035,14 +1115,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: imageHeight,
                           width: double.infinity,
                           color: Colors.grey[200],
-                          child: const Icon(Icons.image, size: 32, color: Colors.grey),
+                          child: const Icon(
+                            Icons.image,
+                            size: 32,
+                            color: Colors.grey,
+                          ),
                         ),
                       )
                     : Container(
                         height: imageHeight,
                         width: double.infinity,
                         color: Colors.grey[200],
-                        child: const Icon(Icons.image, size: 32, color: Colors.grey),
+                        child: const Icon(
+                          Icons.image,
+                          size: 32,
+                          color: Colors.grey,
+                        ),
                       ),
               ),
               // Content - constrained to fit remaining height
@@ -1072,7 +1160,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(width: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
@@ -1102,7 +1193,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Location
                       Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 12, color: Color(0xFF3B82F6)),
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 12,
+                            color: Color(0xFF3B82F6),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -1134,7 +1229,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return BlocBuilder<ListingsCubit, ListingsState>(
       builder: (context, state) {
         if (state is ListingsLoading) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         } else if (state is ListingsError) {
           return Center(
             child: Column(
@@ -1153,13 +1250,14 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         } else if (state is ListingsLoaded) {
           // Filter to only individuals/cleaners and sort by rating descending
-          final allIndividuals = List<Map<String, dynamic>>.from(state.topCleaners)
-              .where((individual) {
+          final allIndividuals =
+              List<Map<String, dynamic>>.from(state.topCleaners).where((
+                individual,
+              ) {
                 // Double-check: ensure it's an individual (should already be filtered in cubit)
                 return individual['name'] != null;
-              })
-              .toList();
-          
+              }).toList();
+
           // Sort by rating descending (highest rating first)
           allIndividuals.sort((a, b) {
             final ratingA = (a['rating'] as num?)?.toDouble() ?? 0.0;
@@ -1204,9 +1302,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildIndividualListCard(BuildContext context, Map<String, dynamic> individual) {
+  Widget _buildIndividualListCard(
+    BuildContext context,
+    Map<String, dynamic> individual,
+  ) {
     final name = individual['name'] as String? ?? 'Unknown Individual';
-    final description = individual['bio'] as String? ?? 'Professional cleaning service provider.';
+    final description =
+        individual['bio'] as String? ??
+        'Professional cleaning service provider.';
     final location = individual['location'] as String? ?? 'Unknown';
     final priceValue = individual['hourly_rate'];
     final price = priceValue != null && priceValue.toString().isNotEmpty
@@ -1215,7 +1318,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final rating = (individual['rating'] as num?)?.toDouble() ?? 0.0;
     final reviews = individual['jobsCompleted'] as int? ?? 0;
     final imageUrl = individual['image'] as String?;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -1251,13 +1354,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
-                          errorWidget: const Icon(Icons.person, size: 30, color: Color(0xFF9CA3AF)),
+                          errorWidget: const Icon(
+                            Icons.person,
+                            size: 30,
+                            color: Color(0xFF9CA3AF),
+                          ),
                         )
-                      : const Icon(Icons.person, size: 30, color: Color(0xFF9CA3AF)),
+                      : const Icon(
+                          Icons.person,
+                          size: 30,
+                          color: Color(0xFF9CA3AF),
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1281,7 +1392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -1299,11 +1410,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
-                  ),
-                ],
-              ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 6),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -1325,7 +1436,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    
+
                     Row(
                       children: [
                         const Icon(
@@ -1349,7 +1460,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -1357,18 +1468,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CleanerProfilePage(cleaner: {
-                      'name': name,
-                      'rating': rating,
-                      'reviews': reviews,
-                      'isVerified': individual['is_verified'] as bool? ?? false,
-                      'description': description,
-                      'image': imageUrl,
-                      'type': 'Individual',
-                      'location': location,
-                      'price': price,
-                      'profileData': individual,
-                    }),
+                    builder: (context) => CleanerProfilePage(
+                      cleaner: {
+                        'name': name,
+                        'rating': rating,
+                        'reviews': reviews,
+                        'isVerified':
+                            individual['is_verified'] as bool? ?? false,
+                        'description': description,
+                        'image': imageUrl,
+                        'type': 'Individual',
+                        'location': location,
+                        'price': price,
+                        'profileData': individual,
+                      },
+                    ),
                   ),
                 );
               },
@@ -1396,7 +1510,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildRecentCardFromJob(BuildContext context, Job job) {
     try {
-      
       if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
         return const SizedBox.shrink();
       }
@@ -1406,99 +1519,105 @@ class _HomeScreenState extends State<HomeScreen> {
           try {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => ManageJobPage(job: job),
-              ),
+              MaterialPageRoute(builder: (context) => ManageJobPage(job: job)),
             );
           } catch (e) {
             print('Error navigating to job details: $e');
           }
         },
         child: Container(
-        width: 280,
-        margin: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              height: 110,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
+          width: 280,
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 110,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  image: null,
                 ),
-                image: null, 
-              ),
-              child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(16),
-                      ),
-                      child: AppImage(
-                        imageUrl: job.coverImageUrl!,
-                        height: 110,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget: const Center(
-                          child: Icon(Icons.image, size: 48, color: Colors.grey),
+                child:
+                    job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(16),
                         ),
-                      ),
-                    )
-                  : const Center(
-                      child: Icon(Icons.image, size: 48, color: Colors.grey),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    job.title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      height: 1.1,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 12,
-                        color: Color(0xFF3B82F6),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          '${job.city}, ${job.country}',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 11,
+                        child: AppImage(
+                          imageUrl: job.coverImageUrl!,
+                          height: 110,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorWidget: const Center(
+                            child: Icon(
+                              Icons.image,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
+                      )
+                    : const Center(
+                        child: Icon(Icons.image, size: 48, color: Colors.grey),
                       ),
-                    ],
-                  ),
-                ],
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 10.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      job.title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        height: 1.1,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on_outlined,
+                          size: 12,
+                          color: Color(0xFF3B82F6),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${job.city}, ${job.country}',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
     } catch (e, stackTrace) {
       print('Error building recent card from job: $e');
       print('Stack trace: $stackTrace');
@@ -1520,8 +1639,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildMyPostsContent() {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, profileState) {
-        if (profileState is! ProfilesLoaded || profileState.currentUser == null) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+        if (profileState is! ProfilesLoaded ||
+            profileState.currentUser == null) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         }
 
         final userId = profileState.currentUser!['id'] as int?;
@@ -1534,10 +1656,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(
                 AppLocalizations.of(context)!.myPostsOnlyForClients,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
               ),
             ),
           );
@@ -1553,7 +1672,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return BlocBuilder<ClientJobsCubit, ClientJobsState>(
           builder: (context, state) {
             if (state is ClientJobsLoading && state is! ClientJobsLoaded) {
-              return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+              );
             } else if (state is ClientJobsError) {
               return Center(
                 child: Column(
@@ -1572,7 +1693,9 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             } else if (state is ClientJobsLoaded) {
               // Show all non-deleted jobs (including completed)
-              final allJobs = state.jobs.where((job) => !job.isDeleted).toList();
+              final allJobs = state.jobs
+                  .where((job) => !job.isDeleted)
+                  .toList();
 
               if (allJobs.isEmpty) {
                 return Center(
@@ -1604,7 +1727,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: sortedJobs.map((job) {
                     try {
-                      if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
+                      if (job.title.isEmpty ||
+                          job.city.isEmpty ||
+                          job.country.isEmpty) {
                         return const SizedBox.shrink();
                       }
                       return _buildJobPostCardFromJob(job);
@@ -1627,8 +1752,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildActivePostsContent() {
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, profileState) {
-        if (profileState is! ProfilesLoaded || profileState.currentUser == null) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+        if (profileState is! ProfilesLoaded ||
+            profileState.currentUser == null) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         }
 
         final userId = profileState.currentUser!['id'] as int?;
@@ -1641,10 +1769,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text(
                 AppLocalizations.of(context)!.activePostsOnlyForClients,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
               ),
             ),
           );
@@ -1660,7 +1785,9 @@ class _HomeScreenState extends State<HomeScreen> {
         return BlocBuilder<ClientJobsCubit, ClientJobsState>(
           builder: (context, state) {
             if (state is ClientJobsLoading && state is! ClientJobsLoaded) {
-              return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+              return const Center(
+                child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+              );
             } else if (state is ClientJobsError) {
               return Center(
                 child: Column(
@@ -1679,10 +1806,12 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             } else if (state is ClientJobsLoaded) {
               // Filter out completed jobs and deleted jobs - ONLY show active posts
-              final activeJobs = state.jobs.where((job) => 
-                job.status != JobStatus.completed && 
-                !job.isDeleted
-              ).toList();
+              final activeJobs = state.jobs
+                  .where(
+                    (job) =>
+                        job.status != JobStatus.completed && !job.isDeleted,
+                  )
+                  .toList();
 
               if (activeJobs.isEmpty) {
                 return Center(
@@ -1714,7 +1843,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: sortedJobs.map((job) {
                     try {
-                      if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
+                      if (job.title.isEmpty ||
+                          job.city.isEmpty ||
+                          job.country.isEmpty) {
                         return const SizedBox.shrink();
                       }
                       return _buildJobPostCardFromJob(job);
@@ -1749,17 +1880,22 @@ class _HomeScreenState extends State<HomeScreen> {
           if (difference.inMinutes == 0) {
             timeAgoText = AppLocalizations.of(context)!.justNow;
           } else {
-            timeAgoText = AppLocalizations.of(context)!.minutesAgo(difference.inMinutes);
+            timeAgoText = AppLocalizations.of(
+              context,
+            )!.minutesAgo(difference.inMinutes);
           }
         } else {
-          timeAgoText = AppLocalizations.of(context)!.hoursAgo(difference.inHours);
+          timeAgoText = AppLocalizations.of(
+            context,
+          )!.hoursAgo(difference.inHours);
         }
       } else if (difference.inDays == 1) {
         timeAgoText = AppLocalizations.of(context)!.yesterday;
       } else if (difference.inDays < 7) {
         timeAgoText = AppLocalizations.of(context)!.daysAgo(difference.inDays);
       } else {
-        timeAgoText = '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
+        timeAgoText =
+            '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
       }
 
       // Get status color
@@ -1794,9 +1930,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => ManageJobPage(job: job),
-            ),
+            MaterialPageRoute(builder: (context) => ManageJobPage(job: job)),
           );
         },
         borderRadius: BorderRadius.circular(12),
@@ -1819,8 +1953,11 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // Cover image
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child:
+                    job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
                     ? AppImage(
                         imageUrl: job.coverImageUrl!,
                         height: 180,
@@ -1830,14 +1967,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           height: 180,
                           width: double.infinity,
                           color: Colors.grey[200],
-                          child: const Icon(Icons.image, size: 48, color: Colors.grey),
+                          child: const Icon(
+                            Icons.image,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                         ),
                       )
                     : Container(
                         height: 180,
                         width: double.infinity,
                         color: Colors.grey[200],
-                        child: const Icon(Icons.image, size: 48, color: Colors.grey),
+                        child: const Icon(
+                          Icons.image,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                       ),
               ),
               // Content
@@ -1865,7 +2010,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
@@ -1898,17 +2046,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.account_balance_wallet_outlined, size: 16, color: Color(0xFF3B82F6)),
+                          const Icon(
+                            Icons.account_balance_wallet_outlined,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               job.budgetMin != null && job.budgetMax != null
                                   ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                                   : job.budgetMin != null
-                                      ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                                      : job.budgetMax != null
-                                          ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                                          : AppLocalizations.of(context)!.budgetNegotiable,
+                                  ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                                  : job.budgetMax != null
+                                  ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                  : AppLocalizations.of(
+                                      context,
+                                    )!.budgetNegotiable,
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF6B7280),
@@ -1924,7 +2078,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF3B82F6)),
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -1942,7 +2100,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Date with blue icon and time ago in parentheses - under location
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF3B82F6)),
+                        const Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: Color(0xFF3B82F6),
+                        ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
@@ -2005,9 +2167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ? DecorationImage(
                         image: NetworkImage(imageUrl),
                         fit: BoxFit.cover,
-                        onError: (exception, stackTrace) {
-                          
-                        },
+                        onError: (exception, stackTrace) {},
                       )
                     : null,
               ),
@@ -2058,11 +2218,11 @@ class _HomeScreenState extends State<HomeScreen> {
     String? logoUrl, {
     Map<String, dynamic>? agencyData,
   }) {
-    
     try {
-      
       final safeName = name.isEmpty ? 'Unknown Agency' : name;
-      final safeRating = rating.isNaN || rating < 0 ? 0.0 : (rating > 5.0 ? 5.0 : rating);
+      final safeRating = rating.isNaN || rating < 0
+          ? 0.0
+          : (rating > 5.0 ? 5.0 : rating);
       final location = agencyData?['location'] as String? ?? 'Algiers';
 
       return GestureDetector(
@@ -2071,20 +2231,24 @@ class _HomeScreenState extends State<HomeScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => CleanerProfilePage(cleaner: {
-                  'name': safeName,
-                  'rating': safeRating,
-                  'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
-                  'isVerified': agencyData?['is_verified'] as bool? ?? false,
-                  'description': agencyData?['bio'] as String? ?? 'Professional cleaning service provider.',
-                  'image': logoUrl ?? agencyData?['image'],
-                  'type': 'Agency',
-                  'location': location,
-                  'price': agencyData?['hourly_rate'] != null 
-                      ? 'From ${agencyData?['hourly_rate']} DZD/hr'
-                      : AppLocalizations.of(context)!.contactForPricing,
-                  'profileData': agencyData,
-                }),
+                builder: (context) => CleanerProfilePage(
+                  cleaner: {
+                    'name': safeName,
+                    'rating': safeRating,
+                    'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
+                    'isVerified': agencyData?['is_verified'] as bool? ?? false,
+                    'description':
+                        agencyData?['bio'] as String? ??
+                        'Professional cleaning service provider.',
+                    'image': logoUrl ?? agencyData?['image'],
+                    'type': 'Agency',
+                    'location': location,
+                    'price': agencyData?['hourly_rate'] != null
+                        ? 'From ${agencyData?['hourly_rate']} DZD/hr'
+                        : AppLocalizations.of(context)!.contactForPricing,
+                    'profileData': agencyData,
+                  },
+                ),
               ),
             );
           } catch (e) {
@@ -2096,133 +2260,150 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
         },
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.7, 
-        constraints: const BoxConstraints(
-          minWidth: 200,
-          maxWidth: 250,
-        ),
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ClipOval(
-              child: logoUrl != null && logoUrl.isNotEmpty
-                  ? AppImage(
-                      imageUrl: logoUrl,
-                      width: 70,
-                      height: 70,
-                      fit: BoxFit.cover,
-                      errorWidget: Container(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.7,
+          constraints: const BoxConstraints(minWidth: 200, maxWidth: 250),
+          margin: const EdgeInsets.only(right: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipOval(
+                child: logoUrl != null && logoUrl.isNotEmpty
+                    ? AppImage(
+                        imageUrl: logoUrl,
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                        errorWidget: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.business,
+                            size: 35,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : Container(
                         width: 70,
                         height: 70,
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.business, size: 35, color: Colors.grey),
+                        child: const Icon(
+                          Icons.business,
+                          size: 35,
+                          color: Colors.grey,
+                        ),
                       ),
-                    )
-                  : Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.business, size: 35, color: Colors.grey),
-                    ),
-            ),
-            const SizedBox(height: 6),
-            Flexible(
-              child: Text(
-                name,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: 4),
-            Flexible(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ...List.generate(
-                    5,
-                    (index) => Icon(
-                      Icons.star,
-                      color: index < rating.floor() ? Colors.amber : Colors.grey[300],
-                      size: 12,
-                    ),
+              const SizedBox(height: 6),
+              Flexible(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      '(${rating.toStringAsFixed(1)})',
-                      style: const TextStyle(fontSize: 11),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  final agencyProfileData = {
-                    'name': safeName,
-                    'rating': safeRating,
-                    'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
-                    'isVerified': agencyData?['is_verified'] as bool? ?? false,
-                    'description': agencyData?['bio'] as String? ?? 'Professional cleaning service provider.',
-                    'image': logoUrl ?? agencyData?['image'],
-                    'type': 'Agency',
-                    'location': location,
-                    'price': agencyData?['hourly_rate'] != null 
-                        ? 'From ${agencyData?['hourly_rate']} DZD/hr'
-                        : AppLocalizations.of(context)!.contactForPricing,
-                    'profileData': agencyData,
-                  };
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CleanerProfilePage(cleaner: agencyProfileData),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  minimumSize: const Size(0, 32),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'View',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Flexible(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...List.generate(
+                      5,
+                      (index) => Icon(
+                        Icons.star,
+                        color: index < rating.floor()
+                            ? Colors.amber
+                            : Colors.grey[300],
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '(${rating.toStringAsFixed(1)})',
+                        style: const TextStyle(fontSize: 11),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    final agencyProfileData = {
+                      'name': safeName,
+                      'rating': safeRating,
+                      'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
+                      'isVerified':
+                          agencyData?['is_verified'] as bool? ?? false,
+                      'description':
+                          agencyData?['bio'] as String? ??
+                          'Professional cleaning service provider.',
+                      'image': logoUrl ?? agencyData?['image'],
+                      'type': 'Agency',
+                      'location': location,
+                      'price': agencyData?['hourly_rate'] != null
+                          ? 'From ${agencyData?['hourly_rate']} DZD/hr'
+                          : AppLocalizations.of(context)!.contactForPricing,
+                      'profileData': agencyData,
+                    };
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CleanerProfilePage(cleaner: agencyProfileData),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'View',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
     } catch (e, stackTrace) {
       print('Error building agency card: $e');
       print('Stack trace: $stackTrace');
-      
+
       return const SizedBox.shrink();
     }
   }
@@ -2236,48 +2417,55 @@ class _HomeScreenState extends State<HomeScreen> {
     Map<String, dynamic>? cleanerData,
   }) {
     try {
-      
       final safeName = name.isEmpty ? 'Unknown Cleaner' : name;
-      final safeRating = rating.isNaN || rating < 0 ? 0.0 : (rating > 5.0 ? 5.0 : rating);
+      final safeRating = rating.isNaN || rating < 0
+          ? 0.0
+          : (rating > 5.0 ? 5.0 : rating);
       final location = cleanerData?['location'] as String? ?? 'Algiers';
-      
-      
+
       // Use real data from cleanerData if available, otherwise minimal fallback
-      final data = cleanerData != null ? {
-        ...cleanerData,
-        'name': safeName,
-        'rating': safeRating,
-        'reviews': cleanerData['jobsCompleted'] as int? ?? 0,
-        'isVerified': cleanerData['is_verified'] as bool? ?? false,
-        'description': cleanerData['bio'] as String? ?? 'Professional cleaning service provider.',
-        'location': location,
-        'price': cleanerData['hourly_rate'] != null 
-            ? 'From ${cleanerData['hourly_rate']} DZD/hr'
-            : AppLocalizations.of(context)!.contactForPricing,
-        'image': imageUrl ?? cleanerData['image'],
-        'type': 'Individual',
-        'aboutMe': cleanerData['bio'] as String? ?? 'Professional cleaning service provider.',
-        'experience': cleanerData['experience_years'] != null
-            ? '${cleanerData['experience_years']}+ Years'
-            : '5+ Years',
-        'age': cleanerData['age']?.toString() ?? '28',
-        'languages': cleanerData['languages'] as String? ?? 'Arabic, French',
-        'profileData': cleanerData,
-      } : {
-        'name': safeName,
-        'rating': safeRating,
-        'reviews': 0,
-        'isVerified': false,
-        'description': 'Professional cleaning service provider.',
-        'location': location,
-        'price': AppLocalizations.of(context)!.contactForPricing,
-        'image': imageUrl,
-        'type': 'Individual',
-        'aboutMe': 'Professional cleaning service provider.',
-        'experience': '5+ Years',
-        'age': '28',
-        'languages': 'Arabic, French',
-      };
+      final data = cleanerData != null
+          ? {
+              ...cleanerData,
+              'name': safeName,
+              'rating': safeRating,
+              'reviews': cleanerData['jobsCompleted'] as int? ?? 0,
+              'isVerified': cleanerData['is_verified'] as bool? ?? false,
+              'description':
+                  cleanerData['bio'] as String? ??
+                  'Professional cleaning service provider.',
+              'location': location,
+              'price': cleanerData['hourly_rate'] != null
+                  ? 'From ${cleanerData['hourly_rate']} DZD/hr'
+                  : AppLocalizations.of(context)!.contactForPricing,
+              'image': imageUrl ?? cleanerData['image'],
+              'type': 'Individual',
+              'aboutMe':
+                  cleanerData['bio'] as String? ??
+                  'Professional cleaning service provider.',
+              'experience': cleanerData['experience_years'] != null
+                  ? '${cleanerData['experience_years']}+ Years'
+                  : '5+ Years',
+              'age': cleanerData['age']?.toString() ?? '28',
+              'languages':
+                  cleanerData['languages'] as String? ?? 'Arabic, French',
+              'profileData': cleanerData,
+            }
+          : {
+              'name': safeName,
+              'rating': safeRating,
+              'reviews': 0,
+              'isVerified': false,
+              'description': 'Professional cleaning service provider.',
+              'location': location,
+              'price': AppLocalizations.of(context)!.contactForPricing,
+              'image': imageUrl,
+              'type': 'Individual',
+              'aboutMe': 'Professional cleaning service provider.',
+              'experience': '5+ Years',
+              'age': '28',
+              'languages': 'Arabic, French',
+            };
 
       return GestureDetector(
         onTap: () {
@@ -2297,119 +2485,132 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
         },
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.7, 
-        constraints: const BoxConstraints(
-          minWidth: 200,
-          maxWidth: 250,
-        ),
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ClipOval(
-              child: imageUrl != null && imageUrl.isNotEmpty
-                  ? AppImage(
-                      imageUrl: imageUrl,
-                      width: 70,
-                      height: 70,
-                      fit: BoxFit.cover,
-                      errorWidget: Container(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.7,
+          constraints: const BoxConstraints(minWidth: 200, maxWidth: 250),
+          margin: const EdgeInsets.only(right: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipOval(
+                child: imageUrl != null && imageUrl.isNotEmpty
+                    ? AppImage(
+                        imageUrl: imageUrl,
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                        errorWidget: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            size: 35,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
+                    : Container(
                         width: 70,
                         height: 70,
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.person, size: 35, color: Colors.grey),
+                        child: const Icon(
+                          Icons.person,
+                          size: 35,
+                          color: Colors.grey,
+                        ),
                       ),
-                    )
-                  : Container(
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.person, size: 35, color: Colors.grey),
-                    ),
-            ),
-            const SizedBox(height: 6),
-            Flexible(
-              child: Text(
-                name,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            const SizedBox(height: 4),
-            Flexible(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ...List.generate(
-                    5,
-                    (index) => Icon(
-                      Icons.star,
-                      color: index < rating.floor() ? Colors.amber : Colors.grey[300],
-                      size: 12,
-                    ),
+              const SizedBox(height: 6),
+              Flexible(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      '(${rating.toStringAsFixed(1)})',
-                      style: const TextStyle(fontSize: 11),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CleanerProfilePage(cleaner: data),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  minimumSize: const Size(0, 32),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'View',
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Flexible(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ...List.generate(
+                      5,
+                      (index) => Icon(
+                        Icons.star,
+                        color: index < rating.floor()
+                            ? Colors.amber
+                            : Colors.grey[300],
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '(${rating.toStringAsFixed(1)})',
+                        style: const TextStyle(fontSize: 11),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CleanerProfilePage(cleaner: data),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'View',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
     } catch (e, stackTrace) {
       print('Error building individual card: $e');
       print('Stack trace: $stackTrace');
-      
+
       return const SizedBox.shrink();
     }
   }

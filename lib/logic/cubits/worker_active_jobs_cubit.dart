@@ -37,4 +37,3 @@ class WorkerActiveJobsCubit extends Cubit<WorkerActiveJobsState> {
     await loadActiveJobs(workerId);
   }
 }
-

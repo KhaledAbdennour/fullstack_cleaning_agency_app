@@ -37,10 +37,7 @@ class LaunchPage extends StatelessWidget {
             Text(
               localizations.createAccountDescription,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Colors.white70,
-              ),
+              style: const TextStyle(fontSize: 15, color: Colors.white70),
             ),
           ],
         ),

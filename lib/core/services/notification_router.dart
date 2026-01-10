@@ -41,7 +41,7 @@ class CleanerProfileTabs {
 class NotificationRouter {
   static bool _isAppReady = false;
   static RemoteMessage? _pendingMessage;
-  
+
   /// Mark app as ready (call after initialization)
   static void markAppReady() {
     _isAppReady = true;
@@ -61,7 +61,10 @@ class NotificationRouter {
 
     final data = message.data;
     final route = data['route']?.toString();
-    final id = data['id']?.toString() ?? data['jobId']?.toString() ?? data['bookingId']?.toString();
+    final id =
+        data['id']?.toString() ??
+        data['jobId']?.toString() ??
+        data['bookingId']?.toString();
 
     final context = navigatorKey.currentContext;
     if (context == null) {
@@ -71,9 +74,9 @@ class NotificationRouter {
 
     if (route == null) {
       // Default: go to notifications inbox
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const NotificationsInboxPage()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const NotificationsInboxPage()));
       return;
     }
 
@@ -91,9 +94,9 @@ class NotificationRouter {
 
       case '/profile':
       case '/clientProfile':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ClientProfilePage()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ClientProfilePage()));
         break;
 
       case '/notifications':
@@ -107,27 +110,28 @@ class NotificationRouter {
   }
 
   static void _showInfoSnackBar(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   /// Handle job details navigation with async data fetching
-  static Future<void> _handleJobDetails(BuildContext context, String? id) async {
+  static Future<void> _handleJobDetails(
+    BuildContext context,
+    String? id,
+  ) async {
     if (id == null) {
       // No ID provided, navigate without data
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const JobDetailsScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const JobDetailsScreen()));
       return;
     }
 
     try {
       final jobId = int.tryParse(id);
       if (jobId == null) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const JobDetailsScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const JobDetailsScreen()));
         return;
       }
 
@@ -138,43 +142,44 @@ class NotificationRouter {
       if (!context.mounted) return;
 
       if (job != null) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => JobDetailsScreen(job: job),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => JobDetailsScreen(job: job)));
       } else {
         // Job not found, navigate without data
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const JobDetailsScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const JobDetailsScreen()));
       }
     } catch (e) {
       print('Error fetching job for notification: $e');
       if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const JobDetailsScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const JobDetailsScreen()));
       }
     }
   }
 
   /// Handle booking details navigation with async data fetching
-  static Future<void> _handleBookingDetails(BuildContext context, String? id) async {
+  static Future<void> _handleBookingDetails(
+    BuildContext context,
+    String? id,
+  ) async {
     if (id == null) {
       // No ID provided, navigate without data
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const BookingDetailsScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const BookingDetailsScreen()));
       return;
     }
 
     try {
       final bookingId = int.tryParse(id);
       if (bookingId == null) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const BookingDetailsScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const BookingDetailsScreen()));
         return;
       }
 
@@ -203,9 +208,7 @@ class NotificationRouter {
           };
 
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => BookingDetailsPage(job: jobMap),
-            ),
+            MaterialPageRoute(builder: (_) => BookingDetailsPage(job: jobMap)),
           );
         } else {
           Navigator.of(context).push(
@@ -214,16 +217,16 @@ class NotificationRouter {
         }
       } else {
         // Booking not found, navigate without data
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const BookingDetailsScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const BookingDetailsScreen()));
       }
     } catch (e) {
       print('Error fetching booking for notification: $e');
       if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const BookingDetailsScreen()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const BookingDetailsScreen()));
       }
     }
   }
@@ -239,7 +242,10 @@ class NotificationRouter {
   }
 
   /// Handle cleaner profile navigation with async data fetching
-  static Future<void> _handleCleanerProfile(BuildContext context, String id) async {
+  static Future<void> _handleCleanerProfile(
+    BuildContext context,
+    String id,
+  ) async {
     try {
       final cleanerId = int.tryParse(id);
       if (cleanerId == null) {
@@ -265,7 +271,11 @@ class NotificationRouter {
   }
 
   /// Navigate to route directly (for use from notification tap in UI)
-  static Future<void> navigateToRoute(BuildContext context, String route, String? id) async {
+  static Future<void> navigateToRoute(
+    BuildContext context,
+    String route,
+    String? id,
+  ) async {
     switch (route) {
       case '/jobDetails':
       case '/job':
@@ -279,9 +289,9 @@ class NotificationRouter {
 
       case '/profile':
       case '/clientProfile':
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ClientProfilePage()),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const ClientProfilePage()));
         break;
 
       case '/cleanerProfile':
@@ -306,7 +316,7 @@ class NotificationRouter {
     try {
       final state = context.read<ProfilesCubit>().state;
       if (state is ProfilesLoaded && state.currentUser != null) {
-        return state.currentUser!['user_type']?.toString()?.trim();
+        return state.currentUser!['user_type']?.toString().trim();
       }
     } catch (e) {
       print('Error getting user role: $e');
@@ -332,18 +342,18 @@ class NotificationRouter {
       ),
       (route) => route.isFirst,
     );
-    
+
     // If highlightJobId is provided and autoOpenJobDetails is true, open job details after a delay
     if (highlightJobId != null && autoOpenJobDetails) {
       await Future.delayed(const Duration(milliseconds: 1000));
       if (context.mounted) {
         try {
-          final job = await AbstractJobsRepo.getInstance().getJobById(highlightJobId);
+          final job = await AbstractJobsRepo.getInstance().getJobById(
+            highlightJobId,
+          );
           if (job != null && context.mounted) {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => JobDetailsScreen(job: job),
-              ),
+              MaterialPageRoute(builder: (_) => JobDetailsScreen(job: job)),
             );
           }
         } catch (e) {
@@ -367,27 +377,35 @@ class NotificationRouter {
 
   /// Navigate from notification item (main entry point for UI taps)
   /// Role-aware routing: different pages based on user role + notification type
-  static Future<void> navigateFromNotification(BuildContext context, NotificationItem notification) async {
+  static Future<void> navigateFromNotification(
+    BuildContext context,
+    NotificationItem notification,
+  ) async {
     try {
       // Parse navigation data from notification
       final navData = NotificationNavData.fromNotification(notification);
-      
+
       if (!navData.isValid) {
-        _showErrorSnackBar(context, 'Cannot open this notification (missing target).');
+        _showErrorSnackBar(
+          context,
+          'Cannot open this notification (missing target).',
+        );
         return;
       }
-      
+
       // Get current user role
       final userRole = _getCurrentUserRole(context);
       final normalizedRole = _normalizeUserRole(userRole);
-      
+
       // Strategy A: Use explicit route if provided (but still consider role for some routes)
       if (navData.route != null) {
         // For manage job route, check if user is client/agency
         if (navData.route == '/manageJob' || navData.route == '/jobDetails') {
           if (normalizedRole == 'Client' && navData.jobId != null) {
             // Client should go to ManageJobPage for their own jobs
-            final job = await AbstractJobsRepo.getInstance().getJobById(navData.jobId!);
+            final job = await AbstractJobsRepo.getInstance().getJobById(
+              navData.jobId!,
+            );
             if (job != null && !context.mounted) return;
             if (job != null) {
               Navigator.of(context).push(
@@ -400,21 +418,26 @@ class NotificationRouter {
         await navigateToRoute(context, navData.route!, navData.routeId);
         return;
       }
-      
+
       // Strategy B: Role-aware type-based routing
       final type = navData.notificationType;
       if (type == null) {
-        _showErrorSnackBar(context, 'Cannot open this notification (missing type).');
+        _showErrorSnackBar(
+          context,
+          'Cannot open this notification (missing type).',
+        );
         return;
       }
-      
+
       // Route based on (type + role) combination
       switch (type) {
         case 'job_published':
           if (normalizedRole == 'Client') {
             // Client's own job post -> ManageJobPage
             if (navData.jobId != null) {
-              final job = await AbstractJobsRepo.getInstance().getJobById(navData.jobId!);
+              final job = await AbstractJobsRepo.getInstance().getJobById(
+                navData.jobId!,
+              );
               if (!context.mounted) return;
               if (job != null) {
                 Navigator.of(context).push(
@@ -435,12 +458,14 @@ class NotificationRouter {
             }
           }
           break;
-          
+
         case 'job_accepted':
           if (normalizedRole == 'Client') {
             // Client -> ManageJobPage (see applications + accept/reject)
             if (navData.jobId != null) {
-              final job = await AbstractJobsRepo.getInstance().getJobById(navData.jobId!);
+              final job = await AbstractJobsRepo.getInstance().getJobById(
+                navData.jobId!,
+              );
               if (!context.mounted) return;
               if (job != null) {
                 Navigator.of(context).push(
@@ -452,19 +477,23 @@ class NotificationRouter {
             } else {
               _showErrorSnackBar(context, 'Job details not available.');
             }
-          } else if (normalizedRole == 'Individual Cleaner' || normalizedRole == 'Worker') {
+          } else if (normalizedRole == 'Individual Cleaner' ||
+              normalizedRole == 'Worker') {
             // Worker -> AgencyDashboardPage (Active Listings tab - their active jobs)
             // Opens Active Listings tab, highlights job, and auto-opens job details
             await _navigateToAgencyDashboard(
               context,
               initialTab: 0, // Active Listings tab
               highlightJobId: navData.jobId,
-              autoOpenJobDetails: true, // Auto-open job details for active job actions
+              autoOpenJobDetails:
+                  true, // Auto-open job details for active job actions
             );
           } else if (normalizedRole == 'Agency') {
             // Agency -> AgencyDashboardPage or ManageJobPage
             if (navData.jobId != null) {
-              final job = await AbstractJobsRepo.getInstance().getJobById(navData.jobId!);
+              final job = await AbstractJobsRepo.getInstance().getJobById(
+                navData.jobId!,
+              );
               if (!context.mounted) return;
               if (job != null && job.agencyId != null) {
                 // If agency owns the job, go to ManageJobPage
@@ -477,7 +506,8 @@ class NotificationRouter {
                   context,
                   initialTab: 0, // Active Listings tab
                   highlightJobId: navData.jobId,
-                  autoOpenJobDetails: false, // Agency may want to see list first
+                  autoOpenJobDetails:
+                      false, // Agency may want to see list first
                 );
               }
             } else {
@@ -495,9 +525,10 @@ class NotificationRouter {
             }
           }
           break;
-          
+
         case 'job_rejected':
-          if (normalizedRole == 'Individual Cleaner' || normalizedRole == 'Worker') {
+          if (normalizedRole == 'Individual Cleaner' ||
+              normalizedRole == 'Worker') {
             // Worker -> JobDetails (can see the job they were rejected from)
             if (navData.jobId != null) {
               await _handleJobDetails(context, navData.jobId.toString());
@@ -507,7 +538,9 @@ class NotificationRouter {
           } else if (normalizedRole == 'Client') {
             // Client -> ManageJobPage (see all applications)
             if (navData.jobId != null) {
-              final job = await AbstractJobsRepo.getInstance().getJobById(navData.jobId!);
+              final job = await AbstractJobsRepo.getInstance().getJobById(
+                navData.jobId!,
+              );
               if (!context.mounted) return;
               if (job != null) {
                 Navigator.of(context).push(
@@ -528,18 +561,22 @@ class NotificationRouter {
             }
           }
           break;
-          
+
         case 'job_completed':
           if (normalizedRole == 'Client') {
             // Client -> Only open ReviewPage if job is fully completed
             if (navData.jobId != null && navData.workerId != null) {
-              final job = await AbstractJobsRepo.getInstance().getJobById(navData.jobId!);
+              final job = await AbstractJobsRepo.getInstance().getJobById(
+                navData.jobId!,
+              );
               if (!context.mounted) return;
               if (job == null) {
                 _showErrorSnackBar(context, 'Job not found.');
                 return;
               }
-              if (job.status == JobStatus.completed && job.clientDone && job.workerDone) {
+              if (job.status == JobStatus.completed &&
+                  job.clientDone &&
+                  job.workerDone) {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => ReviewPage(
@@ -550,11 +587,16 @@ class NotificationRouter {
                   ),
                 );
               } else {
-                _showInfoSnackBar(context, 'Waiting for both parties to confirm completion.');
+                _showInfoSnackBar(
+                  context,
+                  'Waiting for both parties to confirm completion.',
+                );
               }
             } else if (navData.jobId != null) {
               // Fallback: JobDetails if cleanerId missing
-              final job = await AbstractJobsRepo.getInstance().getJobById(navData.jobId!);
+              final job = await AbstractJobsRepo.getInstance().getJobById(
+                navData.jobId!,
+              );
               if (!context.mounted) return;
               if (job != null) {
                 Navigator.of(context).push(
@@ -566,9 +608,11 @@ class NotificationRouter {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          job.status == JobStatus.completed && job.clientDone && job.workerDone
-                            ? 'Job completed! You can leave a review from the job details.'
-                            : 'Waiting for both parties to confirm completion.',
+                          job.status == JobStatus.completed &&
+                                  job.clientDone &&
+                                  job.workerDone
+                              ? 'Job completed! You can leave a review from the job details.'
+                              : 'Waiting for both parties to confirm completion.',
                         ),
                         duration: const Duration(seconds: 3),
                       ),
@@ -581,7 +625,8 @@ class NotificationRouter {
             } else {
               _showErrorSnackBar(context, 'Job details not available.');
             }
-          } else if (normalizedRole == 'Individual Cleaner' || normalizedRole == 'Worker') {
+          } else if (normalizedRole == 'Individual Cleaner' ||
+              normalizedRole == 'Worker') {
             // Worker -> CleanerSelfProfilePage History tab (tab 1)
             await _navigateToMyProfile(context, initialTab: 1); // History tab
             // If jobId provided, could scroll to that job in history (future enhancement)
@@ -602,15 +647,19 @@ class NotificationRouter {
             }
           }
           break;
-          
+
         case 'review_added':
-          if (normalizedRole == 'Individual Cleaner' || normalizedRole == 'Worker') {
+          if (normalizedRole == 'Individual Cleaner' ||
+              normalizedRole == 'Worker') {
             // Worker -> My Profile Reviews tab (tab 2)
             await _navigateToMyProfile(context, initialTab: 2); // Reviews tab
           } else if (normalizedRole == 'Client') {
             // Client -> CleanerProfilePage of the cleaner who was reviewed
             if (navData.cleanerId != null) {
-              await _handleCleanerProfile(context, navData.cleanerId.toString());
+              await _handleCleanerProfile(
+                context,
+                navData.cleanerId.toString(),
+              );
             } else if (navData.workerId != null) {
               await _handleCleanerProfile(context, navData.workerId.toString());
             } else if (navData.senderId != null) {
@@ -621,7 +670,10 @@ class NotificationRouter {
           } else if (normalizedRole == 'Agency') {
             // Agency -> CleanerProfilePage of their worker
             if (navData.cleanerId != null) {
-              await _handleCleanerProfile(context, navData.cleanerId.toString());
+              await _handleCleanerProfile(
+                context,
+                navData.cleanerId.toString(),
+              );
             } else if (navData.workerId != null) {
               await _handleCleanerProfile(context, navData.workerId.toString());
             } else {
@@ -630,7 +682,10 @@ class NotificationRouter {
           } else {
             // Fallback: CleanerProfilePage
             if (navData.cleanerId != null) {
-              await _handleCleanerProfile(context, navData.cleanerId.toString());
+              await _handleCleanerProfile(
+                context,
+                navData.cleanerId.toString(),
+              );
             } else if (navData.senderId != null) {
               await _handleCleanerProfile(context, navData.senderId.toString());
             } else {
@@ -638,16 +693,22 @@ class NotificationRouter {
             }
           }
           break;
-          
+
         default:
           // Unknown type - show error
-          _showErrorSnackBar(context, 'Cannot open this notification (unknown type: $type).');
+          _showErrorSnackBar(
+            context,
+            'Cannot open this notification (unknown type: $type).',
+          );
           break;
       }
     } catch (e) {
       print('Error navigating from notification: $e');
       if (context.mounted) {
-        _showErrorSnackBar(context, 'Error opening notification: ${e.toString()}');
+        _showErrorSnackBar(
+          context,
+          'Error opening notification: ${e.toString()}',
+        );
       }
     }
   }
@@ -657,7 +718,7 @@ class NotificationRouter {
     if (role == null) return 'Client';
     final normalized = role.trim();
     if (normalized.toLowerCase() == 'agency') return 'Agency';
-    if (normalized.toLowerCase() == 'individual cleaner' || 
+    if (normalized.toLowerCase() == 'individual cleaner' ||
         normalized.toLowerCase() == 'cleaner' ||
         normalized.toLowerCase() == 'individual_cleaner' ||
         normalized.toLowerCase() == 'worker') {
@@ -666,7 +727,7 @@ class NotificationRouter {
     if (normalized.toLowerCase() == 'client') return 'Client';
     return normalized;
   }
-  
+
   /// Show error snackbar
   static void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -689,10 +750,10 @@ class NotificationRouter {
       final navData = NotificationNavData.fromNotification(notification);
       final userRole = _getCurrentUserRole(context);
       final normalizedRole = _normalizeUserRole(userRole);
-      
+
       String destination = 'Unknown';
       String? tabInfo;
-      
+
       if (!navData.isValid) {
         destination = 'Error: Missing target';
       } else if (navData.route != null) {
@@ -701,14 +762,15 @@ class NotificationRouter {
         final type = navData.notificationType;
         switch (type) {
           case 'job_published':
-            destination = normalizedRole == 'Client' 
-                ? 'ManageJobPage' 
+            destination = normalizedRole == 'Client'
+                ? 'ManageJobPage'
                 : 'JobDetailsScreen';
             break;
           case 'job_accepted':
             if (normalizedRole == 'Client') {
               destination = 'ManageJobPage';
-            } else if (normalizedRole == 'Individual Cleaner' || normalizedRole == 'Worker') {
+            } else if (normalizedRole == 'Individual Cleaner' ||
+                normalizedRole == 'Worker') {
               destination = 'AgencyDashboardPage';
               tabInfo = 'Tab: Active Listings (0)';
             } else if (normalizedRole == 'Agency') {
@@ -716,14 +778,15 @@ class NotificationRouter {
             }
             break;
           case 'job_rejected':
-            destination = normalizedRole == 'Client' 
-                ? 'ManageJobPage' 
+            destination = normalizedRole == 'Client'
+                ? 'ManageJobPage'
                 : 'JobDetailsScreen';
             break;
           case 'job_completed':
             if (normalizedRole == 'Client') {
               destination = 'ReviewPage';
-            } else if (normalizedRole == 'Individual Cleaner' || normalizedRole == 'Worker') {
+            } else if (normalizedRole == 'Individual Cleaner' ||
+                normalizedRole == 'Worker') {
               destination = 'CleanerSelfProfilePage';
               tabInfo = 'Tab: History (1)';
             } else if (normalizedRole == 'Agency') {
@@ -732,7 +795,8 @@ class NotificationRouter {
             }
             break;
           case 'review_added':
-            if (normalizedRole == 'Individual Cleaner' || normalizedRole == 'Worker') {
+            if (normalizedRole == 'Individual Cleaner' ||
+                normalizedRole == 'Worker') {
               destination = 'CleanerSelfProfilePage';
               tabInfo = 'Tab: Reviews (2)';
             } else {
@@ -743,7 +807,7 @@ class NotificationRouter {
             destination = 'Error: Unknown type';
         }
       }
-      
+
       return {
         'notificationId': notification.id,
         'notificationType': navData.notificationType,
@@ -758,11 +822,7 @@ class NotificationRouter {
         'navData': navData.toString(),
       };
     } catch (e) {
-      return {
-        'error': e.toString(),
-        'notificationId': notification.id,
-      };
+      return {'error': e.toString(), 'notificationId': notification.id};
     }
   }
 }
-

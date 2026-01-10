@@ -6,7 +6,10 @@ abstract class AbstractComplaintsRepo {
   Future<List<Complaint>> getComplaintsByUser(int userId);
   Future<Complaint?> getComplaintById(int complaintId);
   Future<List<Complaint>> getAllComplaints();
-  Future<Complaint> updateComplaintStatus(int complaintId, ComplaintStatus status);
+  Future<Complaint> updateComplaintStatus(
+    int complaintId,
+    ComplaintStatus status,
+  );
   Future<void> deleteComplaint(int complaintId);
 
   static AbstractComplaintsRepo? _instance;

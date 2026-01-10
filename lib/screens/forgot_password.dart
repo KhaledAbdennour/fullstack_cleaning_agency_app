@@ -28,18 +28,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     if (username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your username.'),
-        ),
+        const SnackBar(content: Text('Please enter your username.')),
       );
       return;
     }
 
     if (newPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your new password.'),
-        ),
+        const SnackBar(content: Text('Please enter your new password.')),
       );
       return;
     }
@@ -72,7 +68,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Username not found. Please check your username and try again.'),
+              content: Text(
+                'Username not found. Please check your username and try again.',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -82,10 +80,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       // Update password
       final docId = snapshot.docs.first.id;
-      await FirebaseConfig.firestore
-          .collection('profiles')
-          .doc(docId)
-          .update({
+      await FirebaseConfig.firestore.collection('profiles').doc(docId).update({
         'password': newPassword,
         'updated_at': FieldValue.serverTimestamp(),
       });
@@ -156,10 +151,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             const SizedBox(height: 16),
             const Text(
               'Enter your username and new password below. Make sure the password is at least 6 characters long.',
-              style: TextStyle(
-                color: Color(0xFF6B7280),
-                fontSize: 15,
-              ),
+              style: TextStyle(color: Color(0xFF6B7280), fontSize: 15),
             ),
             const SizedBox(height: 32),
             const Text(
@@ -214,7 +206,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                    _isPasswordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
                     color: Colors.grey[400],
                   ),
                   onPressed: () {
@@ -244,7 +238,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Text(
@@ -263,5 +259,3 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 }
-
-

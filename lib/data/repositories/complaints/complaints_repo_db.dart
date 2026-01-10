@@ -18,7 +18,7 @@ class ComplaintsDB extends AbstractComplaintsRepo {
             .orderBy('id', descending: true)
             .limit(1)
             .get();
-        
+
         if (snapshot.docs.isNotEmpty) {
           final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
           complaintId = maxId + 1;
@@ -103,7 +103,10 @@ class ComplaintsDB extends AbstractComplaintsRepo {
   }
 
   @override
-  Future<Complaint> updateComplaintStatus(int complaintId, ComplaintStatus status) async {
+  Future<Complaint> updateComplaintStatus(
+    int complaintId,
+    ComplaintStatus status,
+  ) async {
     try {
       final docRef = FirebaseConfig.firestore
           .collection(collectionName)

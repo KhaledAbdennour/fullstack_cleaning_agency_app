@@ -39,4 +39,3 @@ class NotificationsError extends NotificationsState {
   final String message;
   NotificationsError(this.message);
 }
-

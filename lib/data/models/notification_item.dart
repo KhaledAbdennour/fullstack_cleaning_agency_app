@@ -9,9 +9,10 @@ class NotificationItem {
   final DateTime createdAt;
   final Map<String, dynamic>? data; // Contains route, id, etc.
   final bool read;
-  
+
   // New fields for role-based filtering
-  final String? type; // 'job_published', 'job_accepted', 'job_rejected', 'job_completed', 'review_added'
+  final String?
+  type; // 'job_published', 'job_accepted', 'job_rejected', 'job_completed', 'review_added'
   final String? senderId; // User ID of the sender
   final int? jobId; // Related job ID
   final String userId; // Recipient user ID
@@ -44,22 +45,27 @@ class NotificationItem {
     };
   }
 
-  factory NotificationItem.fromMap(Map<String, dynamic> map, {DocumentSnapshot? docSnapshot}) {
+  factory NotificationItem.fromMap(
+    Map<String, dynamic> map, {
+    DocumentSnapshot? docSnapshot,
+  }) {
     // Parse createdAt using unified helper (supports Timestamp/int/String)
     DateTime? parsedDate = readDate(map['created_at']);
-    
+
     // Fallback to created_at_ms if created_at is null
     if (parsedDate == null && map['created_at_ms'] != null) {
       final ms = map['created_at_ms'];
       parsedDate = readDate(ms);
     }
-    
+
     // Final fallback: use current time (but log warning)
     if (parsedDate == null) {
-      print('⚠️ Notification missing created_at, using DateTime.now() - id: ${map['id']}');
+      print(
+        '⚠️ Notification missing created_at, using DateTime.now() - id: ${map['id']}',
+      );
       parsedDate = DateTime.now();
     }
-    
+
     return NotificationItem(
       id: readString(map['id']) ?? '',
       title: readString(map['title']) ?? '',
@@ -142,7 +148,7 @@ extension NotificationTypeExtension on NotificationType {
         return 'review_received';
     }
   }
-  
+
   String get displayName {
     switch (this) {
       case NotificationType.jobPublished:

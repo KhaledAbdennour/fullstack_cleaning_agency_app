@@ -9,7 +9,7 @@ abstract class AbstractReviewsRepo {
     required String comment,
     int? bookingId,
   });
-  
+
   Future<List<Review>> getReviewsForReviewee(String revieweeId);
   Future<List<Review>> getReviewsForJob(int jobId);
   Future<List<Review>> getReviewsByReviewer(String reviewerId);

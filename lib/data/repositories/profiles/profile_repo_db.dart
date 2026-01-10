@@ -14,7 +14,7 @@ class ProfileDB extends AbstractProfileRepo {
           .collection(collectionName)
           .orderBy('created_at', descending: true)
           .get();
-      
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = int.tryParse(doc.id) ?? 0;
@@ -37,7 +37,7 @@ class ProfileDB extends AbstractProfileRepo {
           .collection(collectionName)
           .doc(id.toString())
           .get();
-      
+
       if (!doc.exists) return null;
       final data = doc.data()!;
       data['id'] = id;
@@ -60,7 +60,7 @@ class ProfileDB extends AbstractProfileRepo {
           .where('username', isEqualTo: username)
           .limit(1)
           .get();
-      
+
       if (snapshot.docs.isEmpty) return null;
       final doc = snapshot.docs.first;
       final data = doc.data();
@@ -84,7 +84,7 @@ class ProfileDB extends AbstractProfileRepo {
           .where('email', isEqualTo: email.toLowerCase())
           .limit(1)
           .get();
-      
+
       if (snapshot.docs.isEmpty) return null;
       final doc = snapshot.docs.first;
       final data = doc.data();
@@ -108,7 +108,7 @@ class ProfileDB extends AbstractProfileRepo {
           .where('phone', isEqualTo: phone)
           .limit(1)
           .get();
-      
+
       if (snapshot.docs.isEmpty) return null;
       final doc = snapshot.docs.first;
       final data = doc.data();
@@ -133,7 +133,7 @@ class ProfileDB extends AbstractProfileRepo {
           .where('password', isEqualTo: password)
           .limit(1)
           .get();
-      
+
       if (snapshot.docs.isEmpty) return null;
       final doc = snapshot.docs.first;
       final data = doc.data();
@@ -143,7 +143,7 @@ class ProfileDB extends AbstractProfileRepo {
       if (!data.containsKey('picture')) {
         data['picture'] = null;
       }
-      
+
       await setCurrentUser(userId);
       return data;
     } catch (e, stacktrace) {
@@ -159,19 +159,19 @@ class ProfileDB extends AbstractProfileRepo {
       if (!profile.containsKey('created_at') || profile['created_at'] == null) {
         profile['created_at'] = FieldValue.serverTimestamp();
       }
-      
+
       // Ensure updated_at is set (same as created_at for new profiles)
       if (!profile.containsKey('updated_at') || profile['updated_at'] == null) {
         profile['updated_at'] = FieldValue.serverTimestamp();
       }
-      
+
       // Initialize picture field - always include it in profile (null if not provided)
       // This ensures the field exists in Firestore even if no avatar is uploaded initially
       // If picture is provided, it should be a base64 data URL (e.g., "data:image/jpeg;base64,...")
       if (!profile.containsKey('picture')) {
         profile['picture'] = null;
       }
-      
+
       // Profile fields that can be included:
       // - picture: String? (Base64 data URL for profile picture, e.g., "data:image/jpeg;base64,...")
       // - services: String? (Comma-separated list of services, e.g., "Home, Office, Industrial")
@@ -180,11 +180,11 @@ class ProfileDB extends AbstractProfileRepo {
       // - agency_name: String? (For Agency role)
       // - business_id: String? (For Agency role)
       // - Other fields are handled by the profile data map
-      
+
       // Remove id if present (Firestore will generate or use provided doc ID)
       final id = profile.remove('id');
       final profileData = Map<String, dynamic>.from(profile);
-      
+
       // Use provided ID or generate new one
       String docId;
       if (id != null && id is int) {
@@ -196,7 +196,7 @@ class ProfileDB extends AbstractProfileRepo {
             .orderBy('id', descending: true)
             .limit(1)
             .get();
-        
+
         int newId = 1;
         if (snapshot.docs.isNotEmpty) {
           final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
@@ -205,12 +205,12 @@ class ProfileDB extends AbstractProfileRepo {
         docId = newId.toString();
         profileData['id'] = newId; // Store numeric ID in document
       }
-      
+
       await FirebaseConfig.firestore
           .collection(collectionName)
           .doc(docId)
           .set(profileData);
-      
+
       final userId = int.parse(docId);
       await setCurrentUser(userId);
       return true;
@@ -231,12 +231,12 @@ class ProfileDB extends AbstractProfileRepo {
 
       // Add updated_at timestamp
       profile['updated_at'] = FieldValue.serverTimestamp();
-      
+
       // Check if document exists before updating
       final docRef = FirebaseConfig.firestore
           .collection(collectionName)
           .doc(id.toString());
-      
+
       final docSnapshot = await docRef.get();
       if (!docSnapshot.exists) {
         print('updateProfile: Document with id $id does not exist');
@@ -249,11 +249,11 @@ class ProfileDB extends AbstractProfileRepo {
     } catch (e, stacktrace) {
       print('updateProfile error: $e --> $stacktrace');
       // Re-throw specific errors that should be handled upstream
-      if (e.toString().contains('permission-denied') || 
+      if (e.toString().contains('permission-denied') ||
           e.toString().contains('PERMISSION_DENIED')) {
         throw Exception('Permission denied: Unable to update profile');
-      } else if (e.toString().contains('not-found') || 
-                 e.toString().contains('NOT_FOUND')) {
+      } else if (e.toString().contains('not-found') ||
+          e.toString().contains('NOT_FOUND')) {
         throw Exception('Profile not found');
       }
       return false;
@@ -278,26 +278,28 @@ class ProfileDB extends AbstractProfileRepo {
   Future<bool> updateAvatarUrl(int userId, String? url) async {
     try {
       print('updateAvatarUrl called: userId=$userId, url=$url');
-      
+
       // Verify document exists
       final docRef = FirebaseConfig.firestore
           .collection(collectionName)
           .doc(userId.toString());
-      
+
       final docSnapshot = await docRef.get();
       if (!docSnapshot.exists) {
         print('updateAvatarUrl error: Document with id $userId does not exist');
         return false;
       }
-      
+
       // Update the picture field with the base64 data URL
       // Note: url can be null to remove the picture, or a String (base64 data URL like "data:image/jpeg;base64,...") to set it
       await docRef.update({
         'picture': url, // Store the base64 data URL string in the picture field
         'updated_at': FieldValue.serverTimestamp(),
       });
-      
-      print('updateAvatarUrl success: picture field updated with base64 data URL');
+
+      print(
+        'updateAvatarUrl success: picture field updated with base64 data URL',
+      );
       return true;
     } catch (e, stacktrace) {
       print('updateAvatarUrl error: $e --> $stacktrace');
@@ -313,9 +315,9 @@ class ProfileDB extends AbstractProfileRepo {
           .collection(collectionName)
           .doc(userId.toString())
           .update({
-        'picture': null,
-        'updated_at': FieldValue.serverTimestamp(),
-      });
+            'picture': null,
+            'updated_at': FieldValue.serverTimestamp(),
+          });
       return true;
     } catch (e, stacktrace) {
       print('removeAvatar error: $e --> $stacktrace');

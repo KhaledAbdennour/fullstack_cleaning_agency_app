@@ -33,7 +33,7 @@ import 'core/debug/debug_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase Core FIRST (only on Android/iOS - not supported on Windows/desktop)
   if (Platform.isAndroid || Platform.isIOS) {
     try {
@@ -41,40 +41,31 @@ void main() async {
       FirebaseApp app;
       try {
         app = Firebase.app();
-        debugPrint('✅ Firebase already initialized');
       } catch (e) {
         // Initialize Firebase
-        debugPrint('🔍 Initializing Firebase...');
         app = await Firebase.initializeApp();
-        debugPrint('✅ Firebase initialized successfully');
-        debugPrint('   Project ID: ${app.options.projectId}');
       }
-      
+
       // Initialize Firestore AFTER Firebase Core is initialized
       await FirebaseConfig.initialize();
-      debugPrint('✅ Firestore initialized successfully');
-      
+
       // Seed database with dummy data AFTER Firestore is ready (async, don't block)
       DatabaseSeeder.seedDatabase().catchError((e) {
         debugPrint('Database seeding error: $e');
       });
     } catch (e, stackTrace) {
-      debugPrint('❌ Firebase/Firestore initialization failed: $e');
+      debugPrint('Firebase/Firestore initialization failed: $e');
       debugPrint('Stack trace: $stackTrace');
       // Don't throw - allow app to continue, but data operations will fail
     }
-  } else {
-    debugPrint('⚠️  Firebase not supported on ${Platform.operatingSystem}');
-    debugPrint('   App will run but Firebase features will not work');
   }
-  
+
   // Setup GetIt service locator
   setupServiceLocator();
-  print('✅ Service locator initialized');
-  
+
   // Notifications are now initialized via NotificationsCubit in the app
   // The cubit will call repo.initMessaging() when the app starts
-  
+
   runApp(const MyApp());
 }
 
@@ -83,7 +74,7 @@ class MyApp extends StatefulWidget {
 
   @override
   State<MyApp> createState() => _MyAppState();
-  
+
   // Expose method for settings page
   static _MyAppState? of(BuildContext context) {
     return context.findAncestorStateOfType<_MyAppState>();
@@ -131,9 +122,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     if (!_localeLoaded) {
       return const MaterialApp(
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        ),
+        home: Scaffold(body: Center(child: CircularProgressIndicator())),
       );
     }
 
@@ -156,9 +145,8 @@ class _MyAppState extends State<MyApp> {
         BlocProvider(create: (context) => WorkerActiveJobsCubit()),
         // Notifications cubit using GetIt
         BlocProvider(
-          create: (context) => NotificationsCubit(
-            getIt<AbstractNotificationsRepo>(),
-          ),
+          create: (context) =>
+              NotificationsCubit(getIt<AbstractNotificationsRepo>()),
         ),
       ],
       child: Directionality(
@@ -168,9 +156,7 @@ class _MyAppState extends State<MyApp> {
           title: 'CleanSpace',
           debugShowCheckedModeBanner: false,
           locale: _locale,
-          theme: ThemeData(
-            primarySwatch: Colors.teal,
-          ),
+          theme: ThemeData(primarySwatch: Colors.teal),
           localizationsDelegates: [
             AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
@@ -187,12 +173,12 @@ class _MyAppState extends State<MyApp> {
               // Handle initial message (app opened from terminated state)
               NotificationRouter.handleInitialMessage();
             });
-            
+
             // Handle notification opened app (when app is in background)
             FirebaseMessaging.onMessageOpenedApp.listen((message) {
               NotificationRouter.handleMessage(message);
             });
-            
+
             return child!;
           },
         ),
@@ -221,32 +207,40 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
 
   Future<void> _checkAuth() async {
     // #region agent log
-    DebugLogger.log('_CheckAuthScreen', '_checkAuth_START', data: {
-      'hypothesisId': 'H3',
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      '_CheckAuthScreen',
+      '_checkAuth_START',
+      data: {
+        'hypothesisId': 'H3',
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     // Check if user has seen onboarding
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-    
+
     // #region agent log
     final currentUserId = prefs.getInt('current_user_id');
-    DebugLogger.log('_CheckAuthScreen', '_checkAuth_SHAREDPREFS', data: {
-      'hypothesisId': 'H4',
-      'currentUserId': currentUserId,
-      'hasSeenOnboarding': hasSeenOnboarding,
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      '_CheckAuthScreen',
+      '_checkAuth_SHAREDPREFS',
+      data: {
+        'hypothesisId': 'H4',
+        'currentUserId': currentUserId,
+        'hasSeenOnboarding': hasSeenOnboarding,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     // Check if user is already logged in via SharedPreferences
     final profilesCubit = context.read<ProfilesCubit>();
     await profilesCubit.loadCurrentUser();
-    
+
     if (mounted) {
       setState(() {
         _hasSeenOnboarding = hasSeenOnboarding;
@@ -258,9 +252,7 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
   @override
   Widget build(BuildContext context) {
     if (!_checked) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return BlocBuilder<ProfilesCubit, ProfilesState>(
@@ -280,55 +272,69 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
       },
       builder: (context, state) {
         // #region agent log
-        DebugLogger.log('_CheckAuthScreen', 'BUILD_DECISION_START', data: {
-          'hypothesisId': 'H3',
-          'stateType': state.runtimeType.toString(),
-          'isProfilesLoaded': state is ProfilesLoaded,
-          'hasCurrentUser': state is ProfilesLoaded && (state as ProfilesLoaded).currentUser != null,
-          'hasSeenOnboarding': _hasSeenOnboarding,
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
-        // #endregion
-        
-        // If user is loaded (logged in), show appropriate home screen
-        if (state is ProfilesLoaded && state.currentUser != null) {
-          final userType = (state.currentUser!['user_type'] as String? ?? '').trim();
-          
-          // #region agent log
-          DebugLogger.log('_CheckAuthScreen', 'USER_LOGGED_IN', data: {
+        DebugLogger.log(
+          '_CheckAuthScreen',
+          'BUILD_DECISION_START',
+          data: {
             'hypothesisId': 'H3',
-            'userType': userType,
+            'stateType': state.runtimeType.toString(),
+            'isProfilesLoaded': state is ProfilesLoaded,
+            'hasCurrentUser':
+                state is ProfilesLoaded && (state).currentUser != null,
+            'hasSeenOnboarding': _hasSeenOnboarding,
             'sessionId': 'debug-session',
             'runId': 'run1',
-          });
+          },
+        );
+        // #endregion
+
+        // If user is loaded (logged in), show appropriate home screen
+        if (state is ProfilesLoaded && state.currentUser != null) {
+          final userType = (state.currentUser!['user_type'] as String? ?? '')
+              .trim();
+
+          // #region agent log
+          DebugLogger.log(
+            '_CheckAuthScreen',
+            'USER_LOGGED_IN',
+            data: {
+              'hypothesisId': 'H3',
+              'userType': userType,
+              'sessionId': 'debug-session',
+              'runId': 'run1',
+            },
+          );
           // #endregion
-          
+
           // For clients: go directly to HomeScreen (not WelcomeInside)
           // Use a key to preserve state when widget is recreated
           if (userType == 'Client') {
             return const HomeScreen(key: ValueKey('client_home'));
           }
-          
+
           // For Agency/Individual Cleaner: go to AgencyDashboardPage
           if (userType == 'Agency' || userType == 'Individual Cleaner') {
             return const AgencyDashboardPage();
           }
         }
-        
+
         // Not logged in: check if user has seen onboarding
         // #region agent log
-        DebugLogger.log('_CheckAuthScreen', 'NOT_LOGGED_IN_DECISION', data: {
-          'hypothesisId': 'H3',
-          'hypothesisId2': 'H4',
-          'hasSeenOnboarding': _hasSeenOnboarding,
-          'willShowOnboarding': _hasSeenOnboarding == false,
-          'willShowLogin': _hasSeenOnboarding == true,
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
+        DebugLogger.log(
+          '_CheckAuthScreen',
+          'NOT_LOGGED_IN_DECISION',
+          data: {
+            'hypothesisId': 'H3',
+            'hypothesisId2': 'H4',
+            'hasSeenOnboarding': _hasSeenOnboarding,
+            'willShowOnboarding': _hasSeenOnboarding == false,
+            'willShowLogin': _hasSeenOnboarding == true,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          },
+        );
         // #endregion
-        
+
         if (_hasSeenOnboarding == true) {
           // User has seen onboarding before, show login page
           return const Login();

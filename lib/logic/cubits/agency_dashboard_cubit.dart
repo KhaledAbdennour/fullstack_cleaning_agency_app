@@ -4,7 +4,6 @@ import '../../data/models/cleaner_model.dart';
 import '../../data/repositories/jobs/jobs_repo.dart';
 import '../../data/repositories/cleaners/cleaners_repo.dart';
 
-
 abstract class ActiveListingsState {}
 
 class ActiveListingsInitial extends ActiveListingsState {}
@@ -22,7 +21,6 @@ class ActiveListingsError extends ActiveListingsState {
   ActiveListingsError(this.message);
 }
 
-
 abstract class PastBookingsState {}
 
 class PastBookingsInitial extends PastBookingsState {}
@@ -38,7 +36,6 @@ class PastBookingsError extends PastBookingsState {
   final String message;
   PastBookingsError(this.message);
 }
-
 
 abstract class CleanerTeamState {}
 
@@ -56,7 +53,6 @@ class CleanerTeamError extends CleanerTeamState {
   CleanerTeamError(this.message);
 }
 
-
 class ActiveListingsCubit extends Cubit<ActiveListingsState> {
   final AbstractJobsRepo _jobsRepo = AbstractJobsRepo.getInstance();
 
@@ -66,7 +62,9 @@ class ActiveListingsCubit extends Cubit<ActiveListingsState> {
     emit(ActiveListingsLoading());
     try {
       final jobs = await _jobsRepo.getActiveJobsForAgency(agencyId);
-      final totalCompleted = await _jobsRepo.getTotalJobsCompletedForAgency(agencyId);
+      final totalCompleted = await _jobsRepo.getTotalJobsCompletedForAgency(
+        agencyId,
+      );
       emit(ActiveListingsLoaded(jobs, totalCompleted));
     } catch (e) {
       emit(ActiveListingsError('Failed to load active listings: $e'));
@@ -77,7 +75,6 @@ class ActiveListingsCubit extends Cubit<ActiveListingsState> {
     await loadActiveListings(agencyId);
   }
 }
-
 
 class PastBookingsCubit extends Cubit<PastBookingsState> {
   final AbstractJobsRepo _jobsRepo = AbstractJobsRepo.getInstance();
@@ -98,10 +95,14 @@ class PastBookingsCubit extends Cubit<PastBookingsState> {
     await loadPastBookings(agencyId);
   }
 
-  Future<void> changeJobStatus(int jobId, JobStatus status, int agencyId) async {
+  Future<void> changeJobStatus(
+    int jobId,
+    JobStatus status,
+    int agencyId,
+  ) async {
     try {
       await _jobsRepo.changeJobStatus(jobId, status);
-      
+
       await loadPastBookings(agencyId);
     } catch (e) {
       emit(PastBookingsError('Failed to change job status: $e'));
@@ -117,7 +118,6 @@ class PastBookingsCubit extends Cubit<PastBookingsState> {
     }
   }
 }
-
 
 class CleanerTeamCubit extends Cubit<CleanerTeamState> {
   final AbstractCleanersRepo _cleanersRepo = AbstractCleanersRepo.getInstance();
@@ -138,4 +138,3 @@ class CleanerTeamCubit extends Cubit<CleanerTeamState> {
     await loadCleaners(agencyId);
   }
 }
-

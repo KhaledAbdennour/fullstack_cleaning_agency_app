@@ -51,7 +51,9 @@ class Complaint {
       createdAt = createdAtValue;
     } else {
       try {
-        createdAt = DateTime.parse(map['created_at'] as String? ?? DateTime.now().toIso8601String());
+        createdAt = DateTime.parse(
+          map['created_at'] as String? ?? DateTime.now().toIso8601String(),
+        );
       } catch (e) {
         createdAt = DateTime.now();
       }
@@ -103,9 +105,4 @@ class Complaint {
   }
 }
 
-enum ComplaintStatus {
-  pending,
-  inProgress,
-  resolved,
-  closed,
-}
+enum ComplaintStatus { pending, inProgress, resolved, closed }

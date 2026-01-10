@@ -7,7 +7,8 @@ class CleanersDB extends AbstractCleanersRepo {
   static const String collectionName = 'cleaners';
 
   // Keep SQL code for reference
-  static const String sqlCode = '''
+  static const String sqlCode =
+      '''
     CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -30,13 +31,16 @@ class CleanersDB extends AbstractCleanersRepo {
           .collection(collectionName)
           .where('agency_id', isEqualTo: agencyId)
           .get();
-      
-      final cleaners = snapshot.docs.map((doc) {
-        final data = doc.data();
-        data['id'] = int.tryParse(doc.id) ?? 0;
-        return Cleaner.fromMap(data);
-      }).where((c) => c.isActive).toList();
-      
+
+      final cleaners = snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            data['id'] = int.tryParse(doc.id) ?? 0;
+            return Cleaner.fromMap(data);
+          })
+          .where((c) => c.isActive)
+          .toList();
+
       cleaners.sort((a, b) => b.jobsCompleted.compareTo(a.jobsCompleted));
       return cleaners;
     } catch (e, stacktrace) {
@@ -52,7 +56,7 @@ class CleanersDB extends AbstractCleanersRepo {
           .collection(collectionName)
           .doc(cleanerId.toString())
           .get();
-      
+
       if (!doc.exists) return null;
       final data = doc.data()!;
       data['id'] = cleanerId;
@@ -67,14 +71,13 @@ class CleanersDB extends AbstractCleanersRepo {
   Future<Cleaner> addCleaner(Cleaner cleaner) async {
     try {
       final now = DateTime.now();
-      final cleanerMap = cleaner.copyWith(
-        createdAt: now,
-        updatedAt: now,
-      ).toMap();
+      final cleanerMap = cleaner
+          .copyWith(createdAt: now, updatedAt: now)
+          .toMap();
       final id = cleanerMap.remove('id');
       cleanerMap['created_at'] = Timestamp.fromDate(now);
       cleanerMap['updated_at'] = Timestamp.fromDate(now);
-      
+
       String docId;
       if (id != null && id is int) {
         docId = id.toString();
@@ -85,7 +88,7 @@ class CleanersDB extends AbstractCleanersRepo {
             .orderBy('id', descending: true)
             .limit(1)
             .get();
-        
+
         int newId = 1;
         if (snapshot.docs.isNotEmpty) {
           final maxId = snapshot.docs.first.data()['id'] as int? ?? 0;
@@ -94,12 +97,12 @@ class CleanersDB extends AbstractCleanersRepo {
         docId = newId.toString();
         cleanerMap['id'] = newId;
       }
-      
+
       await FirebaseConfig.firestore
           .collection(collectionName)
           .doc(docId)
           .set(cleanerMap);
-      
+
       final data = cleanerMap;
       data['id'] = int.parse(docId);
       return Cleaner.fromMap(data);
@@ -116,12 +119,12 @@ class CleanersDB extends AbstractCleanersRepo {
       final cleanerMap = cleaner.copyWith(updatedAt: now).toMap();
       cleanerMap.remove('id');
       cleanerMap['updated_at'] = Timestamp.fromDate(now);
-      
+
       await FirebaseConfig.firestore
           .collection(collectionName)
           .doc(cleaner.id.toString())
           .update(cleanerMap);
-      
+
       return cleaner.copyWith(updatedAt: now);
     } catch (e, stacktrace) {
       print('updateCleaner error: $e --> $stacktrace');

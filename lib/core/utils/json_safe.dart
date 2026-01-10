@@ -6,27 +6,27 @@ class JsonSafe {
   /// Sanitizes a value recursively to make it JSON-encodable
   static dynamic sanitize(Object? value) {
     if (value == null) return null;
-    
+
     // Handle FieldValue (not encodable)
     if (value is FieldValue) {
       return '[FieldValue]';
     }
-    
+
     // Handle Timestamp
     if (value is Timestamp) {
       return value.toDate().toIso8601String();
     }
-    
+
     // Handle DateTime
     if (value is DateTime) {
       return value.toIso8601String();
     }
-    
+
     // Handle DocumentReference
     if (value is DocumentReference) {
       return value.path;
     }
-    
+
     // Handle Map - sanitize recursively
     if (value is Map) {
       final sanitized = <String, dynamic>{};
@@ -35,16 +35,16 @@ class JsonSafe {
       });
       return sanitized;
     }
-    
+
     // Handle Iterable (List, Set, etc.)
     if (value is Iterable) {
       return value.map((item) => sanitize(item)).toList();
     }
-    
+
     // Primitive types (int, double, String, bool) are already encodable
     return value;
   }
-  
+
   /// Safely encode a value to JSON string
   static String encode(Object? value) {
     try {
@@ -56,4 +56,3 @@ class JsonSafe {
     }
   }
 }
-

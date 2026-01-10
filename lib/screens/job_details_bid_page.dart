@@ -10,7 +10,6 @@ import '../data/repositories/profiles/profile_repo.dart';
 import '../utils/image_helper.dart';
 import '../l10n/app_localizations.dart';
 
-
 class JobDetailsBidPage extends StatefulWidget {
   final Job job;
 
@@ -30,7 +29,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
   @override
   void initState() {
     super.initState();
-    
+
     if (widget.job.budgetMin != null) {
       final suggestedPrice = widget.job.budgetMax != null
           ? ((widget.job.budgetMin! + widget.job.budgetMax!) / 2).round()
@@ -44,10 +43,11 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
     List<String> images = [];
     if (widget.job.jobImages != null && widget.job.jobImages!.isNotEmpty) {
       images = widget.job.jobImages!;
-    } else if (widget.job.coverImageUrl != null && widget.job.coverImageUrl!.isNotEmpty) {
+    } else if (widget.job.coverImageUrl != null &&
+        widget.job.coverImageUrl!.isNotEmpty) {
       images = [widget.job.coverImageUrl!];
     }
-    
+
     if (images.isEmpty) {
       return Container(
         height: 200,
@@ -56,7 +56,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
         child: const Icon(Icons.image, size: 64, color: Colors.grey),
       );
     }
-    
+
     return Column(
       children: [
         Padding(
@@ -78,7 +78,11 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                     errorWidget: Container(
                       height: 250,
                       color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 64, color: Colors.grey),
+                      child: const Icon(
+                        Icons.image,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
                     ),
                   );
                 },
@@ -117,7 +121,12 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
         children: [
           Icon(icon, color: const Color(0xFF3B82F6)),
           const SizedBox(width: 12),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14, color: Colors.black))),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+            ),
+          ),
         ],
       ),
     );
@@ -133,7 +142,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
     });
 
     try {
-      
       final profilesCubit = context.read<ProfilesCubit>();
       await profilesCubit.loadCurrentUser();
       final state = profilesCubit.state;
@@ -142,7 +150,9 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.pleaseLoginToSubmitBid),
+              content: Text(
+                AppLocalizations.of(context)!.pleaseLoginToSubmitBid,
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -165,13 +175,14 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
         return;
       }
 
-      
       final bidPrice = double.tryParse(_bidPriceController.text.trim());
       if (bidPrice == null || bidPrice <= 0) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.pleaseEnterValidBidPrice),
+              content: Text(
+                AppLocalizations.of(context)!.pleaseEnterValidBidPrice,
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -179,40 +190,38 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
         return;
       }
 
-      
       final booking = Booking(
         jobId: widget.job.id!,
         clientId: widget.job.clientId!,
         providerId: providerId,
         status: BookingStatus.pending,
         bidPrice: bidPrice,
-        message: _messageController.text.trim().isEmpty 
-            ? null 
+        message: _messageController.text.trim().isEmpty
+            ? null
             : _messageController.text.trim(),
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
-      
       final bookingsRepo = AbstractBookingsRepo.getInstance();
       await bookingsRepo.createBooking(booking);
 
-      
       if (mounted) {
         // Refresh available jobs (to remove the job from available list)
         context.read<AvailableJobsCubit>().refresh(providerId);
-        
+
         // Refresh active listings (to show the job as pending)
         context.read<ActiveListingsCubit>().refresh(providerId);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.bidSubmittedSuccessfully),
+            content: Text(
+              AppLocalizations.of(context)!.bidSubmittedSuccessfully,
+            ),
             backgroundColor: Colors.green,
           ),
         );
 
-        
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -223,19 +232,19 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
           final errorStr = e.toString();
           // Remove FieldValue references from error message
           if (errorStr.contains('FieldValue')) {
-            errorMsg = AppLocalizations.of(context)!.errorSubmittingBidInvalidData;
+            errorMsg = AppLocalizations.of(
+              context,
+            )!.errorSubmittingBidInvalidData;
           } else {
-            errorMsg = 'Error submitting bid: ${errorStr.length > 100 ? errorStr.substring(0, 100) : errorStr}';
+            errorMsg =
+                'Error submitting bid: ${errorStr.length > 100 ? errorStr.substring(0, 100) : errorStr}';
           }
         } catch (_) {
           errorMsg = AppLocalizations.of(context)!.errorSubmittingBidUnexpected;
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -269,7 +278,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildImageCarousel(),
-            
+
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
@@ -280,7 +289,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  
                   Text(
                     widget.job.title,
                     style: const TextStyle(
@@ -290,22 +298,27 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  
                   BlocBuilder<ProfilesCubit, ProfilesState>(
                     builder: (context, state) {
-                      if (state is ProfilesLoaded && widget.job.clientId != null) {
-                        
+                      if (state is ProfilesLoaded &&
+                          widget.job.clientId != null) {
                         return FutureBuilder<Map<String, dynamic>?>(
-                          future: AbstractProfileRepo.getInstance().getProfileById(widget.job.clientId!),
+                          future: AbstractProfileRepo.getInstance()
+                              .getProfileById(widget.job.clientId!),
                           builder: (context, snapshot) {
-                            final clientName = snapshot.data?['full_name'] as String? ?? 'Client';
-                            final clientPhoto = snapshot.data?['picture'] as String?;
+                            final clientName =
+                                snapshot.data?['full_name'] as String? ??
+                                'Client';
+                            final clientPhoto =
+                                snapshot.data?['picture'] as String?;
                             return Row(
                               children: [
                                 CircleAvatar(
                                   radius: 35,
                                   backgroundColor: const Color(0xFF3B82F6),
-                                  child: clientPhoto != null && clientPhoto.isNotEmpty
+                                  child:
+                                      clientPhoto != null &&
+                                          clientPhoto.isNotEmpty
                                       ? ClipOval(
                                           child: AppImage(
                                             imageUrl: clientPhoto,
@@ -316,21 +329,37 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                                               width: 70,
                                               height: 70,
                                               color: const Color(0xFF3B82F6),
-                                              child: const Icon(Icons.person, color: Colors.white, size: 40),
+                                              child: const Icon(
+                                                Icons.person,
+                                                color: Colors.white,
+                                                size: 40,
+                                              ),
                                             ),
                                           ),
                                         )
-                                      : const Icon(Icons.person, color: Colors.white, size: 40),
+                                      : const Icon(
+                                          Icons.person,
+                                          color: Colors.white,
+                                          size: 40,
+                                        ),
                                 ),
                                 const SizedBox(width: 12),
                                 RichText(
                                   text: TextSpan(
-                                    style: const TextStyle(fontSize: 14, color: Colors.black),
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                    ),
                                     children: [
-                                      TextSpan(text: '${AppLocalizations.of(context)!.postedBy} '),
+                                      TextSpan(
+                                        text:
+                                            '${AppLocalizations.of(context)!.postedBy} ',
+                                      ),
                                       TextSpan(
                                         text: clientName,
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -359,16 +388,15 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                     widget.job.budgetMin != null && widget.job.budgetMax != null
                         ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMin!.toStringAsFixed(0)} - DA ${widget.job.budgetMax!.toStringAsFixed(0)}'
                         : widget.job.budgetMin != null
-                            ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMin!.toStringAsFixed(0)}'
-                            : widget.job.budgetMax != null
-                                ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMax!.toStringAsFixed(0)}'
-                                : '${AppLocalizations.of(context)!.budget}: ${AppLocalizations.of(context)!.budgetNegotiable}',
+                        ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMin!.toStringAsFixed(0)}'
+                        : widget.job.budgetMax != null
+                        ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMax!.toStringAsFixed(0)}'
+                        : '${AppLocalizations.of(context)!.budget}: ${AppLocalizations.of(context)!.budgetNegotiable}',
                   ),
                 ],
               ),
             ),
 
-            
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(20),
@@ -381,10 +409,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                 children: [
                   Text(
                     AppLocalizations.of(context)!.description,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -395,8 +420,8 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
               ),
             ),
 
-            
-            if (widget.job.requiredServices != null && widget.job.requiredServices!.isNotEmpty)
+            if (widget.job.requiredServices != null &&
+                widget.job.requiredServices!.isNotEmpty)
               Container(
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(20),
@@ -420,7 +445,10 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       runSpacing: 8,
                       children: widget.job.requiredServices!.map((service) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFF3B82F6),
                             borderRadius: BorderRadius.circular(8),
@@ -440,7 +468,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                 ),
               ),
 
-            
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
@@ -462,7 +489,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    
                     Text(
                       AppLocalizations.of(context)!.yourPriceDa,
                       style: const TextStyle(
@@ -475,7 +501,9 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       controller: _bidPriceController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.enterYourBidPrice,
+                        hintText: AppLocalizations.of(
+                          context,
+                        )!.enterYourBidPrice,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -483,18 +511,21 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return AppLocalizations.of(context)!.pleaseEnterBidPrice;
+                          return AppLocalizations.of(
+                            context,
+                          )!.pleaseEnterBidPrice;
                         }
                         final price = double.tryParse(value);
                         if (price == null || price <= 0) {
-                          return AppLocalizations.of(context)!.pleaseEnterValidPrice;
+                          return AppLocalizations.of(
+                            context,
+                          )!.pleaseEnterValidPrice;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
 
-                    
                     Text(
                       AppLocalizations.of(context)!.messageOptional,
                       style: const TextStyle(
@@ -507,7 +538,9 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       controller: _messageController,
                       maxLines: 4,
                       decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.addShortMessageToClient,
+                        hintText: AppLocalizations.of(
+                          context,
+                        )!.addShortMessageToClient,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -518,7 +551,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
               ),
             ),
 
-            
             Container(
               margin: const EdgeInsets.all(16),
               width: double.infinity,
@@ -535,9 +567,11 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: const CircularProgressIndicator(
+                        child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF3B82F6)),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF3B82F6),
+                          ),
                         ),
                       )
                     : Text(
@@ -556,5 +590,3 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
     );
   }
 }
-
-

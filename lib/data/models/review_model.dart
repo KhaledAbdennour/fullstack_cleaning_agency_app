@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/utils/firestore_type.dart';
 
 /// Review model for the new "reviews" collection
@@ -67,7 +66,10 @@ class Review {
       rating: readInt(map['rating']) ?? 0,
       comment: readString(map['comment']) ?? '',
       photos: map['photos'] is List
-          ? (map['photos'] as List).map((e) => readString(e) ?? '').where((s) => s.isNotEmpty).toList()
+          ? (map['photos'] as List)
+                .map((e) => readString(e) ?? '')
+                .where((s) => s.isNotEmpty)
+                .toList()
           : [],
       createdAt: readDate(map['created_at']),
       createdAtMs: readInt(map['created_at_ms']),

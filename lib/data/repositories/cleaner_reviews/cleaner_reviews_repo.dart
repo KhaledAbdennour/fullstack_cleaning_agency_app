@@ -1,7 +1,6 @@
 import '../../models/cleaner_review.dart';
 import 'cleaner_reviews_repo_db.dart';
 
-
 abstract class AbstractCleanerReviewsRepo {
   Future<List<CleanerReview>> getReviewsForCleaner(int cleanerId);
   Future<CleanerReview> addReview(CleanerReview review);
@@ -15,7 +14,3 @@ abstract class AbstractCleanerReviewsRepo {
     return _instance!;
   }
 }
-
-
-
-

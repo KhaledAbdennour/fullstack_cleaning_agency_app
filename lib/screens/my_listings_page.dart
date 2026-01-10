@@ -32,8 +32,7 @@ class _MyListingsPageState extends State<MyListingsPage> {
     },
     {
       'title': 'Window Washing Service',
-      'description':
-          'Professional window cleaning for homes and businesses.',
+      'description': 'Professional window cleaning for homes and businesses.',
       'status': 'Booked',
       'date': '08/03/2024',
       'image':
@@ -43,9 +42,9 @@ class _MyListingsPageState extends State<MyListingsPage> {
 
   List<Map<String, dynamic>> get filteredListings {
     return listings.where((listing) {
-      final matchesSearch = listing['title']
-          .toLowerCase()
-          .contains(_searchController.text.toLowerCase());
+      final matchesSearch = listing['title'].toLowerCase().contains(
+        _searchController.text.toLowerCase(),
+      );
       final matchesStatus = selectedStatus == 'All'
           ? true
           : listing['status'] == selectedStatus;
@@ -57,9 +56,9 @@ class _MyListingsPageState extends State<MyListingsPage> {
     setState(() {
       listings.remove(listing);
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${listing['title']} deleted')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${listing['title']} deleted')));
   }
 
   void _handlePause(Map<String, dynamic> listing) {
@@ -117,7 +116,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
     );
   }
 
-  
   Widget _buildSearchBar() {
     return TextField(
       controller: _searchController,
@@ -135,7 +133,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
     );
   }
 
-  
   Widget _buildFilterRow() {
     return Row(
       children: [
@@ -160,7 +157,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
     );
   }
 
-  
   Widget _buildListingCard(Map<String, dynamic> listing) {
     Color statusColor;
     switch (listing['status']) {
@@ -194,26 +190,25 @@ class _MyListingsPageState extends State<MyListingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: Image.network(
               listing['image'],
               height: 160,
               width: double.infinity,
               fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                height: 160,
-                width: double.infinity,
-                color: Colors.grey[200],
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.image_not_supported,
-                  size: 48,
-                  color: Colors.grey,
-                ),
-              );
-            },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  height: 160,
+                  width: double.infinity,
+                  color: Colors.grey[200],
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.image_not_supported,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
+                );
+              },
             ),
           ),
           Padding(
@@ -221,13 +216,14 @@ class _MyListingsPageState extends State<MyListingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
@@ -252,7 +248,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
                 ),
                 const SizedBox(height: 8),
 
-                
                 Text(
                   listing['title'],
                   style: const TextStyle(
@@ -271,7 +266,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
                 ),
                 const SizedBox(height: 16),
 
-                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -311,7 +305,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
     );
   }
 
-  
   Widget _buildDropdown({
     required String label,
     required String value,
@@ -331,10 +324,7 @@ class _MyListingsPageState extends State<MyListingsPage> {
           isExpanded: true,
           icon: const Icon(Icons.keyboard_arrow_down),
           items: items
-              .map((e) => DropdownMenuItem(
-                    value: e,
-                    child: Text(e),
-                  ))
+              .map((e) => DropdownMenuItem(value: e, child: Text(e)))
               .toList(),
           onChanged: onChanged,
         ),
@@ -342,7 +332,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
     );
   }
 
-  
   Widget _buildSmallButton({
     required String text,
     required Color color,

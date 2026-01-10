@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/cleaner_review.dart';
 import '../../data/repositories/cleaner_reviews/cleaner_reviews_repo.dart';
 
-
 abstract class CleanerReviewsState {}
 
 class CleanerReviewsInitial extends CleanerReviewsState {}
@@ -12,12 +11,12 @@ class CleanerReviewsLoading extends CleanerReviewsState {}
 class CleanerReviewsLoaded extends CleanerReviewsState {
   final List<CleanerReview> allReviews;
   final List<CleanerReview> filteredReviews;
-  final String sortBy; 
-  final int? ratingFilter; 
+  final String sortBy;
+  final int? ratingFilter;
   final bool withPhotosOnly;
   final double averageRating;
   final int reviewCount;
-  
+
   CleanerReviewsLoaded({
     required this.allReviews,
     required this.filteredReviews,
@@ -35,30 +34,35 @@ class CleanerReviewsError extends CleanerReviewsState {
 }
 
 class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
-  final AbstractCleanerReviewsRepo _reviewsRepo = AbstractCleanerReviewsRepo.getInstance();
+  final AbstractCleanerReviewsRepo _reviewsRepo =
+      AbstractCleanerReviewsRepo.getInstance();
 
   CleanerReviewsCubit() : super(CleanerReviewsInitial());
 
-  
   Future<void> loadReviews(int cleanerId) async {
     emit(CleanerReviewsLoading());
     try {
       final reviews = await _reviewsRepo.getReviewsForCleaner(cleanerId);
-      final averageRating = await _reviewsRepo.getAverageRatingForCleaner(cleanerId);
-      final reviewCount = await _reviewsRepo.getReviewCountForCleaner(cleanerId);
-      
-      emit(CleanerReviewsLoaded(
-        allReviews: reviews,
-        filteredReviews: _applyFilters(reviews),
-        averageRating: averageRating,
-        reviewCount: reviewCount,
-      ));
+      final averageRating = await _reviewsRepo.getAverageRatingForCleaner(
+        cleanerId,
+      );
+      final reviewCount = await _reviewsRepo.getReviewCountForCleaner(
+        cleanerId,
+      );
+
+      emit(
+        CleanerReviewsLoaded(
+          allReviews: reviews,
+          filteredReviews: _applyFilters(reviews),
+          averageRating: averageRating,
+          reviewCount: reviewCount,
+        ),
+      );
     } catch (e) {
       emit(CleanerReviewsError('Failed to load reviews: $e'));
     }
   }
 
-  
   List<CleanerReview> _applyFilters(
     List<CleanerReview> reviews, {
     String? sortBy,
@@ -67,27 +71,30 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
   }) {
     var filtered = List<CleanerReview>.from(reviews);
 
-    
-    final rating = ratingFilter ?? (state is CleanerReviewsLoaded 
-        ? (state as CleanerReviewsLoaded).ratingFilter 
-        : null);
+    final rating =
+        ratingFilter ??
+        (state is CleanerReviewsLoaded
+            ? (state as CleanerReviewsLoaded).ratingFilter
+            : null);
     if (rating != null) {
       filtered = filtered.where((r) => r.rating.floor() == rating).toList();
     }
 
-    
-    final photosOnly = withPhotosOnly ?? (state is CleanerReviewsLoaded 
-        ? (state as CleanerReviewsLoaded).withPhotosOnly 
-        : false);
+    final photosOnly =
+        withPhotosOnly ??
+        (state is CleanerReviewsLoaded
+            ? (state as CleanerReviewsLoaded).withPhotosOnly
+            : false);
     if (photosOnly) {
       filtered = filtered.where((r) => r.hasPhotos).toList();
     }
 
-    
-    final sort = sortBy ?? (state is CleanerReviewsLoaded 
-        ? (state as CleanerReviewsLoaded).sortBy 
-        : 'recency');
-    
+    final sort =
+        sortBy ??
+        (state is CleanerReviewsLoaded
+            ? (state as CleanerReviewsLoaded).sortBy
+            : 'recency');
+
     switch (sort) {
       case 'highest':
         filtered.sort((a, b) => b.rating.compareTo(a.rating));
@@ -104,7 +111,6 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
     return filtered;
   }
 
-  
   void updateSort(String sortBy, int cleanerId) {
     if (state is CleanerReviewsLoaded) {
       final currentState = state as CleanerReviewsLoaded;
@@ -114,14 +120,10 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
         ratingFilter: currentState.ratingFilter,
         withPhotosOnly: currentState.withPhotosOnly,
       );
-      emit(currentState.copyWith(
-        filteredReviews: filtered,
-        sortBy: sortBy,
-      ));
+      emit(currentState.copyWith(filteredReviews: filtered, sortBy: sortBy));
     }
   }
 
-  
   void updateRatingFilter(int? rating, int cleanerId) {
     if (state is CleanerReviewsLoaded) {
       final currentState = state as CleanerReviewsLoaded;
@@ -131,14 +133,12 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
         ratingFilter: rating,
         withPhotosOnly: currentState.withPhotosOnly,
       );
-      emit(currentState.copyWith(
-        filteredReviews: filtered,
-        ratingFilter: rating,
-      ));
+      emit(
+        currentState.copyWith(filteredReviews: filtered, ratingFilter: rating),
+      );
     }
   }
 
-  
   void togglePhotosFilter(bool enabled, int cleanerId) {
     if (state is CleanerReviewsLoaded) {
       final currentState = state as CleanerReviewsLoaded;
@@ -148,14 +148,15 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
         ratingFilter: currentState.ratingFilter,
         withPhotosOnly: enabled,
       );
-      emit(currentState.copyWith(
-        filteredReviews: filtered,
-        withPhotosOnly: enabled,
-      ));
+      emit(
+        currentState.copyWith(
+          filteredReviews: filtered,
+          withPhotosOnly: enabled,
+        ),
+      );
     }
   }
 
-  
   Future<void> refresh(int cleanerId) async {
     await loadReviews(cleanerId);
   }
@@ -182,7 +183,3 @@ extension CleanerReviewsLoadedCopyWith on CleanerReviewsLoaded {
     );
   }
 }
-
-
-
-

@@ -33,40 +33,54 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       );
     } else {
       // #region agent log
-      DebugLogger.log('OnboardingScreen', '_nextPage_COMPLETED', data: {
-        'hypothesisId': 'H5',
-        'currentPage': _currentPage,
-        'totalPages': _pages.length,
-        'sessionId': 'debug-session',
-        'runId': 'run1',
-      });
+      DebugLogger.log(
+        'OnboardingScreen',
+        '_nextPage_COMPLETED',
+        data: {
+          'hypothesisId': 'H5',
+          'currentPage': _currentPage,
+          'totalPages': _pages.length,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        },
+      );
       // #endregion
-      
+
       // Mark onboarding as seen when user completes it
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('has_seen_onboarding', true);
-        
+
         // #region agent log
         final verified = prefs.getBool('has_seen_onboarding') ?? false;
-        DebugLogger.log('OnboardingScreen', '_nextPage_MARKED_SEEN', data: {
-          'hypothesisId': 'H5',
-          'hasSeenOnboarding': verified,
-          'verified': verified,
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
+        DebugLogger.log(
+          'OnboardingScreen',
+          '_nextPage_MARKED_SEEN',
+          data: {
+            'hypothesisId': 'H5',
+            'hasSeenOnboarding': verified,
+            'verified': verified,
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          },
+        );
         // #endregion
       } catch (e) {
         // #region agent log
-        DebugLogger.error('OnboardingScreen', '_nextPage_SET_FLAG_ERROR', e, StackTrace.current, data: {
-          'hypothesisId': 'H5',
-          'sessionId': 'debug-session',
-          'runId': 'run1',
-        });
+        DebugLogger.error(
+          'OnboardingScreen',
+          '_nextPage_SET_FLAG_ERROR',
+          e,
+          StackTrace.current,
+          data: {
+            'hypothesisId': 'H5',
+            'sessionId': 'debug-session',
+            'runId': 'run1',
+          },
+        );
         // #endregion
       }
-      
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -97,38 +111,52 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _skipToLogin() async {
     // #region agent log
-    DebugLogger.log('OnboardingScreen', '_skipToLogin_CALLED', data: {
-      'hypothesisId': 'H5',
-      'sessionId': 'debug-session',
-      'runId': 'run1',
-    });
+    DebugLogger.log(
+      'OnboardingScreen',
+      '_skipToLogin_CALLED',
+      data: {
+        'hypothesisId': 'H5',
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+      },
+    );
     // #endregion
-    
+
     // Mark onboarding as seen
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_seen_onboarding', true);
-      
+
       // #region agent log
       final verified = prefs.getBool('has_seen_onboarding') ?? false;
-      DebugLogger.log('OnboardingScreen', '_skipToLogin_MARKED_SEEN', data: {
-        'hypothesisId': 'H5',
-        'hasSeenOnboarding': verified,
-        'verified': verified,
-        'sessionId': 'debug-session',
-        'runId': 'run1',
-      });
+      DebugLogger.log(
+        'OnboardingScreen',
+        '_skipToLogin_MARKED_SEEN',
+        data: {
+          'hypothesisId': 'H5',
+          'hasSeenOnboarding': verified,
+          'verified': verified,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        },
+      );
       // #endregion
     } catch (e) {
       // #region agent log
-      DebugLogger.error('OnboardingScreen', '_skipToLogin_SET_FLAG_ERROR', e, StackTrace.current, data: {
-        'hypothesisId': 'H5',
-        'sessionId': 'debug-session',
-        'runId': 'run1',
-      });
+      DebugLogger.error(
+        'OnboardingScreen',
+        '_skipToLogin_SET_FLAG_ERROR',
+        e,
+        StackTrace.current,
+        data: {
+          'hypothesisId': 'H5',
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+        },
+      );
       // #endregion
     }
-    
+
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -230,7 +258,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildSecondaryButton() {
     final localizations = AppLocalizations.of(context)!;
-    final text = _currentPage == 2 ? localizations.iAlreadyHaveAccount : localizations.skipToLogin;
+    final text = _currentPage == 2
+        ? localizations.iAlreadyHaveAccount
+        : localizations.skipToLogin;
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -238,8 +268,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         onPressed: _skipToLogin,
         style: OutlinedButton.styleFrom(
           side: const BorderSide(color: Color(0xFF3B82F6)),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: Text(
           text,
@@ -252,5 +283,3 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
-
-

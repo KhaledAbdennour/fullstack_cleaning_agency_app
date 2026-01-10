@@ -1,7 +1,6 @@
 import '../../models/cleaner_model.dart';
 import 'cleaners_repo_db.dart';
 
-
 abstract class AbstractCleanersRepo {
   Future<List<Cleaner>> getCleanersForAgency(int agencyId);
   Future<Cleaner?> getCleanerById(int cleanerId);
@@ -15,4 +14,3 @@ abstract class AbstractCleanersRepo {
     return _instance!;
   }
 }
-

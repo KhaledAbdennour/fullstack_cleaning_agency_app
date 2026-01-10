@@ -12,11 +12,8 @@ import 'cleaner_profile_page.dart';
 
 class CleanerTeamPage extends StatefulWidget {
   final int agencyId;
-  
-  const CleanerTeamPage({
-    super.key,
-    required this.agencyId,
-  });
+
+  const CleanerTeamPage({super.key, required this.agencyId});
 
   @override
   State<CleanerTeamPage> createState() => _CleanerTeamPageState();
@@ -34,7 +31,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<CleanerTeamCubit>().loadCleaners(widget.agencyId);
-        context.read<SearchCubit>().loadSearchResults(userType: 'Individual Cleaner');
+        context.read<SearchCubit>().loadSearchResults(
+          userType: 'Individual Cleaner',
+        );
         _loadTeamCleanerIds();
       }
     });
@@ -70,7 +69,10 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       final cleaners = await cleanersRepo.getCleanersForAgency(widget.agencyId);
       if (mounted) {
         setState(() {
-          _teamCleanerIds = cleaners.map((c) => c.id ?? 0).where((id) => id != 0).toList();
+          _teamCleanerIds = cleaners
+              .map((c) => c.id ?? 0)
+              .where((id) => id != 0)
+              .toList();
         });
       }
     } catch (e) {
@@ -93,9 +95,7 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red,
-              ),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: Text(AppLocalizations.of(context)!.remove),
             ),
           ],
@@ -110,10 +110,12 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       if (mounted) {
         context.read<CleanerTeamCubit>().refresh(widget.agencyId);
         await _loadTeamCleanerIds();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.cleanerRemovedSuccessfully),
+            content: Text(
+              AppLocalizations.of(context)!.cleanerRemovedSuccessfully,
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -122,7 +124,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)!.errorRemovingCleaner}: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)!.errorRemovingCleaner}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -144,9 +148,11 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       }
 
       final cleanersRepo = AbstractCleanersRepo.getInstance();
-      final existingCleaners = await cleanersRepo.getCleanersForAgency(widget.agencyId);
+      final existingCleaners = await cleanersRepo.getCleanersForAgency(
+        widget.agencyId,
+      );
       if (!mounted) return;
-      
+
       if (existingCleaners.any((c) => c.id == cleanerId)) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -173,10 +179,12 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       if (mounted) {
         context.read<CleanerTeamCubit>().refresh(widget.agencyId);
         await _loadTeamCleanerIds();
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.cleanerAddedSuccessfully),
+            content: Text(
+              AppLocalizations.of(context)!.cleanerAddedSuccessfully,
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -185,7 +193,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppLocalizations.of(context)!.errorAddingCleaner}: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)!.errorAddingCleaner}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -219,7 +229,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: AppLocalizations.of(context)!.searchForCleaningServices,
+                hintText: AppLocalizations.of(
+                  context,
+                )!.searchForCleaningServices,
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF3B82F6)),
                 filled: true,
                 fillColor: const Color(0xFFF9FAFB),
@@ -227,11 +239,14 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
           ),
-          
+
           // Content: Team list or Search results
           Expanded(
             child: _isSearching ? _buildSearchResults() : _buildTeamList(),
@@ -245,7 +260,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
     return BlocBuilder<CleanerTeamCubit, CleanerTeamState>(
       builder: (context, state) {
         if (state is CleanerTeamLoading) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         } else if (state is CleanerTeamError) {
           return Center(
             child: Column(
@@ -295,7 +312,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
     return BlocBuilder<SearchCubit, SearchState>(
       builder: (context, state) {
         if (state is SearchLoading) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+          );
         } else if (state is SearchError) {
           return Center(
             child: Column(
@@ -347,7 +366,7 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
 
   Widget _buildCleanerCard(Cleaner cleaner, {bool isInTeam = false}) {
     return FutureBuilder<Map<String, dynamic>?>(
-      future: cleaner.id != null 
+      future: cleaner.id != null
           ? AbstractProfileRepo.getInstance().getProfileById(cleaner.id!)
           : Future.value(null),
       builder: (context, snapshot) {
@@ -362,7 +381,7 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
         final rating = cleaner.rating;
         final reviews = profile?['reviews_count'] as int? ?? 0;
         final imageUrl = profile?['picture'] as String? ?? cleaner.avatarUrl;
-        
+
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
@@ -397,9 +416,17 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                               width: 60,
                               height: 60,
                               fit: BoxFit.cover,
-                              errorWidget: const Icon(Icons.person, size: 30, color: Colors.white),
+                              errorWidget: const Icon(
+                                Icons.person,
+                                size: 30,
+                                color: Colors.white,
+                              ),
                             )
-                          : const Icon(Icons.person, size: 30, color: Colors.white),
+                          : const Icon(
+                              Icons.person,
+                              size: 30,
+                              color: Colors.white,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -506,28 +533,45 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                     if (cleaner.id != null) {
                       final profileRepo = AbstractProfileRepo.getInstance();
                       try {
-                        final profileData = await profileRepo.getProfileById(cleaner.id!);
+                        final profileData = await profileRepo.getProfileById(
+                          cleaner.id!,
+                        );
                         if (profileData != null && mounted) {
                           final cleanerProfile = {
                             'id': profileData['id'],
-                            'name': profileData['full_name'] as String? ?? cleaner.name,
-                            'image': profileData['picture'] as String? ?? cleaner.avatarUrl,
+                            'name':
+                                profileData['full_name'] as String? ??
+                                cleaner.name,
+                            'image':
+                                profileData['picture'] as String? ??
+                                cleaner.avatarUrl,
                             'rating': cleaner.rating,
-                            'reviews': profileData['reviews_count'] as int? ?? 0,
-                            'isVerified': profileData['is_verified'] as bool? ?? false,
-                            'aboutMe': profileData['bio'] as String? ?? 'Professional cleaning service provider.',
-                            'experience': profileData['experience_years'] != null 
+                            'reviews':
+                                profileData['reviews_count'] as int? ?? 0,
+                            'isVerified':
+                                profileData['is_verified'] as bool? ?? false,
+                            'aboutMe':
+                                profileData['bio'] as String? ??
+                                'Professional cleaning service provider.',
+                            'experience':
+                                profileData['experience_years'] != null
                                 ? '${profileData['experience_years']}+ Years'
                                 : '5+ Years',
-                            'age': AgeHelper.formatAge(profileData['birthdate'] as String?),
-                            'languages': profileData['languages'] as String? ?? 'Arabic, French',
-                            'location': _extractLocation(profileData['address'] as String?),
+                            'age': AgeHelper.formatAge(
+                              profileData['birthdate'] as String?,
+                            ),
+                            'languages':
+                                profileData['languages'] as String? ??
+                                'Arabic, French',
+                            'location': _extractLocation(
+                              profileData['address'] as String?,
+                            ),
                             // Don't include agency field so "Part of agency" section doesn't show
                             'type': 'Individual',
                             'userType': profileData['user_type'],
                             'profileData': profileData,
                           };
-                          
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -543,7 +587,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error loading cleaner profile: $e'),
+                              content: Text(
+                                'Error loading cleaner profile: $e',
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -605,11 +651,13 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
     final name = cleaner['name'] as String? ?? 'Unknown';
     final description = cleaner['description'] as String? ?? '';
     final location = cleaner['location'] as String? ?? 'Unknown';
-    final price = cleaner['price'] as String? ?? AppLocalizations.of(context)!.contactForPricing;
+    final price =
+        cleaner['price'] as String? ??
+        AppLocalizations.of(context)!.contactForPricing;
     final rating = cleaner['rating'] as num? ?? 0.0;
     final reviews = cleaner['reviews'] as int? ?? 0;
     final imageUrl = cleaner['image'] as String?;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -644,7 +692,11 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                           width: 60,
                           height: 60,
                           fit: BoxFit.cover,
-                          errorWidget: const Icon(Icons.person, size: 30, color: Colors.white),
+                          errorWidget: const Icon(
+                            Icons.person,
+                            size: 30,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.person, size: 30, color: Colors.white),
                 ),
@@ -754,28 +806,38 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                 try {
                   final cleanerId = cleaner['id'] as int?;
                   if (cleanerId != null) {
-                    final profileData = await profileRepo.getProfileById(cleanerId);
+                    final profileData = await profileRepo.getProfileById(
+                      cleanerId,
+                    );
                     if (profileData != null && mounted) {
                       final cleanerProfile = {
                         'id': profileData['id'],
                         'name': profileData['full_name'] as String? ?? name,
                         'image': profileData['picture'] as String? ?? imageUrl,
                         'rating': rating.toDouble(),
-                        'reviews': profileData['reviews_count'] as int? ?? reviews,
-                        'isVerified': profileData['is_verified'] as bool? ?? false,
+                        'reviews':
+                            profileData['reviews_count'] as int? ?? reviews,
+                        'isVerified':
+                            profileData['is_verified'] as bool? ?? false,
                         'aboutMe': profileData['bio'] as String? ?? description,
-                        'experience': profileData['experience_years'] != null 
+                        'experience': profileData['experience_years'] != null
                             ? '${profileData['experience_years']}+ Years'
                             : '5+ Years',
-                        'age': AgeHelper.formatAge(profileData['birthdate'] as String?),
-                        'languages': profileData['languages'] as String? ?? 'Arabic, French',
-                        'location': _extractLocation(profileData['address'] as String?),
+                        'age': AgeHelper.formatAge(
+                          profileData['birthdate'] as String?,
+                        ),
+                        'languages':
+                            profileData['languages'] as String? ??
+                            'Arabic, French',
+                        'location': _extractLocation(
+                          profileData['address'] as String?,
+                        ),
                         // Don't include agency field so "Part of agency" section doesn't show
                         'type': 'Individual',
                         'userType': profileData['user_type'],
                         'profileData': profileData,
                       };
-                      
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -825,7 +887,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                 if (cleanerId != null) {
                   final profileRepo = AbstractProfileRepo.getInstance();
                   try {
-                    final profileData = await profileRepo.getProfileById(cleanerId);
+                    final profileData = await profileRepo.getProfileById(
+                      cleanerId,
+                    );
                     if (profileData != null && mounted) {
                       await _addCleanerToTeam(profileData);
                       await _loadTeamCleanerIds();

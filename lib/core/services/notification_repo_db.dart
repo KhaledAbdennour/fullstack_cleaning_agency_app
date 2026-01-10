@@ -2,25 +2,27 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../config/firebase_config.dart';
-import 'notification_service.dart';
 import 'notification_repo.dart';
 
 class NotificationRepoDB extends AbstractNotificationRepo {
   static const String collectionName = 'notifications';
   static const String devicesCollectionName = 'user_devices';
-  
+
   // FCM Server Key - should be stored securely in production
-  static const String fcmServerKey = '6B6_LDeZoDxT14kvBMKuHuGkYhGDmNMbhFPUFmScS0';
+  static const String fcmServerKey =
+      '6B6_LDeZoDxT14kvBMKuHuGkYhGDmNMbhFPUFmScS0';
 
   @override
-  Future<List<Map<String, dynamic>>> getNotificationsForUser(String userId) async {
+  Future<List<Map<String, dynamic>>> getNotificationsForUser(
+    String userId,
+  ) async {
     try {
       final snapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('user_id', isEqualTo: userId)
           .orderBy('created_at', descending: true)
           .get();
-      
+
       return snapshot.docs.map((doc) {
         final data = doc.data();
         data['id'] = doc.id;
@@ -53,7 +55,7 @@ class NotificationRepoDB extends AbstractNotificationRepo {
           .where('user_id', isEqualTo: userId)
           .where('read_at', isNull: true)
           .get();
-      
+
       final batch = FirebaseConfig.firestore.batch();
       for (final doc in snapshot.docs) {
         batch.update(doc.reference, {'read_at': FieldValue.serverTimestamp()});
@@ -74,7 +76,7 @@ class NotificationRepoDB extends AbstractNotificationRepo {
           .where('read_at', isNull: true)
           .count()
           .get();
-      
+
       return snapshot.count ?? 0;
     } catch (e) {
       print('Error getting unread count: $e');
@@ -95,17 +97,17 @@ class NotificationRepoDB extends AbstractNotificationRepo {
           .collection(devicesCollectionName)
           .where('user_id', isEqualTo: userId)
           .get();
-      
+
       final tokens = devicesSnapshot.docs
           .map((doc) => doc.data()['fcm_token'] as String?)
           .where((token) => token != null && token.isNotEmpty)
           .toList();
-      
+
       if (tokens.isEmpty) {
         print('No FCM tokens found for user $userId');
         return;
       }
-      
+
       // Send notification to all devices via FCM HTTP v1 API
       for (final token in tokens) {
         await _sendFCMNotification(
@@ -115,7 +117,7 @@ class NotificationRepoDB extends AbstractNotificationRepo {
           data: data,
         );
       }
-      
+
       // Save notification to Firestore for history
       await FirebaseConfig.firestore.collection(collectionName).add({
         'user_id': userId,
@@ -130,7 +132,7 @@ class NotificationRepoDB extends AbstractNotificationRepo {
       rethrow;
     }
   }
-  
+
   Future<void> _sendFCMNotification({
     required String token,
     required String title,
@@ -147,18 +149,12 @@ class NotificationRepoDB extends AbstractNotificationRepo {
         },
         body: jsonEncode({
           'to': token,
-          'notification': {
-            'title': title,
-            'body': body,
-          },
-          'data': {
-            ...?data,
-            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-          },
+          'notification': {'title': title, 'body': body},
+          'data': {...?data, 'click_action': 'FLUTTER_NOTIFICATION_CLICK'},
           'priority': 'high',
         }),
       );
-      
+
       if (response.statusCode != 200) {
         print('FCM error: ${response.statusCode} - ${response.body}');
       }

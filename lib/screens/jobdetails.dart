@@ -10,9 +10,9 @@ import '../logic/cubits/agency_dashboard_cubit.dart';
 import '../utils/image_helper.dart';
 
 class JobDetailsScreen extends StatefulWidget {
-  final Job? job; 
-  final Map<String, dynamic>? jobMap; 
-  
+  final Job? job;
+  final Map<String, dynamic>? jobMap;
+
   const JobDetailsScreen({super.key, this.job, this.jobMap});
 
   @override
@@ -25,7 +25,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   final PageController _pageController = PageController();
   Job? _currentJob;
   bool _isLoading = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -34,10 +34,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       _refreshJob();
     }
   }
-  
+
   Future<void> _refreshJob() async {
     if (_currentJob?.id != null) {
-      final updatedJob = await AbstractJobsRepo.getInstance().getJobById(_currentJob!.id!);
+      final updatedJob = await AbstractJobsRepo.getInstance().getJobById(
+        _currentJob!.id!,
+      );
       if (updatedJob != null && mounted) {
         setState(() {
           _currentJob = updatedJob;
@@ -49,7 +51,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final job = _currentJob ?? widget.job;
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -78,27 +80,37 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                 children: [
                   Text(
                     job?.title ?? widget.jobMap?['title'] ?? 'Job Details',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   if (job?.clientId != null)
                     FutureBuilder<Map<String, dynamic>?>(
-                      future: AbstractJobsRepo.getInstance().getJobById(job!.id!)
+                      future: AbstractJobsRepo.getInstance()
+                          .getJobById(job!.id!)
                           .then((job) => job?.clientId)
-                          .then((clientId) => clientId != null 
-                              ? AbstractProfileRepo.getInstance().getProfileById(clientId)
-                              : null),
+                          .then(
+                            (clientId) => clientId != null
+                                ? AbstractProfileRepo.getInstance()
+                                      .getProfileById(clientId)
+                                : null,
+                          ),
                       builder: (context, snapshot) {
                         if (snapshot.hasData && snapshot.data != null) {
                           final client = snapshot.data!;
-                          final clientName = client['full_name'] as String? ?? 'Client';
+                          final clientName =
+                              client['full_name'] as String? ?? 'Client';
                           final clientPhoto = client['picture'] as String?;
                           return Row(
                             children: [
                               CircleAvatar(
                                 radius: 35,
                                 backgroundColor: const Color(0xFF3B82F6),
-                                child: clientPhoto != null && clientPhoto.isNotEmpty
+                                child:
+                                    clientPhoto != null &&
+                                        clientPhoto.isNotEmpty
                                     ? ClipOval(
                                         child: AppImage(
                                           imageUrl: clientPhoto,
@@ -109,21 +121,34 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                                             width: 70,
                                             height: 70,
                                             color: const Color(0xFF3B82F6),
-                                            child: const Icon(Icons.person, color: Colors.white, size: 40),
+                                            child: const Icon(
+                                              Icons.person,
+                                              color: Colors.white,
+                                              size: 40,
+                                            ),
                                           ),
                                         ),
                                       )
-                                    : const Icon(Icons.person, color: Colors.white, size: 40),
+                                    : const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 40,
+                                      ),
                               ),
                               const SizedBox(width: 12),
                               RichText(
                                 text: TextSpan(
-                                  style: const TextStyle(fontSize: 14, color: Colors.black),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
                                   children: [
                                     const TextSpan(text: 'Posted by '),
                                     TextSpan(
                                       text: clientName,
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -136,15 +161,18 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     ),
                   const SizedBox(height: 20),
                   _buildDetailRow(
-                    Icons.location_on_outlined, 
-                    job?.fullLocation ?? widget.jobMap?['location'] ?? 'Algiers, Hydra'
+                    Icons.location_on_outlined,
+                    job?.fullLocation ??
+                        widget.jobMap?['location'] ??
+                        'Algiers, Hydra',
                   ),
                   const SizedBox(height: 12),
                   _buildDetailRow(
                     Icons.calendar_today_outlined,
                     job != null
                         ? '${_formatDate(job.postedDate)} ${_formatTime(job.postedDate)} (Est. ${job.estimatedHours ?? 4} hours)'
-                        : widget.jobMap?['date'] ?? '15 Nov 2023, 10:00 AM (Est. 4 hours)',
+                        : widget.jobMap?['date'] ??
+                              '15 Nov 2023, 10:00 AM (Est. 4 hours)',
                   ),
                   const SizedBox(height: 12),
                   if (job?.id != null)
@@ -152,7 +180,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       future: _getWorkerBidForJob(job!.id!),
                       builder: (context, snapshot) {
                         final bidPrice = snapshot.data;
-                        final budgetText = job.budgetMin != null && job.budgetMax != null 
+                        final budgetText =
+                            job.budgetMin != null && job.budgetMax != null
                             ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                             : 'Negotiable';
                         final displayText = bidPrice != null
@@ -176,7 +205,9 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    job?.description ?? widget.jobMap?['description'] ?? 'No description available.',
+                    job?.description ??
+                        widget.jobMap?['description'] ??
+                        'No description available.',
                     style: const TextStyle(color: Colors.grey, height: 1.5),
                   ),
                   const SizedBox(height: 24),
@@ -188,12 +219,19 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: job?.requiredServices != null && job!.requiredServices!.isNotEmpty
-                        ? job.requiredServices!.map((service) => _buildChip(service)).toList()
+                    children:
+                        job?.requiredServices != null &&
+                            job!.requiredServices!.isNotEmpty
+                        ? job.requiredServices!
+                              .map((service) => _buildChip(service))
+                              .toList()
                         : [
                             const Text(
                               'No specific services listed',
-                              style: TextStyle(color: Colors.grey, fontSize: 14),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 14,
+                              ),
                             ),
                           ],
                   ),
@@ -215,7 +253,12 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         children: [
           Icon(icon, color: const Color(0xFF3B82F6)),
           const SizedBox(width: 12),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 14, color: Colors.black))),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 14, color: Colors.black),
+            ),
+          ),
         ],
       ),
     );
@@ -250,25 +293,28 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   Widget _buildActionButtons() {
     final job = _currentJob ?? widget.job;
     if (job == null) return const SizedBox.shrink();
-    
+
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, state) {
         if (state is! ProfilesLoaded || state.currentUser == null) {
           return const SizedBox.shrink();
         }
-        
+
         final currentUser = state.currentUser!;
         final userId = currentUser['id'] as int?;
         final userType = currentUser['user_type'] as String? ?? '';
-        final isCleaner = userType == 'Individual Cleaner' || userType == 'Worker';
+        final isCleaner =
+            userType == 'Individual Cleaner' || userType == 'Worker';
         final isAssignedWorker = job.assignedWorkerId == userId;
         // Allow marking as done if: assigned, inProgress, or completedPendingConfirmation (if worker hasn't confirmed yet)
-        final canMarkDone = isCleaner && isAssignedWorker && 
-            (job.status == JobStatus.assigned || 
-             job.status == JobStatus.inProgress || 
-             job.status == JobStatus.completedPendingConfirmation) &&
+        final canMarkDone =
+            isCleaner &&
+            isAssignedWorker &&
+            (job.status == JobStatus.assigned ||
+                job.status == JobStatus.inProgress ||
+                job.status == JobStatus.completedPendingConfirmation) &&
             !job.workerDone;
-        
+
         if (canMarkDone) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +334,10 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     const SizedBox(height: 8),
                     RichText(
                       text: TextSpan(
-                        style: const TextStyle(fontSize: 14, color: Colors.black),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black,
+                        ),
                         children: [
                           const TextSpan(text: 'Status: '),
                           TextSpan(
@@ -302,54 +351,72 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        onPressed: _isLoading ? null : () async {
-                          setState(() => _isLoading = true);
-                          try {
-                            await AbstractJobsRepo.getInstance().markWorkerDone(job.id!);
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Job marked as done! Waiting for client confirmation.'),
-                                  backgroundColor: Color(0xFF3B82F6),
-                                ),
-                              );
-                              await _refreshJob();
-                              // Refresh active listings
-                              if (userId != null) {
-                                context.read<ActiveListingsCubit>().refresh(userId);
-                              }
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              String errorMessage = 'Error marking job as done';
-                              if (e.toString().contains('not found')) {
-                                errorMessage = 'Job not found. Please refresh and try again.';
-                              } else if (e.toString().contains('already marked')) {
-                                errorMessage = 'This job has already been marked as done.';
-                              } else {
-                                errorMessage = 'Error: ${e.toString()}';
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(errorMessage),
-                                  backgroundColor: Colors.red,
-                                  duration: const Duration(seconds: 4),
-                                ),
-                              );
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isLoading = false);
-                            }
-                          }
-                        },
-                        icon: _isLoading 
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                setState(() => _isLoading = true);
+                                try {
+                                  await AbstractJobsRepo.getInstance()
+                                      .markWorkerDone(job.id!);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Job marked as done! Waiting for client confirmation.',
+                                        ),
+                                        backgroundColor: Color(0xFF3B82F6),
+                                      ),
+                                    );
+                                    await _refreshJob();
+                                    // Refresh active listings
+                                    if (userId != null) {
+                                      context
+                                          .read<ActiveListingsCubit>()
+                                          .refresh(userId);
+                                    }
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    String errorMessage =
+                                        'Error marking job as done';
+                                    if (e.toString().contains('not found')) {
+                                      errorMessage =
+                                          'Job not found. Please refresh and try again.';
+                                    } else if (e.toString().contains(
+                                      'already marked',
+                                    )) {
+                                      errorMessage =
+                                          'This job has already been marked as done.';
+                                    } else {
+                                      errorMessage = 'Error: ${e.toString()}';
+                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(errorMessage),
+                                        backgroundColor: Colors.red,
+                                        duration: const Duration(seconds: 4),
+                                      ),
+                                    );
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isLoading = false);
+                                  }
+                                }
+                              },
+                        icon: _isLoading
                             ? const SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
-                            : const Icon(Icons.check_circle, color: Colors.white),
+                            : const Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                              ),
                         label: Text(
                           _isLoading ? 'Marking...' : 'Mark as Done',
                           style: const TextStyle(color: Colors.white),
@@ -370,7 +437,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
             ],
           );
         }
-        
+
         // For non-assigned workers or clients, show job info only
         return const SizedBox.shrink();
       },
@@ -379,7 +446,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
 
   Widget _buildImageCarousel() {
     final job = _currentJob ?? widget.job;
-    
+
     // Get all images from job_images field, or fallback to cover_image_url
     List<String> images = [];
     if (job?.jobImages != null && job!.jobImages!.isNotEmpty) {
@@ -387,7 +454,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     } else if (job?.coverImageUrl != null && job!.coverImageUrl!.isNotEmpty) {
       images = [job.coverImageUrl!];
     }
-    
+
     if (images.isEmpty) {
       return Container(
         height: 250,
@@ -396,7 +463,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         child: const Icon(Icons.image, size: 50, color: Colors.grey),
       );
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,7 +504,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
       final applications = await bookingsRepo.getApplicationsForJob(jobId);
       // Find the accepted booking (status is inProgress or completed)
       for (final booking in applications) {
-        if (booking.status == BookingStatus.inProgress || booking.status == BookingStatus.completed) {
+        if (booking.status == BookingStatus.inProgress ||
+            booking.status == BookingStatus.completed) {
           return booking.bidPrice;
         }
       }

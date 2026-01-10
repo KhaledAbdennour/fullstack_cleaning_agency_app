@@ -18,4 +18,3 @@ abstract class AbstractNotificationRepo {
     return _instance!;
   }
 }
-

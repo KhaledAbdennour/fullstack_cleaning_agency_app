@@ -38,7 +38,8 @@ class NotificationServiceEnhanced {
         'sender_id': senderId,
         'job_id': jobId,
         'created_at': FieldValue.serverTimestamp(),
-        'created_at_ms': nowMillis, // Fallback for immediate sorting before serverTimestamp resolves
+        'created_at_ms':
+            nowMillis, // Fallback for immediate sorting before serverTimestamp resolves
         'read': false,
       };
 
@@ -88,19 +89,24 @@ class NotificationServiceEnhanced {
   /// - job_marked_done (when client marks job as done)
   /// - job_deleted (when job they interacted with is deleted)
   /// - review_received (when someone reviews them)
-  static Future<List<NotificationItem>> getNotificationsForWorker(String userId) async {
+  static Future<List<NotificationItem>> getNotificationsForWorker(
+    String userId,
+  ) async {
     try {
       // Get all notifications for this worker
       final snapshot = await _firestore
           .collection(collectionName)
           .where('user_id', isEqualTo: userId)
-          .where('type', whereIn: [
-            NotificationType.jobAssigned.value,
-            NotificationType.jobCompleted.value,
-            NotificationType.jobMarkedDone.value,
-            NotificationType.jobDeleted.value,
-            NotificationType.reviewReceived.value,
-          ])
+          .where(
+            'type',
+            whereIn: [
+              NotificationType.jobAssigned.value,
+              NotificationType.jobCompleted.value,
+              NotificationType.jobMarkedDone.value,
+              NotificationType.jobDeleted.value,
+              NotificationType.reviewReceived.value,
+            ],
+          )
           .orderBy('created_at', descending: true)
           .limit(100) // Get more to filter by job interaction
           .get();
@@ -118,54 +124,59 @@ class NotificationServiceEnhanced {
       // - They reviewed it (review exists)
       final jobsRepo = AbstractJobsRepo.getInstance();
       final bookingsRepo = AbstractBookingsRepo.getInstance();
-      
+
       final filteredNotifications = <NotificationItem>[];
       final userIdInt = int.tryParse(userId);
-      
+
       for (final notification in allNotifications) {
         // Only process notifications that have a jobId (required for filtering)
         if (notification.jobId == null) {
           // Skip notifications without jobId - they can't be verified
           continue;
         }
-        
+
         bool shouldInclude = false;
-        
+
         try {
           // Check if worker was assigned to this job
           final job = await jobsRepo.getJobById(notification.jobId!);
           if (job != null && job.assignedWorkerId == userIdInt) {
             shouldInclude = true;
           }
-          
+
           // If not assigned, check if worker applied to this job
           if (!shouldInclude) {
-            final bookings = await bookingsRepo.getApplicationsForJob(notification.jobId!);
+            final bookings = await bookingsRepo.getApplicationsForJob(
+              notification.jobId!,
+            );
             if (bookings.any((b) => b.providerId == userIdInt)) {
               shouldInclude = true;
             }
           }
-          
+
           // For review_received, verify it's actually for this worker
-          if (!shouldInclude && notification.type == NotificationType.reviewReceived.value) {
+          if (!shouldInclude &&
+              notification.type == NotificationType.reviewReceived.value) {
             // Review received notifications are sent to the worker who was reviewed
             // The notification.userId should already match, but verify via job if possible
             if (job != null && job.assignedWorkerId == userIdInt) {
               shouldInclude = true;
             }
           }
-          
+
           // Only include if verified
           if (shouldInclude) {
             filteredNotifications.add(notification);
           }
         } catch (e) {
-          print('Error checking job interaction for notification ${notification.id}: $e');
+          print(
+            'Error checking job interaction for notification ${notification.id}: $e',
+          );
           // If check fails, DO NOT include notification - be strict about filtering
           // This prevents wrong users from seeing notifications
         }
       }
-      
+
       // Sort by date and limit to 50
       filteredNotifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return filteredNotifications.take(50).toList();
@@ -182,19 +193,24 @@ class NotificationServiceEnhanced {
   /// - job_marked_done (when client marks job as done)
   /// - job_deleted (when job they interacted with is deleted)
   /// - review_received (when someone reviews their worker)
-  static Future<List<NotificationItem>> getNotificationsForAgency(String userId) async {
+  static Future<List<NotificationItem>> getNotificationsForAgency(
+    String userId,
+  ) async {
     try {
       // Get all notifications for this agency
       final snapshot = await _firestore
           .collection(collectionName)
           .where('user_id', isEqualTo: userId)
-          .where('type', whereIn: [
-            NotificationType.jobAssigned.value,
-            NotificationType.jobCompleted.value,
-            NotificationType.jobMarkedDone.value,
-            NotificationType.jobDeleted.value,
-            NotificationType.reviewReceived.value,
-          ])
+          .where(
+            'type',
+            whereIn: [
+              NotificationType.jobAssigned.value,
+              NotificationType.jobCompleted.value,
+              NotificationType.jobMarkedDone.value,
+              NotificationType.jobDeleted.value,
+              NotificationType.reviewReceived.value,
+            ],
+          )
           .orderBy('created_at', descending: true)
           .limit(100) // Get more to filter by job interaction
           .get();
@@ -214,54 +230,71 @@ class NotificationServiceEnhanced {
       final bookingsRepo = AbstractBookingsRepo.getInstance();
       final cleanersRepo = AbstractCleanersRepo.getInstance();
       final userIdInt = int.tryParse(userId);
-      
+
       // Get all cleaners in this agency's team
-      final teamCleaners = userIdInt != null ? await cleanersRepo.getCleanersForAgency(userIdInt) : [];
-      final teamCleanerIds = teamCleaners.map((c) => c.id).whereType<int>().toSet();
-      
+      final teamCleaners = userIdInt != null
+          ? await cleanersRepo.getCleanersForAgency(userIdInt)
+          : [];
+      final teamCleanerIds = teamCleaners
+          .map((c) => c.id)
+          .whereType<int>()
+          .toSet();
+
       final filteredNotifications = <NotificationItem>[];
-      
+
       for (final notification in allNotifications) {
         // Only process notifications that have a jobId (required for filtering)
         if (notification.jobId == null) {
           // Skip notifications without jobId - they can't be verified
           continue;
         }
-        
+
         bool shouldInclude = false;
-        
+
         try {
           // Check if any worker from this agency was assigned to this job
           final job = await jobsRepo.getJobById(notification.jobId!);
-          if (job != null && job.assignedWorkerId != null && teamCleanerIds.contains(job.assignedWorkerId)) {
+          if (job != null &&
+              job.assignedWorkerId != null &&
+              teamCleanerIds.contains(job.assignedWorkerId)) {
             shouldInclude = true;
           }
-          
+
           // If not assigned, check if any worker from this agency applied to this job
           if (!shouldInclude) {
-            final bookings = await bookingsRepo.getApplicationsForJob(notification.jobId!);
-            if (bookings.any((b) => b.providerId != null && teamCleanerIds.contains(b.providerId))) {
+            final bookings = await bookingsRepo.getApplicationsForJob(
+              notification.jobId!,
+            );
+            if (bookings.any(
+              (b) =>
+                  b.providerId != null && teamCleanerIds.contains(b.providerId),
+            )) {
               shouldInclude = true;
             }
           }
-          
+
           // For review_received, verify it's for a worker in their team
-          if (!shouldInclude && notification.type == NotificationType.reviewReceived.value) {
-            if (job != null && job.assignedWorkerId != null && teamCleanerIds.contains(job.assignedWorkerId)) {
+          if (!shouldInclude &&
+              notification.type == NotificationType.reviewReceived.value) {
+            if (job != null &&
+                job.assignedWorkerId != null &&
+                teamCleanerIds.contains(job.assignedWorkerId)) {
               shouldInclude = true;
             }
           }
-          
+
           // Only include if verified
           if (shouldInclude) {
             filteredNotifications.add(notification);
           }
         } catch (e) {
-          print('Error checking job interaction for notification ${notification.id}: $e');
+          print(
+            'Error checking job interaction for notification ${notification.id}: $e',
+          );
           // If check fails, DO NOT include notification - be strict about filtering
         }
       }
-      
+
       // Sort by date and limit to 50
       filteredNotifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return filteredNotifications.take(50).toList();
@@ -278,19 +311,24 @@ class NotificationServiceEnhanced {
   /// - job_marked_done (when cleaner/agency marks job as done)
   /// - job_completed (when job is completed)
   /// - job_deleted (when they delete a post)
-  static Future<List<NotificationItem>> getNotificationsForClient(String userId) async {
+  static Future<List<NotificationItem>> getNotificationsForClient(
+    String userId,
+  ) async {
     try {
       // Get all notifications for this client
       final snapshot = await _firestore
           .collection(collectionName)
           .where('user_id', isEqualTo: userId)
-          .where('type', whereIn: [
-            NotificationType.jobApplication.value,
-            NotificationType.jobAssigned.value,
-            NotificationType.jobMarkedDone.value,
-            NotificationType.jobCompleted.value,
-            NotificationType.jobDeleted.value,
-          ])
+          .where(
+            'type',
+            whereIn: [
+              NotificationType.jobApplication.value,
+              NotificationType.jobAssigned.value,
+              NotificationType.jobMarkedDone.value,
+              NotificationType.jobCompleted.value,
+              NotificationType.jobDeleted.value,
+            ],
+          )
           .orderBy('created_at', descending: true)
           .limit(100) // Get more to filter by job ownership
           .get();
@@ -304,16 +342,16 @@ class NotificationServiceEnhanced {
       // Filter: Only show notifications for jobs this client created
       final jobsRepo = AbstractJobsRepo.getInstance();
       final userIdInt = int.tryParse(userId);
-      
+
       final filteredNotifications = <NotificationItem>[];
-      
+
       for (final notification in allNotifications) {
         // Only process notifications that have a jobId (required for filtering)
         if (notification.jobId == null) {
           // Skip notifications without jobId - they can't be verified
           continue;
         }
-        
+
         try {
           // Check if this job belongs to the client
           final job = await jobsRepo.getJobById(notification.jobId!);
@@ -323,12 +361,14 @@ class NotificationServiceEnhanced {
           }
           // If job doesn't belong to client, don't include it
         } catch (e) {
-          print('Error checking job ownership for notification ${notification.id}: $e');
+          print(
+            'Error checking job ownership for notification ${notification.id}: $e',
+          );
           // If check fails, DO NOT include notification - be strict about filtering
           // This prevents wrong users from seeing notifications
         }
       }
-      
+
       // Sort by date and limit to 50
       filteredNotifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return filteredNotifications.take(50).toList();
@@ -339,7 +379,9 @@ class NotificationServiceEnhanced {
   }
 
   /// Get notifications based on user role (auto-detects role)
-  static Future<List<NotificationItem>> getNotificationsForUser(String userId) async {
+  static Future<List<NotificationItem>> getNotificationsForUser(
+    String userId,
+  ) async {
     try {
       // Get user profile to determine role
       final profiles = await AbstractProfileRepo.getInstance().getAllProfiles();
@@ -392,10 +434,9 @@ class NotificationServiceEnhanced {
   /// Mark notification as read
   static Future<void> markAsRead(String notificationId) async {
     try {
-      await _firestore
-          .collection(collectionName)
-          .doc(notificationId)
-          .update({'read': true});
+      await _firestore.collection(collectionName).doc(notificationId).update({
+        'read': true,
+      });
     } catch (e) {
       print('Error marking notification as read: $e');
       rethrow;
@@ -422,4 +463,3 @@ class NotificationServiceEnhanced {
     }
   }
 }
-

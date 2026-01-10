@@ -6,7 +6,7 @@ import '../data/models/complaint_model.dart';
 import '../l10n/app_localizations.dart';
 
 class SupportPage extends StatefulWidget {
-  const SupportPage({Key? key}) : super(key: key);
+  const SupportPage({super.key});
 
   @override
   State<SupportPage> createState() => _SupportPageState();
@@ -40,12 +40,13 @@ class _SupportPageState extends State<SupportPage> {
       // Get current user
       final profilesCubit = context.read<ProfilesCubit>();
       final profileState = profilesCubit.state;
-      
+
       if (profileState is! ProfilesLoaded || profileState.currentUser == null) {
         await profilesCubit.loadCurrentUser();
         if (!mounted) return;
         final updatedState = profilesCubit.state;
-        if (updatedState is! ProfilesLoaded || updatedState.currentUser == null) {
+        if (updatedState is! ProfilesLoaded ||
+            updatedState.currentUser == null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -99,7 +100,9 @@ class _SupportPageState extends State<SupportPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Message submitted successfully! We will get back to you soon.'),
+          content: Text(
+            'Message submitted successfully! We will get back to you soon.',
+          ),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 3),
         ),
@@ -167,10 +170,7 @@ class _SupportPageState extends State<SupportPage> {
               const SizedBox(height: 8),
               Text(
                 'We\'re here to help! Please describe your issue and we\'ll get back to you as soon as possible.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 32),
               // Subject field
@@ -199,7 +199,10 @@ class _SupportPageState extends State<SupportPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF3B82F6),
+                      width: 2,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.all(16),
                 ),
@@ -241,7 +244,10 @@ class _SupportPageState extends State<SupportPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 2),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF3B82F6),
+                      width: 2,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.all(16),
                 ),
@@ -274,7 +280,9 @@ class _SupportPageState extends State<SupportPage> {
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
                           ),
                         )
                       : const Text(
