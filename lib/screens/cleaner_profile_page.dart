@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'jobdetails.dart';
 import '../utils/age_helper.dart';
 import '../core/utils/firestore_type.dart';
 import '../logic/cubits/cleaner_history_cubit.dart';
@@ -8,15 +7,22 @@ import '../logic/cubits/cleaner_reviews_cubit.dart';
 import '../data/models/cleaning_history_item.dart';
 import '../data/models/cleaner_review.dart';
 import '../data/repositories/cleaner_reviews/cleaner_reviews_repo.dart';
+import '../widgets/notification_bell_widget.dart';
+import '../l10n/app_localizations.dart';
+import '../utils/image_helper.dart';
+import 'homescreen.dart';
+import 'settings_page.dart';
 
 class CleanerProfilePage extends StatefulWidget {
   final Map<String, dynamic> cleaner;
-  final bool isOwnProfile; 
+  final bool isOwnProfile;
+  final bool hideBars;
 
   CleanerProfilePage({
     super.key, 
     required this.cleaner,
     this.isOwnProfile = false,
+    this.hideBars = false,
   });
 
   @override
@@ -85,27 +91,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: !widget.isOwnProfile, 
-        leading: widget.isOwnProfile 
-            ? null 
-            : IconButton(
-                icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-                onPressed: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Color(0xFF111827)),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      appBar: widget.isOwnProfile ? null : (widget.hideBars ? _buildAgencyAppBar() : _buildClientAppBar()),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -130,23 +116,13 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  if (widget.cleaner['agency'] != null)
-                    Text(
-                      'Part of ${widget.cleaner['agency']}.',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF3B82F6),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  if (widget.cleaner['agency'] != null) const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Icon(Icons.star, color: Color(0xFFF59E0B), size: 20),
                       const SizedBox(width: 4),
                       Text(
-                        '${_rating.toStringAsFixed(1)} ($_reviewCount Reviews)',
+                        '${_rating.toStringAsFixed(1)} ($_reviewCount ${AppLocalizations.of(context)!.reviews})',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Color(0xFF111827),
@@ -186,15 +162,158 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               color: Colors.white,
               child: Row(
                 children: [
-                  _buildTab('Overview', 0),
-                  _buildTab('History', 1),
-                  _buildTab('Reviews', 2),
+                  _buildTab(AppLocalizations.of(context)!.overview, 0),
+                  _buildTab(AppLocalizations.of(context)!.history, 1),
+                  _buildTab(AppLocalizations.of(context)!.reviews, 2),
                 ],
               ),
             ),
             _buildTabContent(),
           ],
         ),
+      ),
+      bottomNavigationBar: (widget.isOwnProfile || widget.hideBars) ? null : BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: const Color(0xFF3B82F6),
+            unselectedItemColor: Colors.grey,
+            currentIndex: 1, // Search tab is highlighted since we're viewing a cleaner profile
+            onTap: (index) {
+              // Pop back to HomeScreen and navigate to the correct tab
+              if (Navigator.of(context).canPop()) {
+                // Pop back to HomeScreen
+                Navigator.of(context).pop();
+                
+                // Wait a moment for navigation to complete, then replace with HomeScreen at correct tab
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (context.mounted) {
+                    // Replace current route with HomeScreen at the correct tab
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => HomeScreen(initialTabIndex: index),
+                      ),
+                    );
+                  }
+                });
+              } else {
+                // No route to pop, push HomeScreen with correct tab
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => HomeScreen(initialTabIndex: index),
+                  ),
+                  (route) => false,
+                );
+              }
+            },
+            items: [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.home),
+                label: AppLocalizations.of(context)!.home,
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.search),
+                label: AppLocalizations.of(context)!.search,
+              ),
+              const BottomNavigationBarItem(
+                icon: Icon(Icons.article_outlined),
+                label: 'My Posts',
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.person_outline),
+                label: AppLocalizations.of(context)!.profile,
+              ),
+            ],
+          ),
+    );
+  }
+
+  PreferredSizeWidget _buildAgencyAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
+      ),
+      title: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3B82F6),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.eco,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'CleanSpace',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        NotificationBellWidget(),
+        IconButton(
+          icon: const Icon(Icons.settings, color: Color(0xFF6B7280)),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsPage()),
+            );
+          },
+          tooltip: AppLocalizations.of(context)!.settings,
+        ),
+      ],
+    );
+  }
+
+  PreferredSizeWidget _buildClientAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      title: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3B82F6),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.eco,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'CleanSpace',
+            style: TextStyle(
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const Spacer(),
+          NotificationBellWidget(),
+        ],
       ),
     );
   }
@@ -259,8 +378,8 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'About Me',
+          Text(
+            AppLocalizations.of(context)!.aboutMe,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -283,16 +402,16 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               Expanded(
                 child: _buildInfoCard(
                   icon: Icons.work_history,
-                  label: 'Experience',
-                  value: widget.cleaner['experience'] ?? '5+ Years',
+                  label: AppLocalizations.of(context)!.experience,
+                  value: _getExperienceDisplay(),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildInfoCard(
                   icon: Icons.cake_outlined,
-                  label: 'Age',
-                  value: (widget.cleaner['age'] as String?) ?? AgeHelper.formatAge((widget.cleaner['profileData'] as Map<String, dynamic>?)?['birthdate'] as String?),
+                  label: AppLocalizations.of(context)!.age,
+                  value: _getAgeDisplay(),
                 ),
               ),
             ],
@@ -303,65 +422,53 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               Expanded(
                 child: _buildInfoCard(
                   icon: Icons.location_on_outlined,
-                  label: 'Location',
+                  label: AppLocalizations.of(context)!.location,
                   value: widget.cleaner['location'] ?? 'Algiers',
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildInfoCard(
-                  icon: Icons.language,
-                  label: 'Languages',
-                  value: widget.cleaner['languages'] ?? 'Arabic, French',
+                  icon: Icons.phone,
+                  label: AppLocalizations.of(context)!.phone,
+                  value: _getPhoneDisplay(),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          if (widget.cleaner['agency'] != null)
-            RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  icon: Icons.attach_money_outlined,
+                  label: AppLocalizations.of(context)!.hourlyRate,
+                  value: _getHourlyRateDisplay(),
                 ),
-                children: [
-                  const TextSpan(text: 'Part of '),
-                  TextSpan(
-                    text: widget.cleaner['agency'],
-                    style: const TextStyle(
-                      color: Color(0xFF3B82F6),
-                      decoration: TextDecoration.underline,
-                    ),
-                  ),
-                  const TextSpan(text: '.'),
-                ],
               ),
-            ),
-          if (widget.cleaner['agency'] != null) const SizedBox(height: 24),
-          const Text(
-            'Services Offered',
-            style: TextStyle(
+              if (_hasAgency()) ...[
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildInfoCard(
+                    icon: Icons.business_outlined,
+                    label: AppLocalizations.of(context)!.agency,
+                    value: _getAgencyDisplay(),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            AppLocalizations.of(context)!.servicesOffered,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: Color(0xFF111827),
             ),
           ),
           const SizedBox(height: 12),
-          _buildServiceItem(
-            icon: Icons.home_outlined,
-            service: 'Residential Cleaning',
-          ),
-          const SizedBox(height: 8),
-          _buildServiceItem(
-            icon: Icons.business_outlined,
-            service: 'Office Cleaning',
-          ),
-          const SizedBox(height: 8),
-          _buildServiceItem(
-            icon: Icons.cleaning_services_outlined,
-            service: 'Deep Cleaning',
-          ),
+          _buildServicesList(),
           const SizedBox(height: 80),
         ],
       ),
@@ -370,9 +477,9 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
 
   Widget _buildHistoryTab() {
     if (_cleanerId == null) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: Text('Cleaner ID not found')),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(child: Text(AppLocalizations.of(context)!.cleanerIdNotFound)),
       );
     }
 
@@ -381,7 +488,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
         if (state is CleanerHistoryLoading) {
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))),
           );
         }
 
@@ -396,12 +503,12 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
           final historyItems = state.items;
 
           if (historyItems.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
+            return Padding(
+              padding: const EdgeInsets.all(16),
               child: Center(
                 child: Text(
-                  'No cleaning history available',
-                  style: TextStyle(color: Color(0xFF6B7280)),
+                  AppLocalizations.of(context)!.noCleaningHistoryYet,
+                  style: const TextStyle(color: Color(0xFF6B7280)),
                 ),
               ),
             );
@@ -412,8 +519,8 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Cleaning History',
+                Text(
+                  AppLocalizations.of(context)!.cleaningHistory,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -468,7 +575,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title ?? 'Cleaning Job',
+                  item.title ?? AppLocalizations.of(context)!.cleaningJob,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -503,9 +610,9 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
 
   Widget _buildReviewsTab() {
     if (_cleanerId == null) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: Text('Cleaner ID not found')),
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Center(child: Text(AppLocalizations.of(context)!.cleanerIdNotFound)),
       );
     }
 
@@ -514,7 +621,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
         if (state is CleanerReviewsLoading) {
           return const Padding(
             padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
+            child: Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))),
           );
         }
 
@@ -545,8 +652,8 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'All Reviews',
+                Text(
+                  AppLocalizations.of(context)!.allReviews,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -770,17 +877,168 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
 
   Widget _buildProfileImage() {
     final imageUrl = widget.cleaner['image'] as String? ?? widget.cleaner['picture'] as String?;
-    if (imageUrl != null && imageUrl.isNotEmpty && imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return AppImage(
+        imageUrl: imageUrl,
         width: 120,
         height: 120,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Icon(Icons.person, size: 60, color: Color(0xFF9CA3AF));
-        },
+        errorWidget: const Icon(Icons.person, size: 60, color: Color(0xFF9CA3AF)),
       );
     }
     return const Icon(Icons.person, size: 60, color: Color(0xFF9CA3AF));
+  }
+
+  String _getAgeDisplay() {
+    // Try to get birthdate from profileData first, then fallback to direct cleaner data
+    final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
+    final birthdate = profileData?['birthdate'] as String? ?? widget.cleaner['birthdate'] as String?;
+    
+    if (birthdate != null && birthdate.isNotEmpty) {
+      final age = AgeHelper.calculateAge(birthdate);
+      if (age != null) {
+        return '$age years';
+      }
+    }
+    
+    // Fallback to age field if birthdate calculation fails
+    final ageString = widget.cleaner['age'] as String?;
+    if (ageString != null && ageString.isNotEmpty) {
+      return '$ageString years';
+    }
+    
+    return 'N/A';
+  }
+
+  String _getPhoneDisplay() {
+    // Try to get phone from profileData first, then fallback to direct cleaner data
+    final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
+    final phone = profileData?['phone'] as String? ?? widget.cleaner['phone'] as String?;
+    
+    if (phone != null && phone.isNotEmpty) {
+      return phone;
+    }
+    
+    return 'N/A';
+  }
+
+  String _getExperienceDisplay() {
+    // Try to get experience_level from profileData first, then fallback to direct cleaner data
+    final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
+    final experienceLevel = profileData?['experience_level'] as String? ?? widget.cleaner['experience_level'] as String?;
+    
+    if (experienceLevel != null && experienceLevel.isNotEmpty) {
+      // Capitalize first letter
+      return experienceLevel[0].toUpperCase() + experienceLevel.substring(1).toLowerCase();
+    }
+    
+    // Fallback to experience years if available
+    final experienceYears = widget.cleaner['experience'] as String?;
+    if (experienceYears != null && experienceYears.isNotEmpty) {
+      return experienceYears;
+    }
+    
+    return 'N/A';
+  }
+
+  String _getHourlyRateDisplay() {
+    // Try to get hourly_rate from profileData first, then fallback to direct cleaner data
+    final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
+    final hourlyRate = profileData?['hourly_rate'] as String? ?? 
+                      widget.cleaner['hourly_rate'] as String? ??
+                      profileData?['hourlyRate'] as String? ??
+                      widget.cleaner['hourlyRate'] as String?;
+    
+    if (hourlyRate != null && hourlyRate.isNotEmpty) {
+      // Format as "XXX DZD/hr" if it's a number
+      final rateValue = double.tryParse(hourlyRate);
+      if (rateValue != null) {
+        return '${rateValue.toStringAsFixed(0)} DZD/hr';
+      }
+      return hourlyRate;
+    }
+    
+    return AppLocalizations.of(context)!.contactForPricing;
+  }
+
+  bool _hasAgency() {
+    // Check if cleaner has an agency
+    final agency = widget.cleaner['agency'] as String?;
+    return agency != null && agency.isNotEmpty;
+  }
+
+  String _getAgencyDisplay() {
+    // Try to get agency from cleaner data
+    final agency = widget.cleaner['agency'] as String?;
+    
+    if (agency != null && agency.isNotEmpty) {
+      return agency;
+    }
+    
+    return '';
+  }
+
+  Widget _buildServicesList() {
+    // Try to get services from profileData first, then fallback to direct cleaner data
+    final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
+    final servicesString = profileData?['services'] as String? ?? widget.cleaner['services'] as String?;
+    
+    if (servicesString == null || servicesString.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'No services listed',
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6B7280),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+    }
+    
+    // Split comma-separated services
+    final services = servicesString.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+    
+    if (services.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          'No services listed',
+          style: TextStyle(
+            fontSize: 14,
+            color: Color(0xFF6B7280),
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      );
+    }
+    
+    // Map service names to icons
+    IconData getServiceIcon(String service) {
+      final lowerService = service.toLowerCase();
+      if (lowerService.contains('home') || lowerService.contains('residential')) {
+        return Icons.home_outlined;
+      } else if (lowerService.contains('office')) {
+        return Icons.business_outlined;
+      } else if (lowerService.contains('industrial')) {
+        return Icons.factory_outlined;
+      } else if (lowerService.contains('specialty') || lowerService.contains('special')) {
+        return Icons.cleaning_services_outlined;
+      }
+      return Icons.cleaning_services_outlined;
+    }
+    
+    return Column(
+      children: services.map((service) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: _buildServiceItem(
+            icon: getServiceIcon(service),
+            service: service,
+          ),
+        );
+      }).toList(),
+    );
   }
 }

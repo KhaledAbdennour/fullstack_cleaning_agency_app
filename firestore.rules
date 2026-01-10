@@ -1,7 +1,27 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow read/write access to all documents for authenticated users
+    // Complaints collection
+    // Note: App uses integer IDs with SharedPreferences, not Firebase Auth
+    // For development: allow all access. For production with Firebase Auth migration:
+    // - Users can create complaints with their user_id
+    // - Users can read/update/delete only their own complaints
+    match /complaints/{complaintId} {
+      // Development: allow all (app doesn't use Firebase Auth)
+      allow read, write: if true;
+      
+      // Production (when Firebase Auth is implemented):
+      // allow create: if request.auth != null && 
+      //                request.resource.data.user_id is int;
+      // allow read: if request.auth != null && 
+      //              resource.data.user_id is int;
+      // allow update: if request.auth != null && 
+      //                resource.data.user_id is int;
+      // allow delete: if request.auth != null && 
+      //                resource.data.user_id is int;
+    }
+    
+    // Allow read/write access to all other documents for authenticated users
     // TODO: Implement proper security rules based on your requirements
     match /{document=**} {
       allow read, write: if request.auth != null;

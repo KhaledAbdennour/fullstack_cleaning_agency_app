@@ -27,6 +27,7 @@ abstract class AbstractJobsRepo {
   Future<List<Job>> getCompletedJobsForWorker(int workerId);
   Future<List<Job>> getActiveJobsForClient(int clientId);
   Future<List<Job>> getCompletedJobsForClient(int clientId);
+  Future<void> markAllClientJobsAsDeleted(int clientId); // Mark all client's jobs as deleted
 
   static AbstractJobsRepo? _instance;
   static AbstractJobsRepo getInstance() {

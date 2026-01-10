@@ -119,19 +119,13 @@ class Validators {
     
     final digitsOnly = trimmed.replaceAll(RegExp(r'[^\d]'), '');
     
-    if (digitsOnly.length < 9 || digitsOnly.length > 15) {
-      return 'Phone Number must be 9-15 digits';
+    // Must be between 9 and 10 digits
+    if (digitsOnly.length < 9) {
+      return 'Phone Number must be at least 9 digits';
     }
     
-    
-    if (trimmed.startsWith('+213')) {
-      if (digitsOnly.length != 12) { 
-        return 'Algerian phone number must be +213 followed by 9 digits';
-      }
-    } else if (trimmed.startsWith('0')) {
-      if (digitsOnly.length != 10) { 
-        return 'Algerian phone number must start with 0 followed by 9 digits';
-      }
+    if (digitsOnly.length > 10) {
+      return 'Phone Number cannot be longer than 10 digits';
     }
     
     return null;

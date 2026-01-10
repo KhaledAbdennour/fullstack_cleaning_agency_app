@@ -1,30 +1,32 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class ExperiencePage extends StatelessWidget {
   const ExperiencePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text(
-            "CLEASPACE EXPERIENCE",
-            style: TextStyle(
-              color: Color(0xFF157A6E),
+          Text(
+            localizations.cleaspaceExperience,
+            style: const TextStyle(
+              color: Color(0xFF3B82F6),
               fontSize: 13,
               letterSpacing: 2,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            "All-in-one platform for trusted cleaning services.",
+          Text(
+            localizations.allInOnePlatform,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Color(0xFF1E293B),
@@ -32,20 +34,20 @@ class ExperiencePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          _infoCard(Icons.verified, "Verified Professionals",
-              "Every cleaner and agency passes identity and quality checks for full trust."),
+          _infoCard(context, Icons.verified, localizations.verifiedProfessionals,
+              localizations.everyCleanerPasses),
           const SizedBox(height: 16),
-          _infoCard(Icons.star_border, "Smart Matching",
-              "Browse curated lists or let CleanSpace suggest best-fit cleaners."),
+          _infoCard(context, Icons.star_border, localizations.smartMatching,
+              localizations.browseCuratedLists),
           const SizedBox(height: 16),
-          _infoCard(Icons.attach_money_outlined, "Transparent Pricing",
-              "See clear hourly rates before booking. No hidden surprises."),
+          _infoCard(context, Icons.attach_money_outlined, localizations.transparentPricing,
+              localizations.seeClearHourlyRates),
         ],
       ),
     );
   }
 
-  Widget _infoCard(IconData icon, String title, String desc) {
+  Widget _infoCard(BuildContext context, IconData icon, String title, String desc) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -65,10 +67,10 @@ class ExperiencePage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
-              color: Color(0xFFE6F4F1),
+              color: Color(0xFFEFF6FF),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: Color(0xFF157A6E)),
+            child: Icon(icon, color: Color(0xFF3B82F6)),
           ),
           const SizedBox(width: 16),
           Expanded(

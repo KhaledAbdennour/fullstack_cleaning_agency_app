@@ -2,7 +2,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image/image.dart' as img;
-import '../../../core/config/firebase_config.dart';
 import 'storage_repo.dart';
 
 /// Firestore implementation of storage repository
@@ -36,18 +35,45 @@ class StorageRepoDB extends AbstractStorageRepo {
     try {
       _agentLog('H5', 'upload start', {'userId': userId, 'filePath': filePath});
 
+      // Verify Firebase Storage is available
+      try {
+        _agentLog('H5', 'storage instance verified', {'userId': userId});
+      } catch (storageError) {
+        _agentLog('H5', 'storage instance error', {
+          'userId': userId,
+          'error': storageError.toString(),
+        });
+        throw Exception('Firebase Storage not available: $storageError');
+      }
+
       final file = File(filePath);
       if (!file.existsSync()) {
+        _agentLog('H5', 'file not found', {'filePath': filePath});
         throw Exception('File does not exist: $filePath');
       }
 
+      _agentLog('H5', 'file exists', {
+        'filePath': filePath,
+        'fileSize': await file.length(),
+      });
+
       // Compress image to reduce upload size (optional but recommended)
       final originalBytes = await file.readAsBytes();
+      _agentLog('H5', 'file read', {
+        'fileSize': originalBytes.length,
+      });
+      
       final image = img.decodeImage(originalBytes);
       
       if (image == null) {
-        throw Exception('Invalid image file');
+        _agentLog('H5', 'invalid image', {'filePath': filePath});
+        throw Exception('Invalid image file - could not decode image');
       }
+      
+      _agentLog('H5', 'image decoded', {
+        'width': image.width,
+        'height': image.height,
+      });
 
       // Resize if too large (max 800px width/height)
       img.Image? resizedImage = image;
@@ -67,24 +93,53 @@ class StorageRepoDB extends AbstractStorageRepo {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final ref = _storage.ref().child('profile_pictures/$userId/$timestamp.jpg');
       
-      final uploadTask = ref.putData(
-        compressedBytes,
-        SettableMetadata(
-          contentType: 'image/jpeg',
-          cacheControl: 'public, max-age=31536000', // Cache for 1 year
-        ),
-      );
+      _agentLog('H5', 'upload before putData', {
+        'userId': userId, 
+        'path': ref.fullPath,
+        'fileSize': compressedBytes.length,
+      });
+      
+      try {
+        final uploadTask = ref.putData(
+          compressedBytes,
+          SettableMetadata(
+            contentType: 'image/jpeg',
+            cacheControl: 'public, max-age=31536000', // Cache for 1 year
+          ),
+        );
 
-      // Wait for upload to complete
-      final snapshot = await uploadTask;
-      
-      // Get download URL
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-      
-      _agentLog('H5', 'upload success', {'userId': userId, 'path': ref.fullPath, 'url': downloadUrl});
-      return downloadUrl;
+        // Wait for upload to complete and handle progress/errors
+        final snapshot = await uploadTask.whenComplete(() {
+          _agentLog('H5', 'upload task completed', {'userId': userId});
+        });
+        
+        _agentLog('H5', 'upload snapshot received', {
+          'userId': userId,
+          'bytesTransferred': snapshot.bytesTransferred,
+          'totalBytes': snapshot.totalBytes,
+        });
+        
+        // Get download URL
+        final downloadUrl = await snapshot.ref.getDownloadURL();
+        
+        _agentLog('H5', 'download URL obtained', {'userId': userId, 'url': downloadUrl});
+        
+        return downloadUrl;
+      } catch (uploadException) {
+        _agentLog('H5', 'upload exception', {
+          'userId': userId,
+          'error': uploadException.toString(),
+          'errorType': uploadException.runtimeType.toString(),
+        });
+        rethrow;
+      }
     } catch (e, stackTrace) {
-      _agentLog('H5', 'upload error', {'userId': userId, 'error': e.toString(), 'stack': stackTrace.toString()});
+      _agentLog('H5', 'upload error', {
+        'userId': userId, 
+        'error': e.toString(), 
+        'errorType': e.runtimeType.toString(),
+        'stack': stackTrace.toString()
+      });
       rethrow;
     }
   }

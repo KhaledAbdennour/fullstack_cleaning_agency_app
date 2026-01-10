@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/config/firebase_config.dart';
 import '../../../core/services/notification_backend_service.dart';
+import '../../../core/services/notification_service_enhanced.dart';
 import '../../../core/debug/debug_logger.dart';
 import '../../models/booking_model.dart';
 import '../../models/job_model.dart';
+import '../../models/notification_item.dart';
 import '../jobs/jobs_repo.dart';
+import '../profiles/profile_repo.dart';
 import 'bookings_repo.dart';
-import '../jobs/jobs_repo.dart';
 
 class BookingsDB extends AbstractBookingsRepo {
   static const String collectionName = 'bookings';
@@ -218,12 +220,22 @@ class BookingsDB extends AbstractBookingsRepo {
             final jobsRepo = AbstractJobsRepo.getInstance();
             final job = await jobsRepo.getJobById(booking.jobId);
             if (job != null) {
-              await NotificationBackendService.sendToUser(
+              // Get provider profile to get name
+              final profileRepo = AbstractProfileRepo.getInstance();
+              final providerProfile = await profileRepo.getProfileById(booking.providerId!);
+              final providerName = providerProfile?['full_name'] as String? ?? 'A worker';
+              
+              await NotificationServiceEnhanced.createNotification(
                 userId: booking.clientId.toString(),
                 title: 'New Application Received',
-                body: 'A worker has applied to your job "${job.title}".',
+                body: '$providerName has applied to your job "${job.title}".',
+                type: NotificationType.jobApplication,
+                senderId: booking.providerId.toString(),
+                jobId: booking.jobId,
+                clientId: booking.clientId,
+                workerId: booking.providerId,
                 route: '/jobDetails',
-                id: booking.jobId.toString(),
+                routeId: booking.jobId.toString(),
               );
             }
           } catch (e) {
@@ -569,22 +581,37 @@ class BookingsDB extends AbstractBookingsRepo {
         
         if (job != null) {
           try {
-            // Notify accepted worker
-            await NotificationBackendService.sendToUser(
+            // Get provider profile to get name
+            final profileRepo = AbstractProfileRepo.getInstance();
+            final providerProfile = await profileRepo.getProfileById(booking.providerId!);
+            final providerName = providerProfile?['full_name'] as String? ?? 'A worker';
+            
+            // Notify accepted worker/agency (job_assigned)
+            await NotificationServiceEnhanced.createNotification(
               userId: booking.providerId.toString(),
               title: 'Application Accepted!',
               body: 'Congratulations! Your application for "${job.title}" has been accepted.',
+              type: NotificationType.jobAssigned,
+              senderId: booking.clientId.toString(),
+              jobId: booking.jobId,
+              clientId: booking.clientId,
+              workerId: booking.providerId,
               route: '/jobDetails',
-              id: booking.jobId.toString(),
+              routeId: booking.jobId.toString(),
             );
             
-            // Notify client
-            await NotificationBackendService.sendToUser(
+            // Notify client (job_assigned - they assigned the job)
+            await NotificationServiceEnhanced.createNotification(
               userId: booking.clientId.toString(),
               title: 'Worker Assigned',
-              body: 'A worker has been assigned to your job "${job.title}".',
+              body: '$providerName has been assigned to your job "${job.title}".',
+              type: NotificationType.jobAssigned,
+              senderId: booking.providerId.toString(),
+              jobId: booking.jobId,
+              clientId: booking.clientId,
+              workerId: booking.providerId,
               route: '/jobDetails',
-              id: booking.jobId.toString(),
+              routeId: booking.jobId.toString(),
             );
           } catch (e) {
             print('Error sending acceptance notifications: $e');

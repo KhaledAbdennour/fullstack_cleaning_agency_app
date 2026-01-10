@@ -12,7 +12,8 @@ import '../l10n/app_localizations.dart';
 
 
 class PostJobScreen extends StatefulWidget {
-  const PostJobScreen({Key? key}) : super(key: key);
+  final bool showInScaffold;
+  const PostJobScreen({Key? key, this.showInScaffold = true}) : super(key: key);
 
   @override
   State<PostJobScreen> createState() => _PostJobScreenState();
@@ -21,32 +22,37 @@ class PostJobScreen extends StatefulWidget {
 class _PostJobScreenState extends State<PostJobScreen> {
   String? selectedServiceType;
   String? selectedProvince;
-  final TextEditingController budgetController = TextEditingController();
+  final TextEditingController budgetMinController = TextEditingController();
+  final TextEditingController budgetMaxController = TextEditingController();
   final TextEditingController durationController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-  String selectedDurationUnit = 'Hours';
+  String? selectedDurationUnit;
   final ImagePicker _picker = ImagePicker();
   List<XFile> selectedImages = [];
 
-  final List<Map<String, dynamic>> serviceTypes = [
+  List<Map<String, dynamic>> getServiceTypes(BuildContext context) => [
     {
-      'title': 'Home',
-      'image': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop', // Mop/cleaning on wooden floor
+      'title': AppLocalizations.of(context)!.homeCleaning,
+      'key': 'Home',
+      'image': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&auto=format&fit=crop', // Modern house exterior (switched from specialty)
       'isAsset': false,
     },
     {
-      'title': 'Office',
-      'image': 'https://images.unsplash.com/photo-1507206130118-b5907f817163?w=600&auto=format&fit=crop', // Office cleaning
+      'title': AppLocalizations.of(context)!.officeCleaning,
+      'key': 'Office',
+      'image': 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop', // Company/office building
       'isAsset': false,
     },
     {
-      'title': 'Industrial',
-      'image': 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=600&auto=format&fit=crop', // Industrial/warehouse cleaning
+      'title': AppLocalizations.of(context)!.industrialCleaning,
+      'key': 'Industrial',
+      'image': 'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&auto=format&fit=crop', // Factory
       'isAsset': false,
     },
     {
-      'title': 'Specialty',
-      'image': 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&auto=format&fit=crop', // Modern house exterior
+      'title': AppLocalizations.of(context)!.specialtyCleaning,
+      'key': 'Specialty',
+      'image': 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop', // Mop/cleaning on wooden floor (switched from home)
       'isAsset': false,
     },
   ];
@@ -157,18 +163,52 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
     if (selectedProvince == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a location'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pleaseSelectLocation),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    if (budgetController.text.isEmpty) {
+    if (budgetMinController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a budget'),
+          content: Text('Please enter minimum budget'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (budgetMaxController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter maximum budget'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Validate that max >= min
+    final budgetMin = double.tryParse(budgetMinController.text.trim());
+    final budgetMax = double.tryParse(budgetMaxController.text.trim());
+    
+    if (budgetMin == null || budgetMax == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter valid budget amounts'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (budgetMax < budgetMin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum budget must be greater than or equal to minimum budget'),
           backgroundColor: Colors.red,
         ),
       );
@@ -177,8 +217,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
 
     if (descriptionController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a job description'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.pleaseEnterJobDescription),
           backgroundColor: Colors.red,
         ),
       );
@@ -226,51 +266,54 @@ class _PostJobScreenState extends State<PostJobScreen> {
       }
 
       
-      final budgetText = budgetController.text.trim();
-      double? budgetMin;
-      double? budgetMax;
-      
-      if (budgetText.contains('-')) {
-        final parts = budgetText.split('-');
-        if (parts.length == 2) {
-          budgetMin = double.tryParse(parts[0].trim());
-          budgetMax = double.tryParse(parts[1].trim());
-        }
-      } else {
-        budgetMin = double.tryParse(budgetText);
-        budgetMax = budgetMin;
-      }
+      // Parse budget values (already validated above)
+      final budgetMin = double.parse(budgetMinController.text.trim());
+      final budgetMax = double.parse(budgetMaxController.text.trim());
 
       
       int? estimatedHours;
       if (durationController.text.isNotEmpty) {
         final duration = int.tryParse(durationController.text);
         if (duration != null) {
-          estimatedHours = selectedDurationUnit == 'Hours' ? duration : duration * 24;
+          final hoursText = AppLocalizations.of(context)!.hours;
+          final currentUnit = selectedDurationUnit ?? hoursText;
+          estimatedHours = currentUnit == hoursText ? duration : duration * 24;
         }
       }
 
       
+      // Convert all selected images to base64 data URLs
       String? coverImageDataUrl;
+      List<String> jobImagesList = [];
+      
       if (selectedImages.isNotEmpty) {
-        try {
-          final imageFile = File(selectedImages[0].path);
-          final imageBytes = await imageFile.readAsBytes();
-          final base64Image = base64Encode(imageBytes);
-          
-          final extension = selectedImages[0].path.split('.').last.toLowerCase();
-          String mimeType = 'image/jpeg'; 
-          if (extension == 'png') {
-            mimeType = 'image/png';
-          } else if (extension == 'gif') {
-            mimeType = 'image/gif';
-          } else if (extension == 'webp') {
-            mimeType = 'image/webp';
+        for (int i = 0; i < selectedImages.length; i++) {
+          try {
+            final imageFile = File(selectedImages[i].path);
+            final imageBytes = await imageFile.readAsBytes();
+            final base64Image = base64Encode(imageBytes);
+            
+            final extension = selectedImages[i].path.split('.').last.toLowerCase();
+            String mimeType = 'image/jpeg'; 
+            if (extension == 'png') {
+              mimeType = 'image/png';
+            } else if (extension == 'gif') {
+              mimeType = 'image/gif';
+            } else if (extension == 'webp') {
+              mimeType = 'image/webp';
+            }
+            
+            final imageDataUrl = 'data:$mimeType;base64,$base64Image';
+            jobImagesList.add(imageDataUrl);
+            
+            // First image is also stored as cover image (for backward compatibility)
+            if (i == 0) {
+              coverImageDataUrl = imageDataUrl;
+            }
+          } catch (e) {
+            print('Error converting image ${i + 1} to base64: $e');
+            // Continue with other images even if one fails
           }
-          coverImageDataUrl = 'data:$mimeType;base64,$base64Image';
-        } catch (e) {
-          print('Error converting image to base64: $e');
-          
         }
       }
 
@@ -284,6 +327,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
         postedDate: DateTime.now(),
         jobDate: DateTime.now().add(const Duration(days: 7)), 
         coverImageUrl: coverImageDataUrl,
+        jobImages: jobImagesList.isNotEmpty ? jobImagesList : null,
         clientId: clientId,
         agencyId: null, 
         budgetMin: budgetMin,
@@ -303,11 +347,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
       setState(() {
         selectedServiceType = null;
         selectedProvince = null;
-        budgetController.clear();
+        budgetMinController.clear();
+        budgetMaxController.clear();
         durationController.clear();
         descriptionController.clear();
         selectedImages.clear();
-        selectedDurationUnit = 'Hours';
+        selectedDurationUnit = null; // Will be re-initialized on next build
       });
       
       
@@ -358,34 +403,19 @@ class _PostJobScreenState extends State<PostJobScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          AppLocalizations.of(context)!.postANewJob,
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
+  Widget _buildFormContent() {
+    // Initialize selectedDurationUnit if not set
+    selectedDurationUnit ??= AppLocalizations.of(context)!.hours;
+    return SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               
-              const Text(
-                'Select Service Type',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.selectServiceType,
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -401,14 +431,14 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   mainAxisSpacing: 16,
                   childAspectRatio: 0.9,
                 ),
-                itemCount: serviceTypes.length,
+                itemCount: getServiceTypes(context).length,
                 itemBuilder: (context, index) {
-                  final service = serviceTypes[index];
-                  final isSelected = selectedServiceType == service['title'];
+                  final service = getServiceTypes(context)[index];
+                  final isSelected = selectedServiceType == service['key'];
                   return GestureDetector(
                     onTap: () {
                       setState(() {
-                        selectedServiceType = service['title'];
+                        selectedServiceType = service['key'];
                       });
                     },
                     child: Container(
@@ -538,9 +568,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
               const SizedBox(height: 24),
 
               
-              const Text(
-                'Location (Wilaya)',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.locationWilaya,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -554,11 +584,11 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   border: Border.all(color: Colors.grey[300]!),
                 ),
                 child: DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.location_on_outlined, color: Colors.grey),
-                    hintText: 'Select your province',
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.location_on_outlined, color: Colors.grey),
+                    hintText: AppLocalizations.of(context)!.selectYourProvince,
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                   value: selectedProvince,
                   items: provinces.map((String province) {
@@ -577,15 +607,16 @@ class _PostJobScreenState extends State<PostJobScreen> {
               const SizedBox(height: 24),
 
               
-              const Text(
-                'Your Budget (DZD)',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.yourBudgetDzd,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 12),
+              // Minimum Budget Field
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -593,23 +624,43 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   border: Border.all(color: Colors.grey[300]!),
                 ),
                 child: TextField(
-                  controller: budgetController,
+                  controller: budgetMinController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.account_balance_wallet_outlined, color: Colors.grey),
-                    hintText: 'Enter your budget',
-                    hintStyle: TextStyle(color: Colors.grey),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.account_balance_wallet_outlined, color: Colors.grey),
+                    hintText: 'Minimum Budget (DZD)',
+                    hintStyle: const TextStyle(color: Colors.grey),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Maximum Budget Field
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: TextField(
+                  controller: budgetMaxController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.account_balance_wallet_outlined, color: Colors.grey),
+                    hintText: 'Maximum Budget (DZD)',
+                    hintStyle: const TextStyle(color: Colors.grey),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   ),
                 ),
               ),
               const SizedBox(height: 24),
 
               
-              const Text(
-                'Estimated Duration',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.estimatedDuration,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -629,12 +680,12 @@ class _PostJobScreenState extends State<PostJobScreen> {
                       child: TextField(
                         controller: durationController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons.schedule, color: Colors.grey),
-                          hintText: 'e.g., 3',
-                          hintStyle: TextStyle(color: Colors.grey),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.schedule, color: Colors.grey),
+                          hintText: AppLocalizations.of(context)!.egPlaceholder,
+                          hintStyle: const TextStyle(color: Colors.grey),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
                       ),
                     ),
@@ -646,10 +697,14 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     Expanded(
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: selectedDurationUnit,
+                          value: selectedDurationUnit ?? AppLocalizations.of(context)!.hours,
                           isExpanded: true,
                           padding: const EdgeInsets.symmetric(horizontal: 12),
-                          items: ['Hours', 'Days', 'Weeks'].map((String unit) {
+                          items: [
+                            AppLocalizations.of(context)!.hours,
+                            AppLocalizations.of(context)!.days,
+                            AppLocalizations.of(context)!.weeks,
+                          ].map((String unit) {
                             return DropdownMenuItem<String>(
                               value: unit,
                               child: Text(unit),
@@ -669,9 +724,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
               const SizedBox(height: 24),
 
               
-              const Text(
-                'Add Photos',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.addPhotos,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -737,6 +792,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
               GestureDetector(
                 onTap: selectedImages.length < 5 ? _pickImages : null,
                 child: Container(
+                  width: double.infinity,
                   height: 180,
                   decoration: BoxDecoration(
                     color: selectedImages.length >= 5 
@@ -769,8 +825,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
                           children: [
                             TextSpan(
                               text: selectedImages.length >= 5 
-                                  ? 'Maximum 5 photos reached'
-                                  : 'Click to upload',
+                                  ? AppLocalizations.of(context)!.maximumPhotosReached
+                                  : AppLocalizations.of(context)!.clickToUpload,
                               style: TextStyle(
                                 color: selectedImages.length >= 5 
                                     ? Colors.grey[400]
@@ -779,7 +835,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                               ),
                             ),
                             if (selectedImages.length < 5)
-                              const TextSpan(text: ' or drag and drop'),
+                              TextSpan(text: AppLocalizations.of(context)!.dragAndDrop),
                           ],
                         ),
                       ),
@@ -812,9 +868,9 @@ class _PostJobScreenState extends State<PostJobScreen> {
               const SizedBox(height: 24),
 
               
-              const Text(
-                'Job Description',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.jobDescription,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
@@ -839,11 +895,10 @@ class _PostJobScreenState extends State<PostJobScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-
-              
+              // Add Post Button
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: _submitJob,
                   style: ElevatedButton.styleFrom(
@@ -851,31 +906,58 @@ class _PostJobScreenState extends State<PostJobScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 0,
                   ),
                   child: const Text(
                     'Post Now',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
           ),
         ),
-      ),
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final formContent = _buildFormContent();
+    
+    if (widget.showInScaffold) {
+      return Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: Text(
+            AppLocalizations.of(context)!.postANewJob,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: formContent,
+      );
+    } else {
+      return formContent;
+    }
   }
 
   
 
   @override
   void dispose() {
-    budgetController.dispose();
+    budgetMinController.dispose();
+    budgetMaxController.dispose();
     durationController.dispose();
     descriptionController.dispose();
     super.dispose();

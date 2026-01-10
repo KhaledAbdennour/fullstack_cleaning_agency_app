@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cleaner_profile_page.dart';
@@ -22,6 +23,7 @@ class ManageJobPage extends StatefulWidget {
 
 class _ManageJobPageState extends State<ManageJobPage> {
   Job? _currentJob;
+  final PageController _pageController = PageController();
   
   @override
   void initState() {
@@ -50,10 +52,32 @@ class _ManageJobPageState extends State<ManageJobPage> {
     }
   }
 
+  /// Fetches ratings for all applications to enable sorting
+  Future<Map<int, double>> _fetchRatingsForApplications(List<Booking> applications) async {
+    final ratingsMap = <int, double>{};
+    final profileRepo = AbstractProfileRepo.getInstance();
+    
+    // Fetch all profiles in parallel
+    final futures = applications.map((booking) async {
+      if (booking.providerId == null) return;
+      try {
+        final profile = await profileRepo.getProfileById(booking.providerId!);
+        if (profile != null) {
+          final rating = (profile['rating'] as num?)?.toDouble() ?? 0.0;
+          ratingsMap[booking.providerId!] = rating;
+        }
+      } catch (e) {
+        // If profile fetch fails, default to 0.0
+        ratingsMap[booking.providerId!] = 0.0;
+      }
+    }).toList();
+    
+    await Future.wait(futures);
+    return ratingsMap;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Ensure we're using the most up-to-date job
-    final displayJob = _currentJob ?? widget.job;
     
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
@@ -160,8 +184,33 @@ class _ManageJobPageState extends State<ManageJobPage> {
                       ),
                     );
                   }
-                  return Column(
-                    children: validApplications.map((booking) => _buildApplicationCard(booking)).toList(),
+                  
+                  // Sort applications by rating (highest to lowest)
+                  return FutureBuilder<Map<int, double>>(
+                    future: _fetchRatingsForApplications(validApplications),
+                    builder: (context, ratingsSnapshot) {
+                      if (ratingsSnapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24.0),
+                            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
+                          ),
+                        );
+                      }
+                      
+                      final ratingsMap = ratingsSnapshot.data ?? {};
+                      final sortedApplications = List<Booking>.from(validApplications);
+                      sortedApplications.sort((a, b) {
+                        final ratingA = ratingsMap[a.providerId] ?? 0.0;
+                        final ratingB = ratingsMap[b.providerId] ?? 0.0;
+                        // Sort descending (highest rating first)
+                        return ratingB.compareTo(ratingA);
+                      });
+                      
+                      return Column(
+                        children: sortedApplications.map((booking) => _buildApplicationCard(booking)).toList(),
+                      );
+                    },
                   );
                 }
                 return const SizedBox.shrink();
@@ -174,6 +223,30 @@ class _ManageJobPageState extends State<ManageJobPage> {
   }
 
   Widget _buildJobDetailsCard() {
+    final job = _currentJob ?? widget.job;
+    
+    // Calculate time ago
+    final now = DateTime.now();
+    final difference = now.difference(job.postedDate);
+    String timeAgoText;
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes == 0) {
+          timeAgoText = 'Just now';
+        } else {
+          timeAgoText = '${difference.inMinutes}m ago';
+        }
+      } else {
+        timeAgoText = '${difference.inHours}h ago';
+      }
+    } else if (difference.inDays == 1) {
+      timeAgoText = 'Yesterday';
+    } else if (difference.inDays < 7) {
+      timeAgoText = '${difference.inDays}d ago';
+    } else {
+      timeAgoText = '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
+    }
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -193,25 +266,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
           ClipRRect(
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(16)),
-            child: widget.job.coverImageUrl != null
-                ? AppImage(
-                    imageUrl: widget.job.coverImageUrl!,
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorWidget: Container(
-                      height: 200,
-                      width: double.infinity,
-                      color: const Color(0xFFE5E7EB),
-                      child: const Icon(Icons.image, size: 50, color: Color(0xFF9CA3AF)),
-                    ),
-                  )
-                : Container(
-                    height: 200,
-                    width: double.infinity,
-                    color: const Color(0xFFE5E7EB),
-                    child: const Icon(Icons.image, size: 50, color: Color(0xFF9CA3AF)),
-                  ),
+            child: _buildImageCarousel(),
           ),
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -220,7 +275,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.job.title,
+                  job.title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -231,7 +286,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  widget.job.description,
+                  job.description,
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFF6B7280),
@@ -239,16 +294,70 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  '${widget.job.fullLocation} - ${_formatDate(widget.job.jobDate)}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF6B7280),
-                    fontWeight: FontWeight.w500,
+                const SizedBox(height: 12),
+                // Budget (Min - Max) with blue icon - under description, above location
+                if (job.budgetMin != null || job.budgetMax != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.account_balance_wallet_outlined, size: 16, color: Color(0xFF3B82F6)),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            job.budgetMin != null && job.budgetMax != null
+                                ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                : job.budgetMin != null
+                                    ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                                    : job.budgetMax != null
+                                        ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                        : 'Budget negotiable',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF6B7280),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                // Location with blue icon
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF3B82F6)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          '${job.city}, ${job.country}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Date with blue icon and time ago in parentheses - under location
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF3B82F6)),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year} ($timeAgoText)',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF6B7280),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -277,7 +386,14 @@ class _ManageJobPageState extends State<ManageJobPage> {
         final cleanerName = cleanerProfile?['full_name'] as String? ?? 
                            cleanerProfile?['agency_name'] as String? ?? 
                            'Unknown';
-        final cleanerAvatar = cleanerProfile?['picture'] as String?;
+        // Try multiple fields for profile picture: picture, image, avatar_url, or profileData.picture
+        final profileData = cleanerProfile?['profileData'] as Map<String, dynamic>?;
+        final cleanerAvatar = cleanerProfile?['picture'] as String? ?? 
+                             cleanerProfile?['image'] as String? ?? 
+                             cleanerProfile?['avatar_url'] as String? ??
+                             profileData?['picture'] as String? ??
+                             profileData?['image'] as String? ??
+                             profileData?['avatar_url'] as String?;
         final cleanerRating = (cleanerProfile?['rating'] as num?)?.toDouble() ?? 0.0;
         final cleanerReviewsCount = cleanerProfile?['reviews_count'] as int? ?? 0;
         final priceText = booking.bidPrice != null 
@@ -300,12 +416,14 @@ class _ManageJobPageState extends State<ManageJobPage> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: cleanerAvatar != null && cleanerAvatar.startsWith('http')
-                        ? NetworkImage(cleanerAvatar)
+                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundImage: cleanerAvatar != null && (cleanerAvatar.startsWith('http') || cleanerAvatar.startsWith('data:image'))
+                        ? (cleanerAvatar.startsWith('data:image')
+                            ? MemoryImage(base64Decode(cleanerAvatar.split(',').last))
+                            : NetworkImage(cleanerAvatar))
                         : null,
-                    child: cleanerAvatar == null || !cleanerAvatar.startsWith('http')
-                        ? const Icon(Icons.person, color: Colors.grey)
+                    child: cleanerAvatar == null || (!cleanerAvatar.startsWith('http') && !cleanerAvatar.startsWith('data:image'))
+                        ? const Icon(Icons.person, color: Colors.white)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -313,13 +431,39 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          cleanerName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: Color(0xFF111827),
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                cleanerName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            // Rating display next to name
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.star,
+                                  size: 16,
+                                  color: Color(0xFFF59E0B),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  cleanerRating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF111827),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -371,14 +515,14 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: const Color(0xFFFEE2E2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
                     child: Text(
                       'Rejected',
                       style: TextStyle(
-                        color: Color(0xFF6B7280),
+                        color: Color(0xFF991B1B),
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
                       ),
@@ -471,7 +615,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
               SizedBox(
                 width: double.infinity,
                 height: 42,
-                child: OutlinedButton(
+                child: ElevatedButton(
                   onPressed: () {
                     if (cleanerProfile != null) {
                       Navigator.push(
@@ -482,8 +626,8 @@ class _ManageJobPageState extends State<ManageJobPage> {
                       );
                     }
                   },
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF3B82F6)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -491,7 +635,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   child: const Text(
                     'View Profile',
                     style: TextStyle(
-                      color: Color(0xFF3B82F6),
+                      color: Colors.white,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -507,7 +651,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
   Widget _buildJobActionsCard() {
     // Always use the most up-to-date job
     final job = _currentJob ?? widget.job;
-    final canPause = job.status == JobStatus.open || job.status == JobStatus.pending || job.status == JobStatus.assigned;
     final canActivate = job.status == JobStatus.paused || job.status == JobStatus.cancelled;
     final canDelete = job.status != JobStatus.completed;
     final canConfirmCompletion = job.workerDone && !job.clientDone && 
@@ -608,10 +751,16 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   }
                 },
                 icon: const Icon(Icons.check_circle, color: Colors.white),
-                label: const Text('Confirm Completion'),
+                label: const Text(
+                  'Confirm Completion',
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: const Color(0xFF3B82F6),
                   padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -694,39 +843,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
                 ),
               ),
             ),
-          if (canPause || canActivate || canDelete) const SizedBox(height: 8),
-          if (canPause)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  try {
-                    await AbstractJobsRepo.getInstance().changeJobStatus(job.id!, JobStatus.paused);
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Job paused')),
-                      );
-                      await _refreshJob();
-                    }
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: ${e.toString()}')),
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.pause_circle_outline, color: Colors.white),
-                label: const Text('Pause Job', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
+          if (canActivate || canDelete) const SizedBox(height: 8),
           if (canActivate)
             SizedBox(
               width: double.infinity,
@@ -760,7 +877,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
           if (canDelete)
             SizedBox(
               width: double.infinity,
-              child: OutlinedButton.icon(
+              child: ElevatedButton.icon(
                 onPressed: () async {
                   final confirm = await showDialog<bool>(
                     context: context,
@@ -837,14 +954,14 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     }
                   }
                 },
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Colors.red),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                label: const Text('Delete Job', style: TextStyle(color: Colors.red)),
+                icon: const Icon(Icons.delete_outline, color: Colors.white),
+                label: const Text('Delete Job', style: TextStyle(color: Colors.white)),
               ),
             ),
         ],
@@ -860,14 +977,21 @@ class _ManageJobPageState extends State<ManageJobPage> {
       future: AbstractProfileRepo.getInstance().getProfileById(job.assignedWorkerId!),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
         }
         
         final worker = snapshot.data;
         if (worker == null) return const SizedBox.shrink();
         
         final workerName = worker['full_name'] as String? ?? worker['agency_name'] as String? ?? 'Unknown';
-        final workerAvatar = worker['picture'] as String?;
+        // Try multiple fields for profile picture: picture, image, avatar_url, or profileData.picture
+        final profileData = worker['profileData'] as Map<String, dynamic>?;
+        final workerAvatar = worker['picture'] as String? ?? 
+                           worker['image'] as String? ?? 
+                           worker['avatar_url'] as String? ??
+                           profileData?['picture'] as String? ??
+                           profileData?['image'] as String? ??
+                           profileData?['avatar_url'] as String?;
         
         return Container(
           padding: const EdgeInsets.all(16),
@@ -892,12 +1016,14 @@ class _ManageJobPageState extends State<ManageJobPage> {
                 children: [
                   CircleAvatar(
                     radius: 24,
-                    backgroundColor: Colors.grey[200],
-                    backgroundImage: workerAvatar != null && workerAvatar.startsWith('http')
-                        ? NetworkImage(workerAvatar)
+                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundImage: workerAvatar != null && (workerAvatar.startsWith('http') || workerAvatar.startsWith('data:image'))
+                        ? (workerAvatar.startsWith('data:image')
+                            ? MemoryImage(base64Decode(workerAvatar.split(',').last))
+                            : NetworkImage(workerAvatar))
                         : null,
-                    child: workerAvatar == null || !workerAvatar.startsWith('http')
-                        ? const Icon(Icons.person, color: Colors.grey)
+                    child: workerAvatar == null || (!workerAvatar.startsWith('http') && !workerAvatar.startsWith('data:image'))
+                        ? const Icon(Icons.person, color: Colors.white)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -937,7 +1063,67 @@ class _ManageJobPageState extends State<ManageJobPage> {
     );
   }
 
+  Widget _buildImageCarousel() {
+    final job = _currentJob ?? widget.job;
+    
+    // Get all images from job_images field, or fallback to cover_image_url
+    List<String> images = [];
+    if (job.jobImages != null && job.jobImages!.isNotEmpty) {
+      images = job.jobImages!;
+    } else if (job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty) {
+      images = [job.coverImageUrl!];
+    }
+    
+    if (images.isEmpty) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        color: const Color(0xFFE5E7EB),
+        child: const Icon(Icons.image, size: 50, color: Color(0xFF9CA3AF)),
+      );
+    }
+    
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: SizedBox(
+              height: 200,
+              width: double.infinity,
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  return AppImage(
+                    imageUrl: images[index],
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorWidget: Container(
+                      height: 200,
+                      width: double.infinity,
+                      color: const Color(0xFFE5E7EB),
+                      child: const Icon(Icons.image, size: 50, color: Color(0xFF9CA3AF)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 }

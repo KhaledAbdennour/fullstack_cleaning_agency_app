@@ -60,7 +60,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get address => 'العنوان';
 
   @override
-  String get bio => 'نبذة';
+  String get bio => 'السيرة الذاتية';
 
   @override
   String get gender => 'الجنس';
@@ -93,6 +93,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get businessId => 'رقم تسجيل الأعمال';
 
   @override
+  String get enterAgencyName => 'أدخل اسم الوكالة';
+
+  @override
+  String get enterBusinessRegistrationId => 'أدخل رقم تسجيل الأعمال';
+
+  @override
+  String get agencyNameRequired => 'اسم الوكالة مطلوب';
+
+  @override
+  String get businessIdRequired => 'رقم تسجيل الأعمال مطلوب';
+
+  @override
   String get services => 'الخدمات المقدمة';
 
   @override
@@ -123,8 +135,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addNewJob => 'إضافة وظيفة جديدة';
 
   @override
-  String get noActiveListings =>
-      'لا توجد قوائم نشطة بعد.\nاضغط على زر + لإضافة وظيفة جديدة.';
+  String get noActiveListings => 'لا توجد قوائم نشطة بعد.';
 
   @override
   String get noPastBookings => 'لا توجد حجوزات سابقة بعد.';
@@ -437,13 +448,44 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noCleanersFound => 'لم يتم العثور على منظفين';
 
   @override
+  String get addToTeam => 'إضافة إلى الفريق';
+
+  @override
+  String get invalidProfile => 'ملف شخصي غير صالح';
+
+  @override
+  String get cleanerAlreadyInTeam => 'هذا المنظف موجود بالفعل في فريقك';
+
+  @override
+  String get cleanerAddedSuccessfully => 'تمت إضافة المنظف بنجاح!';
+
+  @override
+  String get errorAddingCleaner => 'خطأ في إضافة المنظف';
+
+  @override
+  String get remove => 'إزالة';
+
+  @override
+  String get removeCleaner => 'إزالة المنظف';
+
+  @override
+  String get areYouSureRemoveCleaner =>
+      'هل أنت متأكد أنك تريد إزالة هذا المنظف من فريقك؟';
+
+  @override
+  String get cleanerRemovedSuccessfully => 'تمت إزالة المنظف بنجاح!';
+
+  @override
+  String get errorRemovingCleaner => 'خطأ في إزالة المنظف';
+
+  @override
   String get availableJobs => 'الوظائف المتاحة';
 
   @override
   String get pending => 'قيد الانتظار';
 
   @override
-  String get assigned => 'معين';
+  String get assigned => 'مُعيَّن';
 
   @override
   String get jobDone => 'تم';
@@ -542,7 +584,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectYourBaladiya => 'اختر بلديتك (اختياري)';
 
   @override
-  String get enterStreetName => 'أدخل اسم الشارع ورقم المبنى، إلخ';
+  String get enterStreetName => 'أدخل اسم الشارع، رقم المبنى، إلخ.';
 
   @override
   String get tellUsAboutYourself => 'أخبرنا عن نفسك...';
@@ -603,8 +645,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get yesterday => 'أمس';
 
   @override
-  String daysAgo(int count) {
-    return 'منذ $count أيام';
+  String daysAgo(int days) {
+    return 'منذ $days يوم';
   }
 
   @override
@@ -612,4 +654,395 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get weeks => 'أسابيع';
+
+  @override
+  String get homeCleaning => 'تنظيف المنازل';
+
+  @override
+  String get officeCleaning => 'تنظيف المكاتب';
+
+  @override
+  String get specialtyCleaning => 'تنظيف متخصص';
+
+  @override
+  String get industrialCleaning => 'تنظيف صناعي';
+
+  @override
+  String get clickToUpload => 'انقر للتحميل';
+
+  @override
+  String get dragAndDrop => ' أو اسحب وأفلت';
+
+  @override
+  String get maximumPhotosReached => 'تم الوصول إلى الحد الأقصى 5 صور';
+
+  @override
+  String get egPlaceholder => 'مثال: 3';
+
+  @override
+  String fromDzdPerHr(String hourlyRate) {
+    return 'من $hourlyRate دج/ساعة';
+  }
+
+  @override
+  String get available => 'متاح';
+
+  @override
+  String get noActiveListingsYet => 'لا توجد قوائم نشطة بعد.';
+
+  @override
+  String get errorLoadingProfile => 'خطأ في تحميل الملف الشخصي';
+
+  @override
+  String get noUserDataAvailable => 'لا توجد بيانات مستخدم متاحة';
+
+  @override
+  String get unknown => 'غير معروف';
+
+  @override
+  String get anErrorOccurred => 'حدث خطأ';
+
+  @override
+  String get justNow => 'الآن';
+
+  @override
+  String get budgetNegotiable => 'الميزانية قابلة للتفاوض';
+
+  @override
+  String get untitledJob => 'وظيفة بدون عنوان';
+
+  @override
+  String areYouSureDeleteJob(String title) {
+    return 'هل أنت متأكد أنك تريد حذف \"$title\"؟';
+  }
+
+  @override
+  String get verified => 'مُتحقق منه';
+
+  @override
+  String partOfAgency(String agency) {
+    return 'جزء من $agency';
+  }
+
+  @override
+  String get experience => 'الخبرة';
+
+  @override
+  String get age => 'العمر';
+
+  @override
+  String get languages => 'اللغات';
+
+  @override
+  String get servicesOffered => 'الخدمات المقدمة';
+
+  @override
+  String get noCleaningHistoryYet => 'لا يوجد سجل تنظيف بعد.';
+
+  @override
+  String get jobDetails => 'تفاصيل الوظيفة';
+
+  @override
+  String get postedBy => 'نشر بواسطة';
+
+  @override
+  String get description => 'الوصف';
+
+  @override
+  String estimatedHours(int hours) {
+    return 'مقدر $hours ساعة';
+  }
+
+  @override
+  String get submitBid => 'تقديم عرض';
+
+  @override
+  String get yourBidPrice => 'سعر عرضك (دج)';
+
+  @override
+  String get enterBidPrice => 'أدخل سعر عرضك';
+
+  @override
+  String get messageToClient => 'رسالة للعميل (اختياري)';
+
+  @override
+  String get enterMessage => 'أدخل رسالتك';
+
+  @override
+  String get pleaseLoginToSubmitBid => 'يرجى تسجيل الدخول لتقديم عرض';
+
+  @override
+  String get unableToGetUserId => 'تعذر الحصول على معرف المستخدم';
+
+  @override
+  String get pleaseEnterValidBidPrice => 'يرجى إدخال سعر عرض صالح';
+
+  @override
+  String get bidSubmittedSuccessfully => 'تم تقديم العرض بنجاح!';
+
+  @override
+  String get errorSubmittingBid => 'خطأ في تقديم العرض';
+
+  @override
+  String get errorSubmittingBidInvalidData =>
+      'خطأ في تقديم العرض: تنسيق البيانات غير صالح. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get errorSubmittingBidUnexpected =>
+      'خطأ في تقديم العرض: حدث خطأ غير متوقع';
+
+  @override
+  String get removePhoto => 'إزالة الصورة';
+
+  @override
+  String get profilePictureUpdatedSuccessfully =>
+      'تم تحديث صورة الملف الشخصي بنجاح!';
+
+  @override
+  String get profilePictureRemovedSuccessfully =>
+      'تم إزالة صورة الملف الشخصي بنجاح!';
+
+  @override
+  String get failedToRemoveProfilePicture => 'فشل في إزالة صورة الملف الشخصي';
+
+  @override
+  String get servicesOfferedLabel => 'الخدمات المقدمة';
+
+  @override
+  String get experienceLevel => 'مستوى الخبرة';
+
+  @override
+  String get selectExperienceLevel => 'اختر مستوى الخبرة';
+
+  @override
+  String get entry => 'مبتدئ';
+
+  @override
+  String get mid => 'متوسط';
+
+  @override
+  String get senior => 'خبير';
+
+  @override
+  String get hourlyRateDzd => 'السعر بالساعة (دج)';
+
+  @override
+  String get pleaseSelectAtLeastOneService =>
+      'يرجى اختيار خدمة واحدة على الأقل';
+
+  @override
+  String get wilayaRequired => 'الولاية مطلوبة';
+
+  @override
+  String get baladiyaMunicipality => 'البلدية';
+
+  @override
+  String get streetAddressOptional => 'عنوان الشارع (اختياري)';
+
+  @override
+  String get deleteAccount => 'حذف الحساب';
+
+  @override
+  String get areYouSureDeleteAccount =>
+      'هل أنت متأكد أنك تريد حذف حسابك؟ هذا الإجراء لا يمكن التراجع عنه وستتم حذف جميع منشوراتك.';
+
+  @override
+  String get yesDeleteAccount => 'نعم، احذف الحساب';
+
+  @override
+  String get accountDeletedSuccessfully => 'تم حذف الحساب بنجاح';
+
+  @override
+  String get settings => 'الإعدادات';
+
+  @override
+  String get cleaner => 'منظف';
+
+  @override
+  String get individual => 'فردي';
+
+  @override
+  String get agencyProfileComingSoon => 'ملف الوكالة قادم قريباً';
+
+  @override
+  String get noPastBookingsYet => 'لا توجد حجوزات سابقة بعد.';
+
+  @override
+  String get noCleanersInTeamYet => 'لا يوجد منظفون في فريقك بعد.';
+
+  @override
+  String get errorLoadingCleanerProfile => 'خطأ في تحميل ملف المنظف';
+
+  @override
+  String get addCleaner => 'إضافة منظف';
+
+  @override
+  String get requiredServices => 'الخدمات المطلوبة';
+
+  @override
+  String get yourBid => 'عرضك';
+
+  @override
+  String get yourPriceDa => 'سعرك (دج)';
+
+  @override
+  String get enterYourBidPrice => 'أدخل سعر عرضك';
+
+  @override
+  String get pleaseEnterBidPrice => 'يرجى إدخال سعر عرض';
+
+  @override
+  String get pleaseEnterValidPrice => 'يرجى إدخال سعر صالح';
+
+  @override
+  String get messageOptional => 'الرسالة (اختياري)';
+
+  @override
+  String get addShortMessageToClient => 'أضف رسالة قصيرة للعميل...';
+
+  @override
+  String estimatedHoursFormat(int hours) {
+    return 'مقدر $hours ساعة';
+  }
+
+  @override
+  String get noReviewsYet => 'لا توجد تقييمات بعد.';
+
+  @override
+  String get bid => 'عرض';
+
+  @override
+  String minutesAgo(int minutes) {
+    return 'منذ $minutes دقيقة';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return 'منذ $hours ساعة';
+  }
+
+  @override
+  String get phone => 'الهاتف';
+
+  @override
+  String get partOf => 'جزء من';
+
+  @override
+  String get allReviews => 'جميع التقييمات';
+
+  @override
+  String get cleaningHistory => 'سجل التنظيف';
+
+  @override
+  String get noCleaningHistoryAvailable => 'لا يوجد سجل تنظيف متاح';
+
+  @override
+  String get cleanerIdNotFound => 'لم يتم العثور على معرف المنظف';
+
+  @override
+  String get cleaningJob => 'وظيفة تنظيف';
+
+  @override
+  String get activePosts => 'المنشورات النشطة';
+
+  @override
+  String get noPostsYet => 'لا توجد منشورات بعد.';
+
+  @override
+  String get noActivePosts => 'لا توجد منشورات نشطة.';
+
+  @override
+  String get myPostsOnlyForClients => 'منشوراتي متاحة للعملاء فقط.';
+
+  @override
+  String get activePostsOnlyForClients => 'المنشورات النشطة متاحة للعملاء فقط.';
+
+  @override
+  String reviewsCount(int count) {
+    return '$count تقييم';
+  }
+
+  @override
+  String get cleanSpaceFeatures => 'مميزات CleanSpace';
+
+  @override
+  String get everythingYouNeed => 'كل ما تحتاجه في تطبيق واحد';
+
+  @override
+  String get findVerifiedCleaners => 'العثور على منظفين موثوقين';
+
+  @override
+  String get browseTrustedProfessionals =>
+      'تصفح المحترفين الموثوقين مع الملفات الشخصية والتصنيفات الم verified';
+
+  @override
+  String get easyBooking => 'الحجز السهل';
+
+  @override
+  String get postYourJob => 'انشر وظيفتك واحصل على عروض من المنظفين المؤهلين';
+
+  @override
+  String get jobOpportunities => 'فرص العمل';
+
+  @override
+  String get findStableWork =>
+      'ابحث عن عمل مستقر ونمّي أعمال التنظيف الخاصة بك';
+
+  @override
+  String get cleaspaceExperience => 'تجربة CLEASPACE';
+
+  @override
+  String get allInOnePlatform => 'منصة شاملة لخدمات التنظيف الموثوقة.';
+
+  @override
+  String get verifiedProfessionals => 'المهنيون الموثوقون';
+
+  @override
+  String get everyCleanerPasses =>
+      'كل منظف ووكالة يمر بفحوصات الهوية والجودة للثقة الكاملة.';
+
+  @override
+  String get smartMatching => 'المطابقة الذكية';
+
+  @override
+  String get browseCuratedLists =>
+      'تصفح القوائم المنسقة أو دع CleanSpace يقترح أفضل المنظفين المناسبين.';
+
+  @override
+  String get transparentPricing => 'التسعير الشفاف';
+
+  @override
+  String get seeClearHourlyRates =>
+      'شاهد أسعار الساعة الواضحة قبل الحجز. لا مفاجآت خفية.';
+
+  @override
+  String get cleaspaceAlgeria => 'CLEASPACE الجزائر';
+
+  @override
+  String get readyToLaunch => 'هل أنت مستعد لإطلاق مساحة نظيفة جديدة؟';
+
+  @override
+  String get createAccountDescription =>
+      'أنشئ حسابًا لحجز منظفين موثوقين، أو إدارة الوكالات، أو تقديم خدمات التنظيف الخاصة بك إلى السوق المتنامي في الجزائر.';
+
+  @override
+  String get next => 'التالي';
+
+  @override
+  String get skipToLogin => 'تخطي إلى تسجيل الدخول';
+
+  @override
+  String get iAlreadyHaveAccount => 'لدي حساب بالفعل';
+
+  @override
+  String get createAccountPage => 'صفحة إنشاء الحساب';
+
+  @override
+  String get uploadProfilePicture => 'رفع صورة الملف الشخصي';
+
+  @override
+  String get uploadAClearPhoto => 'قم بتحميل صورة واضحة';
+
+  @override
+  String get photoSelected => 'تم اختيار الصورة';
 }

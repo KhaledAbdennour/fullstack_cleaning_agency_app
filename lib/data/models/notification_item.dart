@@ -110,6 +110,11 @@ enum NotificationType {
   jobRejected,
   jobCompleted,
   reviewAdded,
+  jobApplication,
+  jobAssigned,
+  jobMarkedDone,
+  jobDeleted,
+  reviewReceived,
 }
 
 extension NotificationTypeExtension on NotificationType {
@@ -125,6 +130,16 @@ extension NotificationTypeExtension on NotificationType {
         return 'job_completed';
       case NotificationType.reviewAdded:
         return 'review_added';
+      case NotificationType.jobApplication:
+        return 'job_application';
+      case NotificationType.jobAssigned:
+        return 'job_assigned';
+      case NotificationType.jobMarkedDone:
+        return 'job_marked_done';
+      case NotificationType.jobDeleted:
+        return 'job_deleted';
+      case NotificationType.reviewReceived:
+        return 'review_received';
     }
   }
   
@@ -140,6 +155,16 @@ extension NotificationTypeExtension on NotificationType {
         return 'Job Completed';
       case NotificationType.reviewAdded:
         return 'New Review';
+      case NotificationType.jobApplication:
+        return 'New Application';
+      case NotificationType.jobAssigned:
+        return 'Job Assigned';
+      case NotificationType.jobMarkedDone:
+        return 'Job Marked Done';
+      case NotificationType.jobDeleted:
+        return 'Job Deleted';
+      case NotificationType.reviewReceived:
+        return 'Review Received';
     }
   }
 }

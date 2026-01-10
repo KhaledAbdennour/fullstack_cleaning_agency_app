@@ -28,6 +28,10 @@
   "individualCleaner": "Nettoyeur individuel",
   "agencyName": "Nom de l'agence",
   "businessId": "Numéro d'enregistrement commercial",
+  "enterAgencyName": "Entrez le nom de l'agence",
+  "enterBusinessRegistrationId": "Entrez le numéro d'enregistrement commercial",
+  "agencyNameRequired": "Le nom de l'agence est requis",
+  "businessIdRequired": "Le numéro d'enregistrement commercial est requis",
   "services": "Services offerts",
   "hourlyRate": "Tarif horaire",
   "home": "Accueil",
@@ -38,7 +42,7 @@
   "cleanerTeam": "Équipe de nettoyeurs",
   "jobsCompleted": "Travaux terminés",
   "addNewJob": "Ajouter un nouveau travail",
-  "noActiveListings": "Aucune annonce active pour le moment.\nAppuyez sur le bouton + pour ajouter un nouveau travail.",
+  "noActiveListings": "Aucune annonce active pour le moment.",
   "noPastBookings": "Aucune réservation passée pour le moment.",
   "noCleaners": "Aucun nettoyeur dans votre équipe pour le moment.",
   "postedOn": "Publié le: {date}",
@@ -168,6 +172,16 @@
   "minPrice": "Prix minimum",
   "maxPrice": "Prix maximum",
   "noCleanersFound": "Aucun nettoyeur trouvé",
+  "addToTeam": "Ajouter à l'équipe",
+  "invalidProfile": "Profil invalide",
+  "cleanerAlreadyInTeam": "Ce nettoyeur est déjà dans votre équipe",
+  "cleanerAddedSuccessfully": "Nettoyeur ajouté avec succès!",
+  "errorAddingCleaner": "Erreur lors de l'ajout du nettoyeur",
+  "remove": "Retirer",
+  "removeCleaner": "Retirer le nettoyeur",
+  "areYouSureRemoveCleaner": "Êtes-vous sûr de vouloir retirer ce nettoyeur de votre équipe?",
+  "cleanerRemovedSuccessfully": "Nettoyeur retiré avec succès!",
+  "errorRemovingCleaner": "Erreur lors du retrait du nettoyeur",
   "availableJobs": "Travaux disponibles",
   "pending": "En attente",
   "assigned": "Assigné",
@@ -254,5 +268,217 @@
     }
   },
   "posted": "Publié",
-  "weeks": "Semaines"
+  "weeks": "Semaines",
+  "homeCleaning": "Nettoyage résidentiel",
+  "officeCleaning": "Nettoyage de bureau",
+  "specialtyCleaning": "Nettoyage spécialisé",
+  "industrialCleaning": "Nettoyage industriel",
+  "clickToUpload": "Cliquez pour télécharger",
+  "dragAndDrop": " ou glisser-déposer",
+  "maximumPhotosReached": "Maximum de 5 photos atteint",
+  "egPlaceholder": "ex: 3",
+  "fromDzdPerHr": "À partir de {hourlyRate} DZD/h",
+  "@fromDzdPerHr": {
+    "placeholders": {
+      "hourlyRate": {
+        "type": "String"
+      }
+    }
+  },
+  "active": "Actif",
+  "available": "Disponible",
+  "history": "Historique",
+  "profile": "Profil",
+  "noActiveListingsYet": "Aucune annonce active pour le moment.",
+  "errorLoadingProfile": "Erreur lors du chargement du profil",
+  "noUserDataAvailable": "Aucune donnée utilisateur disponible",
+  "unknown": "Inconnu",
+  "anErrorOccurred": "Une erreur s'est produite",
+  "justNow": "À l'instant",
+  "yesterday": "Hier",
+  "done": "Terminé",
+  "assigned": "Assigné",
+  "pending": "En attente",
+  "budgetNegotiable": "Budget négociable",
+  "untitledJob": "Travail sans titre",
+  "location": "Emplacement",
+  "deleteJob": "Supprimer le travail",
+  "areYouSureDeleteJob": "Êtes-vous sûr de vouloir supprimer \"{title}\" ?",
+  "@areYouSureDeleteJob": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "overview": "Aperçu",
+  "verified": "Vérifié",
+  "partOfAgency": "Fait partie de {agency}",
+  "@partOfAgency": {
+    "placeholders": {
+      "agency": {
+        "type": "String"
+      }
+    }
+  },
+  "reviews": "Avis",
+  "experience": "Expérience",
+  "age": "Âge",
+  "languages": "Langues",
+  "servicesOffered": "Services offerts",
+  "noCleaningHistoryYet": "Aucun historique de nettoyage pour le moment.",
+  "jobDetails": "Détails du travail",
+  "postedBy": "Publié par",
+  "description": "Description",
+  "budget": "Budget",
+  "estimatedHours": "Est. {hours} heures",
+  "@estimatedHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "submitBid": "Soumettre une offre",
+  "yourBidPrice": "Votre prix d'offre (DZD)",
+  "enterBidPrice": "Entrez votre prix d'offre",
+  "messageToClient": "Message au client (optionnel)",
+  "enterMessage": "Entrez votre message",
+  "pleaseLoginToSubmitBid": "Veuillez vous connecter pour soumettre une offre",
+  "unableToGetUserId": "Impossible d'obtenir l'ID utilisateur",
+  "pleaseEnterValidBidPrice": "Veuillez entrer un prix d'offre valide",
+  "bidSubmittedSuccessfully": "Offre soumise avec succès !",
+  "errorSubmittingBid": "Erreur lors de la soumission de l'offre",
+  "errorSubmittingBidInvalidData": "Erreur lors de la soumission de l'offre : format de données invalide. Veuillez réessayer.",
+  "errorSubmittingBidUnexpected": "Erreur lors de la soumission de l'offre : une erreur inattendue s'est produite",
+  "profilePicture": "Photo de profil",
+  "changePhoto": "Changer la photo",
+  "removePhoto": "Supprimer la photo",
+  "profilePictureUpdatedSuccessfully": "Photo de profil mise à jour avec succès !",
+  "profilePictureRemovedSuccessfully": "Photo de profil supprimée avec succès !",
+  "failedToRemoveProfilePicture": "Échec de la suppression de la photo de profil",
+  "servicesOfferedLabel": "Services offerts",
+  "experienceLevel": "Niveau d'expérience",
+  "selectExperienceLevel": "Sélectionner le niveau d'expérience",
+  "entry": "Débutant",
+  "mid": "Intermédiaire",
+  "senior": "Senior",
+  "hourlyRateDzd": "Tarif horaire (DZD)",
+  "pleaseSelectAtLeastOneService": "Veuillez sélectionner au moins un service",
+  "accountDetails": "Détails du compte",
+  "birthdate": "Date de naissance",
+  "gender": "Genre",
+  "wilayaProvince": "Wilaya (Province)",
+  "selectYourWilaya": "Sélectionnez votre wilaya",
+  "wilayaRequired": "La wilaya est requise",
+  "baladiyaMunicipality": "Baladiya (Municipalité)",
+  "selectYourBaladiya": "Sélectionnez votre baladiya (optionnel)",
+  "streetAddressOptional": "Adresse de rue (optionnel)",
+  "enterStreetName": "Entrez le nom de la rue, le numéro du bâtiment, etc.",
+  "bio": "Biographie",
+  "tellUsAboutYourself": "Parlez-nous de vous...",
+  "deleteAccount": "Supprimer le compte",
+  "areYouSureDeleteAccount": "Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible et tous vos messages seront supprimés.",
+  "yesDeleteAccount": "Oui, supprimer le compte",
+  "accountDeletedSuccessfully": "Compte supprimé avec succès",
+  "editProfile": "Modifier le profil",
+  "settings": "Paramètres",
+  "cleaner": "Nettoyeur",
+  "individual": "Individuel",
+  "agencyProfileComingSoon": "Profil d'agence à venir bientôt",
+  "noPastBookingsYet": "Aucune réservation passée pour le moment.",
+  "noCleanersInTeamYet": "Aucun nettoyeur dans votre équipe pour le moment.",
+  "errorLoadingCleanerProfile": "Erreur lors du chargement du profil du nettoyeur",
+  "cleanerTeam": "Équipe de nettoyeurs",
+  "addCleaner": "Ajouter un nettoyeur",
+  "requiredServices": "Services requis",
+  "yourBid": "Votre offre",
+  "yourPriceDa": "Votre prix (DA)",
+  "enterYourBidPrice": "Entrez votre prix d'offre",
+  "pleaseEnterBidPrice": "Veuillez entrer un prix d'offre",
+  "pleaseEnterValidPrice": "Veuillez entrer un prix valide",
+  "messageOptional": "Message (optionnel)",
+  "addShortMessageToClient": "Ajoutez un court message au client...",
+  "estimatedHoursFormat": "Est. {hours} heures",
+  "@estimatedHoursFormat": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "noReviewsYet": "Aucun avis pour le moment.",
+  "bid": "Offre",
+  "minutesAgo": "Il y a {minutes} min",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "Il y a {hours} h",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "Il y a {days} j",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "phone": "Téléphone",
+  "partOf": "Fait partie de",
+  "allReviews": "Tous les avis",
+  "cleaningHistory": "Historique de nettoyage",
+  "noCleaningHistoryAvailable": "Aucun historique de nettoyage disponible",
+  "cleanerIdNotFound": "ID du nettoyeur introuvable",
+  "cleaningJob": "Tâche de nettoyage",
+  "activePosts": "Publications actives",
+  "noPostsYet": "Aucune publication pour le moment.",
+  "noActivePosts": "Aucune publication active pour le moment.",
+  "myPostsOnlyForClients": "Mes publications ne sont disponibles que pour les clients.",
+  "activePostsOnlyForClients": "Les publications actives ne sont disponibles que pour les clients.",
+  "reviewsCount": "{count} Avis",
+  "@reviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanSpaceFeatures": "Fonctionnalités CleanSpace",
+  "everythingYouNeed": "Tout ce dont vous avez besoin dans une seule application",
+  "findVerifiedCleaners": "Trouver des nettoyeurs vérifiés",
+  "browseTrustedProfessionals": "Parcourez des professionnels de confiance avec des profils et des évaluations vérifiés",
+  "easyBooking": "Réservation facile",
+  "postYourJob": "Publiez votre travail et recevez des offres de nettoyeurs qualifiés",
+  "jobOpportunities": "Opportunités d'emploi",
+  "findStableWork": "Trouvez un travail stable et développez votre entreprise de nettoyage",
+  "cleaspaceExperience": "EXPÉRIENCE CLEASPACE",
+  "allInOnePlatform": "Plateforme tout-en-un pour des services de nettoyage de confiance.",
+  "verifiedProfessionals": "Professionnels vérifiés",
+  "everyCleanerPasses": "Chaque nettoyeur et agence passe des vérifications d'identité et de qualité pour une confiance totale.",
+  "smartMatching": "Correspondance intelligente",
+  "browseCuratedLists": "Parcourez des listes sélectionnées ou laissez CleanSpace suggérer les meilleurs nettoyeurs adaptés.",
+  "transparentPricing": "Tarification transparente",
+  "seeClearHourlyRates": "Consultez des tarifs horaires clairs avant de réserver. Pas de surprises cachées.",
+  "cleaspaceAlgeria": "CLEASPACE ALGÉRIE",
+  "readyToLaunch": "Prêt à lancer votre prochain espace propre ?",
+  "createAccountDescription": "Créez un compte pour réserver des nettoyeurs de confiance, gérer des agences ou offrir vos services de nettoyage au marché croissant de l'Algérie.",
+  "next": "Suivant",
+  "skipToLogin": "Passer à la connexion",
+  "createAccount": "Créer un compte",
+  "iAlreadyHaveAccount": "J'ai déjà un compte",
+  "createAccountPage": "Page de création de compte",
+  "selectYourWilaya": "Sélectionnez votre wilaya",
+  "uploadProfilePicture": "Télécharger la photo de profil",
+  "uploadAClearPhoto": "Téléchargez une photo claire",
+  "photoSelected": "Photo sélectionnée"
 }

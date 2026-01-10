@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../logic/cubits/profiles_cubit.dart';
 import '../core/config/firebase_config.dart';
 import '../core/debug/debug_logger.dart';
+import '../core/utils/job_images_migration.dart';
 
 class DataDoctorPage extends StatefulWidget {
   const DataDoctorPage({Key? key}) : super(key: key);
@@ -148,6 +149,61 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
     }
   }
 
+  Future<void> _migrateJobImages() async {
+    if (!mounted) return;
+    
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add job_images Field'),
+        content: const Text('This will add the job_images field to ALL jobs in Firestore. This ensures the field appears in Firebase console. Continue?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Migrate'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm != true) return;
+    
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Adding job_images field to all jobs...')),
+    );
+    
+    try {
+      final updatedCount = await JobImagesMigration.forceMigrateAllJobs();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ Success! Updated $updatedCount jobs with job_images field'),
+            duration: const Duration(seconds: 5),
+            backgroundColor: Colors.green,
+          ),
+        );
+        _loadDiagnostics(); // Refresh diagnostics
+      }
+    } catch (e, stack) {
+      DebugLogger.error('DataDoctor', 'JOB_IMAGES_MIGRATION_ERROR', e, stack);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Migration failed: $e'),
+            duration: const Duration(seconds: 5),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _repairLegacyData() async {
     if (!mounted) return;
     
@@ -252,11 +308,18 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           needsRepair = true;
         }
         
+        // Add job_images field: ALWAYS ensure it exists (set empty array if missing or null)
+        // This ensures the field appears in Firestore console for all documents
+        if (!data.containsKey('job_images') || data['job_images'] == null) {
+          updates['job_images'] = <String>[]; // Empty array so field appears in Firestore console
+          needsRepair = true;
+        }
+        
         if (needsRepair) {
           // Log sample after repair (first doc that was repaired)
           if (!sampleLogged && sampleBefore != null) {
             sampleAfter = Map<String, dynamic>.from(data);
-            sampleAfter!.addAll(updates);
+            sampleAfter.addAll(updates);
             DebugLogger.log('DataDoctor', 'REPAIR_SAMPLE', data: {
               'docId': doc.id,
               'before': sampleBefore,
@@ -402,13 +465,28 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _repairLegacyData,
-        icon: const Icon(Icons.build),
-        label: const Text('Repair Legacy Data'),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            onPressed: _migrateJobImages,
+            icon: const Icon(Icons.image),
+            label: const Text('Add job_images Field'),
+            backgroundColor: Colors.blue,
+            heroTag: 'migrate_images',
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton.extended(
+            onPressed: _repairLegacyData,
+            icon: const Icon(Icons.build),
+            label: const Text('Repair Legacy Data'),
+            heroTag: 'repair_legacy',
+          ),
+        ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)))
           : _diagnostics == null
               ? const Center(child: Text('Failed to load diagnostics'))
               : SingleChildScrollView(

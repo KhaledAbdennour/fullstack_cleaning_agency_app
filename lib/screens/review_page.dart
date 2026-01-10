@@ -212,42 +212,6 @@ class _ReviewPageState extends State<ReviewPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-
-              
-              const Text(
-                "Add photos (optional)",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFD1D5DB)),
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white,
-                ),
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.cloud_upload_outlined,
-                          size: 32, color: Colors.grey),
-                      SizedBox(height: 6),
-                      Text(
-                        "Click to upload or drag and drop",
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        "SVG, PNG, JPG or GIF (max. 800×400px)",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               const SizedBox(height: 32),
 
               
@@ -370,7 +334,10 @@ class _ReviewPageState extends State<ReviewPage> {
                       : const Text(
                           "Submit Review",
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w600),
+                              fontSize: 16, 
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                          ),
                         ),
                 ),
               ),

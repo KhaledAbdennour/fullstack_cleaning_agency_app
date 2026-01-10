@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:convert';
 import '../logic/cubits/profiles_cubit.dart';
 import '../utils/validators.dart';
 import '../utils/algerian_addresses.dart';
-import '../data/repositories/storage/storage_repo.dart';
 import '../data/repositories/profiles/profile_repo.dart';
-import '../widgets/profile_avatar_widget.dart';
+import '../utils/image_helper.dart';
 import '../l10n/app_localizations.dart';
+import 'login.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -25,6 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _phoneController = TextEditingController();
   final _birthdateController = TextEditingController();
   final _addressController = TextEditingController();
+  final _addressFocusNode = FocusNode();
   String? _selectedWilaya;
   String? _selectedBaladiya;
   final _bioController = TextEditingController();
@@ -36,6 +38,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   bool _isUploadingImage = false;
   bool _isRemovingImage = false;
+  
+  // Cleaner-specific fields
+  String? _userType;
+  Set<String> _selectedServices = {};
+  String _experienceLevel = 'Entry';
+  final TextEditingController _hourlyRateController = TextEditingController();
+  final List<String> _availableServices = ['Home', 'Office', 'Industrial', 'Specialty'];
+  
+  // Agency-specific fields
+  final TextEditingController _agencyNameController = TextEditingController();
+  final TextEditingController _businessIdController = TextEditingController();
 
   @override
   void initState() {
@@ -66,6 +79,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _bioController.text = user['bio'] as String? ?? '';
           _selectedGender = user['gender'] as String? ?? 'Male';
           _currentAvatarUrl = user['picture'] as String?;
+          
+          // Load cleaner-specific fields
+          _userType = user['user_type'] as String?;
+          if (_userType == 'Individual Cleaner' || _userType == 'Agency') {
+            // Load services
+            final servicesStr = user['services'] as String? ?? '';
+            if (servicesStr.isNotEmpty) {
+              _selectedServices = servicesStr.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toSet();
+            }
+            
+            // Load experience level
+            _experienceLevel = user['experience_level'] as String? ?? 'Entry';
+            
+            // Load hourly rate
+            final hourlyRate = user['hourly_rate'] as String? ?? '';
+            _hourlyRateController.text = hourlyRate;
+          }
+          
+          // Load agency-specific fields
+          if (_userType == 'Agency') {
+            final agencyName = user['agency_name'] as String? ?? '';
+            _agencyNameController.text = agencyName;
+            
+            final businessId = user['business_id'] as String? ?? '';
+            _businessIdController.text = businessId;
+          }
+          
           _isLoading = false;
         });
       } else {
@@ -78,6 +118,115 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
   }
 
+  void _showDeleteAccountDialog() {
+    final cubit = context.read<ProfilesCubit>();
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.delete_outline, size: 40, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)!.deleteAccount,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)!.areYouSureDeleteAccount,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (_userId != null) {
+                      cubit.deleteAccount(_userId!).then((_) {
+                        final state = cubit.state;
+                        if (state is LogoutSuccess || state is ProfilesLoaded) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const Login()),
+                            (route) => false,
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(AppLocalizations.of(context)!.accountDeletedSuccessfully),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } else if (state is ProfilesError) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text((state as ProfilesError).message),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.yesDeleteAccount,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF9FAFB),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.cancel,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _fullNameController.dispose();
@@ -85,7 +234,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _phoneController.dispose();
     _birthdateController.dispose();
     _addressController.dispose();
+    _addressFocusNode.dispose();
     _bioController.dispose();
+    _hourlyRateController.dispose();
+    _agencyNameController.dispose();
+    _businessIdController.dispose();
     super.dispose();
   }
 
@@ -95,6 +248,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF3B82F6), // Blue color
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null && mounted) {
       setState(() {
@@ -102,6 +267,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       });
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,9 +303,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Edit Profile',
-          style: TextStyle(
+          title: Text(
+          AppLocalizations.of(context)!.editProfile,
+          style: const TextStyle(
             color: Colors.black,
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -279,13 +445,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     _buildProfilePictureSection(),
+                    
+                    // Cleaner-specific fields
+                    if (_userType == 'Individual Cleaner' || _userType == 'Agency') ...[
+                      const SizedBox(height: 24),
+                      _buildServicesSection(),
+                      const SizedBox(height: 24),
+                      _buildExperienceAndRateSection(),
+                    ],
+                    
+                    // Agency-specific fields
+                    if (_userType == 'Agency') ...[
+                      const SizedBox(height: 24),
+                      _buildAgencyInfoSection(),
+                    ],
                   ],
                 ),
               ),
 
               const SizedBox(height: 8),
               
-              
               Container(
                 color: Colors.white,
                 padding: const EdgeInsets.all(16),
@@ -293,78 +472,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Identity Verification',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'For the safety of our community, we require ID verification.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    InkWell(
-                      onTap: () {
-                        
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.badge_outlined, color: Colors.grey.shade700),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Upload ID',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.grey.shade900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Front and back of your ID',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(Icons.chevron_right, color: Colors.grey.shade400),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Account Details',
+                      AppLocalizations.of(context)!.accountDetails,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -374,7 +482,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     Text(
-                      'Birthdate',
+                      AppLocalizations.of(context)!.birthdate,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -410,7 +518,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     Text(
-                      'Gender',
+                      AppLocalizations.of(context)!.gender,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -420,15 +528,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        _buildGenderButton('Male'),
+                        _buildGenderButton('Male', AppLocalizations.of(context)!.male),
                         const SizedBox(width: 12),
-                        _buildGenderButton('Female'),
+                        _buildGenderButton('Female', AppLocalizations.of(context)!.female),
                       ],
                     ),
                     const SizedBox(height: 16),
                     
                     Text(
-                      'Wilaya (Province)',
+                      AppLocalizations.of(context)!.wilayaProvince,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -439,7 +547,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     DropdownButtonFormField<String>(
                       value: _selectedWilaya,
                       decoration: InputDecoration(
-                        hintText: 'Select your wilaya',
+                        hintText: AppLocalizations.of(context)!.selectYourWilaya,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -467,14 +575,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         setState(() {
                           _selectedWilaya = value;
                           _selectedBaladiya = null;
-                          if (value != null) {
-                            _addressController.text = value;
-                          }
                         });
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Wilaya is required';
+                          return AppLocalizations.of(context)!.wilayaRequired;
                         }
                         return null;
                       },
@@ -486,7 +591,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Baladiya (Municipality)',
+                            AppLocalizations.of(context)!.baladiyaMunicipality,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade700,
@@ -497,7 +602,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           DropdownButtonFormField<String>(
                             value: _selectedBaladiya,
                             decoration: InputDecoration(
-                              hintText: 'Select your baladiya (optional)',
+                              hintText: AppLocalizations.of(context)!.selectYourBaladiya,
                               hintStyle: TextStyle(color: Colors.grey.shade400),
                               filled: true,
                               fillColor: Colors.grey.shade50,
@@ -539,9 +644,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             onChanged: (value) {
                               setState(() {
                                 _selectedBaladiya = value;
-                                if (value != null && _selectedWilaya != null) {
-                                  _addressController.text = '$value, ${_selectedWilaya!}';
-                                }
                               });
                             },
                           ),
@@ -554,7 +656,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Street Address (Optional)',
+                            AppLocalizations.of(context)!.streetAddressOptional,
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey.shade700,
@@ -564,8 +666,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: _addressController,
+                            focusNode: _addressFocusNode,
                             decoration: InputDecoration(
-                              hintText: 'Enter street name, building number, etc.',
+                              hintText: AppLocalizations.of(context)!.enterStreetName,
                               hintStyle: TextStyle(color: Colors.grey.shade400),
                               filled: true,
                               fillColor: Colors.grey.shade50,
@@ -583,21 +686,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             ),
-                            onChanged: (value) {
-                              
-                              if (_selectedWilaya != null) {
-                                final street = value.trim();
-                                if (_selectedBaladiya != null) {
-                                  _addressController.text = street.isNotEmpty 
-                                      ? '$street, $_selectedBaladiya, $_selectedWilaya'
-                                      : '$_selectedBaladiya, $_selectedWilaya';
-                                } else {
-                                  _addressController.text = street.isNotEmpty 
-                                      ? '$street, $_selectedWilaya'
-                                      : _selectedWilaya!;
-                                }
-                              }
-                            },
                             validator: (value) => Validators.validateAddress(_addressController.text),
                           ),
                         ],
@@ -605,7 +693,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 16),
                     
                     Text(
-                      'Bio',
+                      AppLocalizations.of(context)!.bio,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade700,
@@ -617,7 +705,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _bioController,
                       maxLines: 4,
                       decoration: InputDecoration(
-                        hintText: 'Tell us about yourself...',
+                        hintText: AppLocalizations.of(context)!.tellUsAboutYourself,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -637,6 +725,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       validator: (value) => Validators.validateBio(value, required: true),
                     ),
+                    const SizedBox(height: 24),
+                    // Delete Account Button
+                    SizedBox(
+                      width: double.infinity,
+                        child: ElevatedButton(
+                        onPressed: _userId != null ? _showDeleteAccountDialog : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+                            const SizedBox(width: 8),
+                            Text(
+                              AppLocalizations.of(context)!.deleteAccount,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -646,73 +764,177 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 padding: const EdgeInsets.all(16),
                 child: BlocConsumer<ProfilesCubit, ProfilesState>(
                   listener: (context, state) {
-                    if (_isUpdating) {
-                      if (state is ProfilesLoaded && state.currentUser != null) {
+                    // Only handle states when we're in the updating process
+                    if (!_isUpdating) return;
+
+                    if (state is ProfilesLoaded) {
+                      // Check if this is a successful update (user data exists)
+                      if (state.currentUser != null) {
                         setState(() {
                           _isUpdating = false;
                         });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Profile updated successfully!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
                         
-                        Future.microtask(() {
-                          if (mounted) {
-                            Navigator.pop(context);
-                          }
-                        });
-                      } else if (state is ProfilesError) {
-                        setState(() {
-                          _isUpdating = false;
-                        });
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(AppLocalizations.of(context)!.profileUpdated),
+                              backgroundColor: Colors.green,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                          
+                          // Reload profile data to reflect changes
+                          _loadProfile();
+                          
+                          // Navigate to profile page after a short delay to allow user to see success message
+                          Future.delayed(const Duration(milliseconds: 500), () {
+                            if (mounted) {
+                              // Pop back to profile page (ClientProfilePage)
+                              // Return true to indicate successful save
+                              Navigator.of(context).pop(true);
+                            }
+                          });
+                        }
+                      }
+                    } else if (state is ProfilesError) {
+                      setState(() {
+                        _isUpdating = false;
+                      });
+                      
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(state.message),
                             backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 3),
                           ),
                         );
                       }
                     }
+                    // Note: ProfilesLoading state is handled by the builder
                   },
                   builder: (context, state) {
                     final isLoading = state is ProfilesLoading;
                     return ElevatedButton(
                       onPressed: (_isLoading || isLoading || _userId == null)
                           ? null
-                          : () {
-                              if (_formKey.currentState!.validate()) {
-                                setState(() {
-                                  _isUpdating = true;
-                                });
-                                final profileData = <String, dynamic>{
-                                  'full_name': _fullNameController.text.trim(),
-                                  'email': _emailController.text.trim().isEmpty
-                                      ? null
-                                      : _emailController.text.trim(),
-                                  'phone': _phoneController.text.trim().isEmpty
-                                      ? null
-                                      : _phoneController.text.trim(),
-                                  'birthdate': _birthdateController.text.trim().isEmpty
-                                      ? null
-                                      : _birthdateController.text.trim(),
-                                  'address': _addressController.text.trim().isEmpty
-                                      ? null
-                                      : _addressController.text.trim(),
-                                  'bio': _bioController.text.trim().isEmpty
-                                      ? null
-                                      : _bioController.text.trim(),
-                                  'gender': _selectedGender,
-                                };
+                          : () async {
+                              if (!_formKey.currentState!.validate()) {
+                                return;
+                              }
+
+                              // Prevent multiple simultaneous updates
+                              if (_isUpdating) {
+                                return;
+                              }
+
+                              setState(() {
+                                _isUpdating = true;
+                              });
+
+                              try {
+                                // Validate cleaner-specific fields
+                                if (_userType == 'Individual Cleaner' || _userType == 'Agency') {
+                                  if (_selectedServices.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Please select at least one service'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    setState(() {
+                                      _isUpdating = false;
+                                    });
+                                    return;
+                                  }
+                                }
+
+                                // Prepare profile data - only include non-empty fields
+                                final profileData = <String, dynamic>{};
+                                
+                                final fullName = _fullNameController.text.trim();
+                                if (fullName.isNotEmpty) {
+                                  profileData['full_name'] = fullName;
+                                }
+
+                                final email = _emailController.text.trim();
+                                if (email.isNotEmpty) {
+                                  profileData['email'] = email;
+                                }
+
+                                final phone = _phoneController.text.trim();
+                                if (phone.isNotEmpty) {
+                                  profileData['phone'] = phone;
+                                }
+
+                                final birthdate = _birthdateController.text.trim();
+                                if (birthdate.isNotEmpty) {
+                                  profileData['birthdate'] = birthdate;
+                                }
+
+                                final address = _addressController.text.trim();
+                                if (address.isNotEmpty) {
+                                  profileData['address'] = address;
+                                }
+
+                                final bio = _bioController.text.trim();
+                                if (bio.isNotEmpty) {
+                                  profileData['bio'] = bio;
+                                }
+
+                                // Always include gender (required field)
+                                profileData['gender'] = _selectedGender;
+
+                                // Add cleaner-specific fields if user is a cleaner
+                                if (_userType == 'Individual Cleaner' || _userType == 'Agency') {
+                                  // Services (required for cleaners)
+                                  profileData['services'] = _selectedServices.join(', ');
+                                  
+                                  // Experience level
+                                  profileData['experience_level'] = _experienceLevel;
+                                  
+                                  // Hourly rate
+                                  final hourlyRate = _hourlyRateController.text.trim();
+                                  if (hourlyRate.isNotEmpty) {
+                                    profileData['hourly_rate'] = hourlyRate;
+                                  }
+                                }
+                                
+                                // Add agency-specific fields if user is an agency
+                                if (_userType == 'Agency') {
+                                  final agencyName = _agencyNameController.text.trim();
+                                  if (agencyName.isNotEmpty) {
+                                    profileData['agency_name'] = agencyName;
+                                  }
+                                  
+                                  final businessId = _businessIdController.text.trim();
+                                  if (businessId.isNotEmpty) {
+                                    profileData['business_id'] = businessId;
+                                  }
+                                }
+
+                                // Call updateProfile - the cubit will handle validation and backend update
                                 context.read<ProfilesCubit>().updateProfile(
                                       _userId!,
                                       profileData,
                                     );
+                              } catch (e) {
+                                // Handle any unexpected errors
+                                if (mounted) {
+                                  setState(() {
+                                    _isUpdating = false;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: ${e.toString()}'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
                             },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: const Color(0xFF3B82F6),
                           minimumSize: const Size(double.infinity, 48),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -753,7 +975,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Profile Picture',
+          AppLocalizations.of(context)!.profilePicture,
           style: TextStyle(
             fontSize: 13,
             color: Colors.grey.shade700,
@@ -763,11 +985,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 12),
         Row(
           children: [
-            // Current avatar display
-            ProfileAvatarWidget(
-              avatarUrl: _currentAvatarUrl,
-              fullName: _fullNameController.text,
-              radius: 40,
+            // Current avatar display - matching profile page style
+            Stack(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                      width: 2,
+                    ),
+                  ),
+                  child: _currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: AppImage(
+                            imageUrl: _currentAvatarUrl!,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorWidget: const Icon(
+                              Icons.person,
+                              size: 40,
+                              color: Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 40,
+                          color: Colors.white,
+                        ),
+                ),
+                if (_isUploadingImage)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF3B82F6),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: 16),
             // Buttons
@@ -788,11 +1054,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3B82F6)),
                             )
                           : const Icon(Icons.photo_library_outlined, size: 18),
-                      label: const Text('Change Photo'),
+                      label: Text(AppLocalizations.of(context)!.changePhoto),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ),
@@ -808,13 +1077,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: const CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3B82F6)),
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3B82F6)),
                               )
                             : const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Remove Photo'),
+                        label: Text(AppLocalizations.of(context)!.removePhoto),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.red,
                           padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
@@ -829,11 +1101,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _changePhoto() async {
-    if (_userId == null) return;
+    if (_userId == null || _isUploadingImage) return;
 
     try {
+      // Show options to pick from gallery or camera
+      final ImageSource? source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null || !mounted) return;
+
       final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 800,
         maxHeight: 800,
         imageQuality: 85,
@@ -845,142 +1141,99 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _isUploadingImage = true;
       });
 
-      String? newImageUrl;
-      
       try {
-        // Upload new image
-        final storageRepo = AbstractStorageRepo.getInstance();
-        newImageUrl = await storageRepo.uploadProfileImage(
-        _userId!,
-        image.path,
-      );
-
-      if (!mounted) return;
-
-      // Delete old image if it exists (fail silently if file doesn't exist)
-      // Note: deleteProfileImage should not throw, but wrap in try-catch just in case
-      if (_currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty && _currentAvatarUrl!.startsWith('http')) {
-        try {
-          await storageRepo.deleteProfileImage(_currentAvatarUrl!);
-        } catch (e) {
-          // Ignore all errors from delete - it's not critical if old file can't be deleted
-          // This is expected if the file doesn't exist (e.g., first upload or file was already deleted)
-        }
-      }
-
-      // Update profile with new avatar URL
-      final profileRepo = AbstractProfileRepo.getInstance();
-      final success = await profileRepo.updateAvatarUrl(_userId!, newImageUrl!);
-
-        if (!mounted) return;
-
-        if (success) {
-          // Update local state first
-          setState(() {
-            _currentAvatarUrl = newImageUrl;
-            _isUploadingImage = false;
-          });
-
-          // Refresh profile state to ensure UI updates with new picture
-          final cubit = context.read<ProfilesCubit>();
-          await cubit.loadCurrentUser();
-
-          // Wait a bit to ensure state is updated
-          await Future.delayed(const Duration(milliseconds: 300));
-
-          if (mounted) {
-            // Force rebuild to show new image
-            setState(() {});
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profile picture updated successfully!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        } else {
-          setState(() {
-            _isUploadingImage = false;
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to update profile picture'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (!mounted) return;
+        // Convert image to base64 data URL (same approach as post images)
+        final imageFile = File(image.path);
+        final imageBytes = await imageFile.readAsBytes();
+        final base64Image = base64Encode(imageBytes);
         
-        // Check if it's an object-not-found error (file doesn't exist)
-        // This is expected and should be handled silently
-        final errorStr = e.toString().toLowerCase();
-      if (errorStr.contains('object-not-found') || 
-          errorStr.contains('no object exists') ||
-          errorStr.contains('[firebase_storage/object-not-found]')) {
-        // Silently handle - this is expected when old file doesn't exist
+        final extension = image.path.split('.').last.toLowerCase();
+        String mimeType = 'image/jpeg'; 
+        if (extension == 'png') {
+          mimeType = 'image/png';
+        } else if (extension == 'gif') {
+          mimeType = 'image/gif';
+        } else if (extension == 'webp') {
+          mimeType = 'image/webp';
+        }
+        
+        final imageDataUrl = 'data:$mimeType;base64,$base64Image';
+
+        if (!mounted) return;
+
+        // Update profile with base64 data URL
+        final profileRepo = AbstractProfileRepo.getInstance();
+        print('Updating picture field for user $_userId with base64 data URL');
+        print('Data URL length: ${imageDataUrl.length}');
+        
+        final success = await profileRepo.updateAvatarUrl(_userId!, imageDataUrl);
+        print('Update picture field result: $success');
+        
+        if (!success) {
+          setState(() {
+            _isUploadingImage = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to save picture to database. Please try again.'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+
+        if (!mounted) return;
+
+        // Immediately update the UI with the uploaded image
         setState(() {
+          _currentAvatarUrl = imageDataUrl;
           _isUploadingImage = false;
         });
-        
-        // Still try to update the profile if we have the new image URL from upload
-        // The upload should have succeeded, only the delete failed
-        if (newImageUrl != null && newImageUrl.isNotEmpty) {
-          // Try to update profile with the new image URL (upload succeeded)
-          try {
-            final profileRepo = AbstractProfileRepo.getInstance();
-            final success = await profileRepo.updateAvatarUrl(_userId!, newImageUrl);
-            
-            if (success) {
-              // Update local state
+
+        // Refresh profile state to sync with backend (in background)
+        final cubit = context.read<ProfilesCubit>();
+        await cubit.loadCurrentUser();
+
+        // Update with backend value if different (to ensure consistency)
+        if (mounted) {
+          final updatedState = cubit.state;
+          if (updatedState is ProfilesLoaded && updatedState.currentUser != null) {
+            final updatedPicture = updatedState.currentUser!['picture'] as String?;
+            if (updatedPicture != null && updatedPicture != _currentAvatarUrl) {
               setState(() {
-                _currentAvatarUrl = newImageUrl;
-                _isUploadingImage = false;
-              });
-              
-              // Refresh profile state to show new image
-              final cubit = context.read<ProfilesCubit>();
-              await cubit.loadCurrentUser();
-              
-              if (mounted) {
-                // Force rebuild to show new image
-                setState(() {});
-              }
-            } else {
-              setState(() {
-                _isUploadingImage = false;
+                _currentAvatarUrl = updatedPicture;
               });
             }
-          } catch (updateError) {
-            // If profile update also fails, just reset the uploading state
-            setState(() {
-              _isUploadingImage = false;
-            });
           }
-        } else {
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.profilePictureUpdatedSuccessfully),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (error) {
+        print('Error processing image: $error');
+        if (mounted) {
           setState(() {
             _isUploadingImage = false;
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to process image: ${error.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
-        return; // Don't show error message for expected errors
-      }
-      
-        setState(() {
-          _isUploadingImage = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating profile picture: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     } catch (outerError) {
-      // Handle any unexpected errors from picking image
+      // Handle any errors from showing bottom sheet or picking image
       if (mounted) {
         setState(() {
           _isUploadingImage = false;
@@ -999,16 +1252,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _isRemovingImage = true;
       });
 
-      // Delete from storage
-      final storageRepo = AbstractStorageRepo.getInstance();
-      try {
-        await storageRepo.deleteProfileImage(_currentAvatarUrl!);
-      } catch (e) {
-        // Log but continue - the URL might already be invalid
-        print('Warning: Failed to delete avatar from storage: $e');
-      }
-
-      // Update profile to remove avatar URL
+      // Update profile to remove avatar URL (base64 data URLs are stored in DB, no storage deletion needed)
       final profileRepo = AbstractProfileRepo.getInstance();
       final success = await profileRepo.removeAvatar(_userId!);
 
@@ -1026,8 +1270,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile picture removed successfully!'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.profilePictureRemovedSuccessfully),
               backgroundColor: Colors.green,
             ),
           );
@@ -1038,8 +1282,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to remove profile picture'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.failedToRemoveProfilePicture),
               backgroundColor: Colors.red,
             ),
           );
@@ -1059,7 +1303,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  Widget _buildGenderButton(String gender) {
+  Widget _buildGenderButton(String gender, String label) {
     final isSelected = _selectedGender == gender;
     return Expanded(
       child: InkWell(
@@ -1078,7 +1322,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
           child: Text(
-            gender,
+            label,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -1088,6 +1332,260 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildServicesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+                      AppLocalizations.of(context)!.servicesOfferedLabel,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: _availableServices.map((service) {
+            final isSelected = _selectedServices.contains(service);
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedServices.remove(service);
+                  } else {
+                    _selectedServices.add(service);
+                  }
+                });
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF3B82F6).withOpacity(0.1)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF3B82F6)
+                        : const Color(0xFFE5E7EB),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                      color: isSelected
+                          ? const Color(0xFF3B82F6)
+                          : Colors.grey.shade400,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      service,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected
+                            ? const Color(0xFF3B82F6)
+                            : Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExperienceAndRateSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Experience Level - Full Width
+        Text(
+                AppLocalizations.of(context)!.experienceLevel,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          value: _experienceLevel,
+          isExpanded: true,
+          decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.selectExperienceLevel,
+            hintStyle: TextStyle(color: Colors.grey.shade400),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.blue, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+                items: [
+                  DropdownMenuItem(value: 'Entry', child: Text(AppLocalizations.of(context)!.entry)),
+                  DropdownMenuItem(value: 'Mid', child: Text(AppLocalizations.of(context)!.mid)),
+                  DropdownMenuItem(value: 'Senior', child: Text(AppLocalizations.of(context)!.senior)),
+                ],
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _experienceLevel = value;
+              });
+            }
+          },
+        ),
+        const SizedBox(height: 16),
+        // Hourly Rate - Full Width
+        Text(
+                AppLocalizations.of(context)!.hourlyRateDzd,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _hourlyRateController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*')),
+          ],
+          decoration: InputDecoration(
+            hintText: 'e.g., 3000',
+            hintStyle: TextStyle(color: Colors.grey.shade400),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.blue, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          validator: (value) {
+            // Optional in edit profile - if provided, must be valid
+            if (value != null && value.trim().isNotEmpty) {
+              return Validators.validateHourlyRate(value);
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAgencyInfoSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.agencyName,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _agencyNameController,
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.enterAgencyName,
+            hintStyle: TextStyle(color: Colors.grey.shade400),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.blue, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return AppLocalizations.of(context)!.agencyNameRequired;
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        Text(
+          AppLocalizations.of(context)!.businessId,
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _businessIdController,
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.enterBusinessRegistrationId,
+            hintStyle: TextStyle(color: Colors.grey.shade400),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Colors.blue, width: 2),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return AppLocalizations.of(context)!.businessIdRequired;
+            }
+            return null;
+          },
+        ),
+      ],
     );
   }
 }

@@ -116,7 +116,7 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
       body: BlocBuilder<NotificationsCubit, NotificationsState>(
         builder: (context, state) {
           if (state is NotificationsLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
           }
 
           if (state is NotificationsError) {
@@ -212,7 +212,7 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
                             else
                               const Padding(
                                 padding: EdgeInsets.all(16),
-                                child: CircularProgressIndicator(),
+                                child: const CircularProgressIndicator(color: Color(0xFF3B82F6)),
                               ),
                           ],
                         ),

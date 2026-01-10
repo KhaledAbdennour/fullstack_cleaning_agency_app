@@ -89,6 +89,9 @@ class ListingsCubit extends Cubit<ListingsState> {
                 'id': p['id'],
                 'created_at': p['created_at'],
                 'updated_at': p['updated_at'],
+                'bio': p['bio'],
+                'hourly_rate': p['hourly_rate'],
+                'is_verified': p['is_verified'] ?? false,
               })
           .toList();
       
@@ -131,6 +134,9 @@ class ListingsCubit extends Cubit<ListingsState> {
                 'id': p['id'],
                 'created_at': p['created_at'],
                 'updated_at': p['updated_at'],
+                'bio': p['bio'],
+                'hourly_rate': p['hourly_rate'],
+                'is_verified': p['is_verified'] ?? false,
               })
           .toList();
       

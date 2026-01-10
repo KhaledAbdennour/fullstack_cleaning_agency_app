@@ -4,6 +4,7 @@ import 'cleaner_profile_page.dart';
 import '../logic/cubits/search_cubit.dart';
 import '../utils/algerian_addresses.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/image_helper.dart';
 
 class FindCleanerPage extends StatefulWidget {
   const FindCleanerPage({super.key});
@@ -19,12 +20,13 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
   double? maxRating;
   double? minPrice;
   double? maxPrice;
+  String? selectedUserType; // 'Agency', 'Individual Cleaner', or null for all
 
   @override
   void initState() {
     super.initState();
     
-    context.read<SearchCubit>().loadSearchResults();
+    context.read<SearchCubit>().loadSearchResults(userType: null);
     _searchController.addListener(_onSearchChanged);
   }
 
@@ -52,6 +54,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
       maxRating: maxRating,
       minPrice: minPrice,
       maxPrice: maxPrice,
+      userType: selectedUserType,
     );
   }
 
@@ -84,11 +87,11 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
-            child: Row(
-              children: [
-                Flexible(
-                  flex: 1,
-                  child: _buildFilterButton(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildFilterButton(
                     label: AppLocalizations.of(context)!.location,
                     icon: Icons.location_on_outlined,
                     value: selectedWilayas.isEmpty 
@@ -100,11 +103,8 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       _showLocationFilter();
                     },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  flex: 1,
-                  child: _buildFilterButton(
+                  const SizedBox(width: 8),
+                  _buildFilterButton(
                     label: AppLocalizations.of(context)!.rating,
                     icon: Icons.star_outline,
                     value: minRating == null && maxRating == null
@@ -114,11 +114,8 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       _showRatingFilter();
                     },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  flex: 1,
-                  child: _buildFilterButton(
+                  const SizedBox(width: 8),
+                  _buildFilterButton(
                     label: AppLocalizations.of(context)!.price,
                     icon: Icons.attach_money,
                     value: minPrice == null && maxPrice == null
@@ -128,8 +125,21 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       _showPriceFilter();
                     },
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  _buildFilterButton(
+                    label: 'Type',
+                    icon: Icons.person_outline,
+                    value: selectedUserType == null
+                        ? AppLocalizations.of(context)!.all
+                        : selectedUserType == 'Agency'
+                            ? 'Agency'
+                            : 'Individual',
+                    onTap: () {
+                      _showUserTypeFilter();
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           
@@ -154,6 +164,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                               maxRating: maxRating,
                               minPrice: minPrice,
                               maxPrice: maxPrice,
+                              userType: selectedUserType,
                             );
                           },
                           child: const Text('Retry'),
@@ -196,7 +207,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: const Color(0xFFF9FAFB),
           borderRadius: BorderRadius.circular(8),
@@ -207,16 +218,22 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 14, color: const Color(0xFF3B82F6)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF111827),
+                fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(width: 4),
@@ -232,7 +249,10 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
     final name = cleaner['name'] as String? ?? 'Unknown';
     final description = cleaner['description'] as String? ?? '';
     final location = cleaner['location'] as String? ?? 'Unknown';
-    final price = cleaner['price'] as String? ?? AppLocalizations.of(context)!.contactForPricing;
+    final priceValue = cleaner['price'] as String?;
+    final price = priceValue != null 
+        ? AppLocalizations.of(context)!.fromDzdPerHr(priceValue)
+        : AppLocalizations.of(context)!.contactForPricing;
     final rating = cleaner['rating'] as num? ?? 0.0;
     final reviews = cleaner['reviews'] as int? ?? 0;
     final imageUrl = cleaner['image'] as String?;
@@ -263,18 +283,18 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                 height: 60,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: const Color(0xFFE5E7EB),
+                  color: const Color(0xFF3B82F6),
                 ),
                 child: ClipOval(
-                  child: imageUrl != null && imageUrl.isNotEmpty && imageUrl.startsWith('http')
-                      ? Image.network(
-                          imageUrl,
+                  child: imageUrl != null && imageUrl.isNotEmpty
+                      ? AppImage(
+                          imageUrl: imageUrl,
+                          width: 60,
+                          height: 60,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(Icons.person, size: 30, color: Color(0xFF9CA3AF));
-                          },
+                          errorWidget: const Icon(Icons.person, size: 30, color: Colors.white),
                         )
-                      : const Icon(Icons.person, size: 30, color: Color(0xFF9CA3AF)),
+                      : const Icon(Icons.person, size: 30, color: Colors.white),
                 ),
               ),
               const SizedBox(width: 12),
@@ -283,13 +303,49 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                        ),
+                        // Icons to indicate type: Individual icon always shown for Individual Cleaners, Agency icon if part of agency
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Always show individual icon for Individual Cleaners
+                            if (cleaner['type'] == 'Individual')
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 18,
+                                  color: const Color(0xFF3B82F6),
+                                ),
+                              ),
+                            // Show agency icon if cleaner is part of an agency
+                            if (cleaner['type'] == 'Individual' && cleaner['agency'] != null && (cleaner['agency'] as String).isNotEmpty)
+                              Icon(
+                                Icons.business,
+                                size: 18,
+                                color: const Color(0xFF3B82F6),
+                              ),
+                            // For Agency profiles, show only business icon
+                            if (cleaner['type'] == 'Agency')
+                              Icon(
+                                Icons.business,
+                                size: 18,
+                                color: const Color(0xFF3B82F6),
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -306,7 +362,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                         const Icon(
                           Icons.location_on_outlined,
                           size: 14,
-                          color: Color(0xFF6B7280),
+                          color: Color(0xFF3B82F6),
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -325,7 +381,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                         const Icon(
                           Icons.attach_money,
                           size: 14,
-                          color: Color(0xFF6B7280),
+                          color: Color(0xFF3B82F6),
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -348,7 +404,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${rating.toStringAsFixed(1)} ($reviews Reviews)',
+                          '${rating.toStringAsFixed(1)} (${AppLocalizations.of(context)!.reviewsCount(reviews)})',
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xFF6B7280),
@@ -711,6 +767,64 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUserTypeFilter() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Filter by Type',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _buildFilterOption(
+              AppLocalizations.of(context)!.all,
+              selectedUserType == null,
+              () {
+                setState(() {
+                  selectedUserType = null;
+                });
+                _reloadSearch();
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            _buildFilterOption(
+              'Agency',
+              selectedUserType == 'Agency',
+              () {
+                setState(() {
+                  selectedUserType = 'Agency';
+                });
+                _reloadSearch();
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            _buildFilterOption(
+              'Individual',
+              selectedUserType == 'Individual Cleaner',
+              () {
+                setState(() {
+                  selectedUserType = 'Individual Cleaner';
+                });
+                _reloadSearch();
+                if (Navigator.canPop(context)) {
+                  Navigator.pop(context);
+                }
+              },
             ),
           ],
         ),

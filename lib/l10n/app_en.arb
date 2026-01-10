@@ -31,6 +31,10 @@
   "individualCleaner": "Individual Cleaner",
   "agencyName": "Agency Name",
   "businessId": "Business Registration ID",
+  "enterAgencyName": "Enter agency name",
+  "enterBusinessRegistrationId": "Enter business registration ID",
+  "agencyNameRequired": "Agency name is required",
+  "businessIdRequired": "Business registration ID is required",
   "services": "Services Offered",
   "hourlyRate": "Hourly Rate",
   "home": "Home",
@@ -41,7 +45,7 @@
   "cleanerTeam": "Cleaner Team",
   "jobsCompleted": "Jobs Completed",
   "addNewJob": "Add New Job",
-  "noActiveListings": "No active listings yet.\nTap the + button to add a new job.",
+  "noActiveListings": "No active listings yet.",
   "noPastBookings": "No past bookings yet.",
   "noCleaners": "No cleaners in your team yet.",
   "postedOn": "Posted on: {date}",
@@ -171,6 +175,16 @@
   "minPrice": "Min Price",
   "maxPrice": "Max Price",
   "noCleanersFound": "No cleaners found",
+  "addToTeam": "Add to Team",
+  "invalidProfile": "Invalid profile",
+  "cleanerAlreadyInTeam": "This cleaner is already in your team",
+  "cleanerAddedSuccessfully": "Cleaner added successfully!",
+  "errorAddingCleaner": "Error adding cleaner",
+  "remove": "Remove",
+  "removeCleaner": "Remove Cleaner",
+  "areYouSureRemoveCleaner": "Are you sure you want to remove this cleaner from your team?",
+  "cleanerRemovedSuccessfully": "Cleaner removed successfully!",
+  "errorRemovingCleaner": "Error removing cleaner",
   "availableJobs": "Available Jobs",
   "pending": "Pending",
   "assigned": "Assigned",
@@ -257,5 +271,217 @@
     }
   },
   "posted": "Posted",
-  "weeks": "Weeks"
+  "weeks": "Weeks",
+  "homeCleaning": "Home Cleaning",
+  "officeCleaning": "Office Cleaning",
+  "specialtyCleaning": "Specialty Cleaning",
+  "industrialCleaning": "Industrial Cleaning",
+  "clickToUpload": "Click to upload",
+  "dragAndDrop": " or drag and drop",
+  "maximumPhotosReached": "Maximum 5 photos reached",
+  "egPlaceholder": "e.g., 3",
+  "fromDzdPerHr": "From {hourlyRate} DZD/hr",
+  "@fromDzdPerHr": {
+    "placeholders": {
+      "hourlyRate": {
+        "type": "String"
+      }
+    }
+  },
+  "active": "Active",
+  "available": "Available",
+  "history": "History",
+  "profile": "Profile",
+  "noActiveListingsYet": "No active listings yet.",
+  "errorLoadingProfile": "Error loading profile",
+  "noUserDataAvailable": "No user data available",
+  "unknown": "Unknown",
+  "anErrorOccurred": "An error occurred",
+  "justNow": "Just now",
+  "yesterday": "Yesterday",
+  "done": "Done",
+  "assigned": "Assigned",
+  "pending": "Pending",
+  "budgetNegotiable": "Budget negotiable",
+  "untitledJob": "Untitled Job",
+  "location": "Location",
+  "deleteJob": "Delete Job",
+  "areYouSureDeleteJob": "Are you sure you want to delete \"{title}\"?",
+  "@areYouSureDeleteJob": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "overview": "Overview",
+  "verified": "Verified",
+  "partOfAgency": "Part of {agency}",
+  "@partOfAgency": {
+    "placeholders": {
+      "agency": {
+        "type": "String"
+      }
+    }
+  },
+  "reviews": "Reviews",
+  "experience": "Experience",
+  "age": "Age",
+  "languages": "Languages",
+  "servicesOffered": "Services Offered",
+  "noCleaningHistoryYet": "No cleaning history yet.",
+  "jobDetails": "Job Details",
+  "postedBy": "Posted by",
+  "description": "Description",
+  "budget": "Budget",
+  "estimatedHours": "Est. {hours} hours",
+  "@estimatedHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "submitBid": "Submit Bid",
+  "yourBidPrice": "Your Bid Price (DZD)",
+  "enterBidPrice": "Enter your bid price",
+  "messageToClient": "Message to Client (Optional)",
+  "enterMessage": "Enter your message",
+  "pleaseLoginToSubmitBid": "Please login to submit a bid",
+  "unableToGetUserId": "Unable to get user ID",
+  "pleaseEnterValidBidPrice": "Please enter a valid bid price",
+  "bidSubmittedSuccessfully": "Bid submitted successfully!",
+  "errorSubmittingBid": "Error submitting bid",
+  "errorSubmittingBidInvalidData": "Error submitting bid: Invalid data format. Please try again.",
+  "errorSubmittingBidUnexpected": "Error submitting bid: An unexpected error occurred",
+  "profilePicture": "Profile Picture",
+  "changePhoto": "Change Photo",
+  "removePhoto": "Remove Photo",
+  "profilePictureUpdatedSuccessfully": "Profile picture updated successfully!",
+  "profilePictureRemovedSuccessfully": "Profile picture removed successfully!",
+  "failedToRemoveProfilePicture": "Failed to remove profile picture",
+  "servicesOfferedLabel": "Services Offered",
+  "experienceLevel": "Experience Level",
+  "selectExperienceLevel": "Select experience level",
+  "entry": "Entry",
+  "mid": "Mid",
+  "senior": "Senior",
+  "hourlyRateDzd": "Hourly Rate (DZD)",
+  "pleaseSelectAtLeastOneService": "Please select at least one service",
+  "accountDetails": "Account Details",
+  "birthdate": "Birthdate",
+  "gender": "Gender",
+  "wilayaProvince": "Wilaya (Province)",
+  "selectYourWilaya": "Select your wilaya",
+  "wilayaRequired": "Wilaya is required",
+  "baladiyaMunicipality": "Baladiya (Municipality)",
+  "selectYourBaladiya": "Select your baladiya (optional)",
+  "streetAddressOptional": "Street Address (Optional)",
+  "enterStreetName": "Enter street name, building number, etc.",
+  "bio": "Bio",
+  "tellUsAboutYourself": "Tell us about yourself...",
+  "deleteAccount": "Delete Account",
+  "areYouSureDeleteAccount": "Are you sure you want to delete your account? This action is irreversible and all your posts will be deleted.",
+  "yesDeleteAccount": "Yes, Delete Account",
+  "accountDeletedSuccessfully": "Account deleted successfully",
+  "editProfile": "Edit Profile",
+  "settings": "Settings",
+  "cleaner": "Cleaner",
+  "individual": "Individual",
+  "agencyProfileComingSoon": "Agency profile coming soon",
+  "noPastBookingsYet": "No past bookings yet.",
+  "noCleanersInTeamYet": "No cleaners in your team yet.",
+  "errorLoadingCleanerProfile": "Error loading cleaner profile",
+  "cleanerTeam": "Cleaner Team",
+  "addCleaner": "Add Cleaner",
+  "requiredServices": "Required Services",
+  "yourBid": "Your Bid",
+  "yourPriceDa": "Your Price (DA)",
+  "enterYourBidPrice": "Enter your bid price",
+  "pleaseEnterBidPrice": "Please enter a bid price",
+  "pleaseEnterValidPrice": "Please enter a valid price",
+  "messageOptional": "Message (Optional)",
+  "addShortMessageToClient": "Add a short message to the client...",
+  "estimatedHoursFormat": "Est. {hours} hours",
+  "@estimatedHoursFormat": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "noReviewsYet": "No reviews yet.",
+  "bid": "Bid",
+  "minutesAgo": "{minutes}m ago",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{hours}h ago",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{days}d ago",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "phone": "Phone",
+  "partOf": "Part of",
+  "allReviews": "All Reviews",
+  "cleaningHistory": "Cleaning History",
+  "noCleaningHistoryAvailable": "No cleaning history available",
+  "cleanerIdNotFound": "Cleaner ID not found",
+  "cleaningJob": "Cleaning Job",
+  "activePosts": "Active Posts",
+  "noPostsYet": "No posts yet.",
+  "noActivePosts": "No active posts.",
+  "myPostsOnlyForClients": "My Posts is only available for clients.",
+  "activePostsOnlyForClients": "Active Posts is only available for clients.",
+  "reviewsCount": "{count} Reviews",
+  "@reviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanSpaceFeatures": "CleanSpace Features",
+  "everythingYouNeed": "Everything you need in one app",
+  "findVerifiedCleaners": "Find Verified Cleaners",
+  "browseTrustedProfessionals": "Browse trusted professionals with verified profiles and ratings",
+  "easyBooking": "Easy Booking",
+  "postYourJob": "Post your job and receive offers from qualified cleaners",
+  "jobOpportunities": "Job Opportunities",
+  "findStableWork": "Find stable work and grow your cleaning business",
+  "cleaspaceExperience": "CLEASPACE EXPERIENCE",
+  "allInOnePlatform": "All-in-one platform for trusted cleaning services.",
+  "verifiedProfessionals": "Verified Professionals",
+  "everyCleanerPasses": "Every cleaner and agency passes identity and quality checks for full trust.",
+  "smartMatching": "Smart Matching",
+  "browseCuratedLists": "Browse curated lists or let CleanSpace suggest best-fit cleaners.",
+  "transparentPricing": "Transparent Pricing",
+  "seeClearHourlyRates": "See clear hourly rates before booking. No hidden surprises.",
+  "cleaspaceAlgeria": "CLEASPACE ALGERIA",
+  "readyToLaunch": "Ready to launch your next clean space?",
+  "createAccountDescription": "Create an account to book trusted cleaners, manage agencies, or offer your cleaning services to Algeria's growing market.",
+  "next": "Next",
+  "skipToLogin": "Skip to login",
+  "createAccount": "Create account",
+  "iAlreadyHaveAccount": "I already have an account",
+  "createAccountPage": "Create Account Page",
+  "selectYourWilaya": "Select your wilaya",
+  "uploadProfilePicture": "Upload Profile Picture",
+  "uploadAClearPhoto": "Upload a clear photo",
+  "photoSelected": "Photo selected"
 }

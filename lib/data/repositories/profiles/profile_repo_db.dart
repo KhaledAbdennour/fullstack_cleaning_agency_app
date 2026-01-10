@@ -167,12 +167,18 @@ class ProfileDB extends AbstractProfileRepo {
       
       // Initialize picture field - always include it in profile (null if not provided)
       // This ensures the field exists in Firestore even if no avatar is uploaded initially
+      // If picture is provided, it should be a base64 data URL (e.g., "data:image/jpeg;base64,...")
       if (!profile.containsKey('picture')) {
         profile['picture'] = null;
       }
       
       // Profile fields that can be included:
-      // - picture: String? (URL to profile picture in Firebase Storage) - now always initialized
+      // - picture: String? (Base64 data URL for profile picture, e.g., "data:image/jpeg;base64,...")
+      // - services: String? (Comma-separated list of services, e.g., "Home, Office, Industrial")
+      // - experience_level: String? (For Agency/Individual Cleaner: "Entry", "Mid", or "Senior")
+      // - hourly_rate: String? (Hourly rate as string, e.g., "3000")
+      // - agency_name: String? (For Agency role)
+      // - business_id: String? (For Agency role)
       // - Other fields are handled by the profile data map
       
       // Remove id if present (Firestore will generate or use provided doc ID)
@@ -217,14 +223,39 @@ class ProfileDB extends AbstractProfileRepo {
   @override
   Future<bool> updateProfile(int id, Map<String, dynamic> profile) async {
     try {
+      // Ensure profile is not empty
+      if (profile.isEmpty) {
+        print('updateProfile: profile data is empty');
+        return false;
+      }
+
+      // Add updated_at timestamp
       profile['updated_at'] = FieldValue.serverTimestamp();
-      await FirebaseConfig.firestore
+      
+      // Check if document exists before updating
+      final docRef = FirebaseConfig.firestore
           .collection(collectionName)
-          .doc(id.toString())
-          .update(profile);
+          .doc(id.toString());
+      
+      final docSnapshot = await docRef.get();
+      if (!docSnapshot.exists) {
+        print('updateProfile: Document with id $id does not exist');
+        return false;
+      }
+
+      // Perform the update
+      await docRef.update(profile);
       return true;
     } catch (e, stacktrace) {
       print('updateProfile error: $e --> $stacktrace');
+      // Re-throw specific errors that should be handled upstream
+      if (e.toString().contains('permission-denied') || 
+          e.toString().contains('PERMISSION_DENIED')) {
+        throw Exception('Permission denied: Unable to update profile');
+      } else if (e.toString().contains('not-found') || 
+                 e.toString().contains('NOT_FOUND')) {
+        throw Exception('Profile not found');
+      }
       return false;
     }
   }
@@ -246,16 +277,31 @@ class ProfileDB extends AbstractProfileRepo {
   @override
   Future<bool> updateAvatarUrl(int userId, String? url) async {
     try {
-      await FirebaseConfig.firestore
+      print('updateAvatarUrl called: userId=$userId, url=$url');
+      
+      // Verify document exists
+      final docRef = FirebaseConfig.firestore
           .collection(collectionName)
-          .doc(userId.toString())
-          .update({
-        'picture': url,
+          .doc(userId.toString());
+      
+      final docSnapshot = await docRef.get();
+      if (!docSnapshot.exists) {
+        print('updateAvatarUrl error: Document with id $userId does not exist');
+        return false;
+      }
+      
+      // Update the picture field with the base64 data URL
+      // Note: url can be null to remove the picture, or a String (base64 data URL like "data:image/jpeg;base64,...") to set it
+      await docRef.update({
+        'picture': url, // Store the base64 data URL string in the picture field
         'updated_at': FieldValue.serverTimestamp(),
       });
+      
+      print('updateAvatarUrl success: picture field updated with base64 data URL');
       return true;
     } catch (e, stacktrace) {
       print('updateAvatarUrl error: $e --> $stacktrace');
+      print('updateAvatarUrl error details: userId=$userId, url=$url');
       return false;
     }
   }

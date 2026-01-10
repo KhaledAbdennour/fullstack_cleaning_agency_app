@@ -24,7 +24,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signUp => 'Sign Up';
 
   @override
-  String get createAccount => 'Create Account';
+  String get createAccount => 'Create account';
 
   @override
   String get email => 'Email';
@@ -93,6 +93,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get businessId => 'Business Registration ID';
 
   @override
+  String get enterAgencyName => 'Enter agency name';
+
+  @override
+  String get enterBusinessRegistrationId => 'Enter business registration ID';
+
+  @override
+  String get agencyNameRequired => 'Agency name is required';
+
+  @override
+  String get businessIdRequired => 'Business registration ID is required';
+
+  @override
   String get services => 'Services Offered';
 
   @override
@@ -123,8 +135,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewJob => 'Add New Job';
 
   @override
-  String get noActiveListings =>
-      'No active listings yet.\nTap the + button to add a new job.';
+  String get noActiveListings => 'No active listings yet.';
 
   @override
   String get noPastBookings => 'No past bookings yet.';
@@ -437,6 +448,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noCleanersFound => 'No cleaners found';
 
   @override
+  String get addToTeam => 'Add to Team';
+
+  @override
+  String get invalidProfile => 'Invalid profile';
+
+  @override
+  String get cleanerAlreadyInTeam => 'This cleaner is already in your team';
+
+  @override
+  String get cleanerAddedSuccessfully => 'Cleaner added successfully!';
+
+  @override
+  String get errorAddingCleaner => 'Error adding cleaner';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get removeCleaner => 'Remove Cleaner';
+
+  @override
+  String get areYouSureRemoveCleaner =>
+      'Are you sure you want to remove this cleaner from your team?';
+
+  @override
+  String get cleanerRemovedSuccessfully => 'Cleaner removed successfully!';
+
+  @override
+  String get errorRemovingCleaner => 'Error removing cleaner';
+
+  @override
   String get availableJobs => 'Available Jobs';
 
   @override
@@ -604,8 +646,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yesterday => 'Yesterday';
 
   @override
-  String daysAgo(int count) {
-    return '$count days ago';
+  String daysAgo(int days) {
+    return '${days}d ago';
   }
 
   @override
@@ -613,4 +655,398 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get weeks => 'Weeks';
+
+  @override
+  String get homeCleaning => 'Home Cleaning';
+
+  @override
+  String get officeCleaning => 'Office Cleaning';
+
+  @override
+  String get specialtyCleaning => 'Specialty Cleaning';
+
+  @override
+  String get industrialCleaning => 'Industrial Cleaning';
+
+  @override
+  String get clickToUpload => 'Click to upload';
+
+  @override
+  String get dragAndDrop => ' or drag and drop';
+
+  @override
+  String get maximumPhotosReached => 'Maximum 5 photos reached';
+
+  @override
+  String get egPlaceholder => 'e.g., 3';
+
+  @override
+  String fromDzdPerHr(String hourlyRate) {
+    return 'From $hourlyRate DZD/hr';
+  }
+
+  @override
+  String get available => 'Available';
+
+  @override
+  String get noActiveListingsYet => 'No active listings yet.';
+
+  @override
+  String get errorLoadingProfile => 'Error loading profile';
+
+  @override
+  String get noUserDataAvailable => 'No user data available';
+
+  @override
+  String get unknown => 'Unknown';
+
+  @override
+  String get anErrorOccurred => 'An error occurred';
+
+  @override
+  String get justNow => 'Just now';
+
+  @override
+  String get budgetNegotiable => 'Budget negotiable';
+
+  @override
+  String get untitledJob => 'Untitled Job';
+
+  @override
+  String areYouSureDeleteJob(String title) {
+    return 'Are you sure you want to delete \"$title\"?';
+  }
+
+  @override
+  String get verified => 'Verified';
+
+  @override
+  String partOfAgency(String agency) {
+    return 'Part of $agency';
+  }
+
+  @override
+  String get experience => 'Experience';
+
+  @override
+  String get age => 'Age';
+
+  @override
+  String get languages => 'Languages';
+
+  @override
+  String get servicesOffered => 'Services Offered';
+
+  @override
+  String get noCleaningHistoryYet => 'No cleaning history yet.';
+
+  @override
+  String get jobDetails => 'Job Details';
+
+  @override
+  String get postedBy => 'Posted by';
+
+  @override
+  String get description => 'Description';
+
+  @override
+  String estimatedHours(int hours) {
+    return 'Est. $hours hours';
+  }
+
+  @override
+  String get submitBid => 'Submit Bid';
+
+  @override
+  String get yourBidPrice => 'Your Bid Price (DZD)';
+
+  @override
+  String get enterBidPrice => 'Enter your bid price';
+
+  @override
+  String get messageToClient => 'Message to Client (Optional)';
+
+  @override
+  String get enterMessage => 'Enter your message';
+
+  @override
+  String get pleaseLoginToSubmitBid => 'Please login to submit a bid';
+
+  @override
+  String get unableToGetUserId => 'Unable to get user ID';
+
+  @override
+  String get pleaseEnterValidBidPrice => 'Please enter a valid bid price';
+
+  @override
+  String get bidSubmittedSuccessfully => 'Bid submitted successfully!';
+
+  @override
+  String get errorSubmittingBid => 'Error submitting bid';
+
+  @override
+  String get errorSubmittingBidInvalidData =>
+      'Error submitting bid: Invalid data format. Please try again.';
+
+  @override
+  String get errorSubmittingBidUnexpected =>
+      'Error submitting bid: An unexpected error occurred';
+
+  @override
+  String get removePhoto => 'Remove Photo';
+
+  @override
+  String get profilePictureUpdatedSuccessfully =>
+      'Profile picture updated successfully!';
+
+  @override
+  String get profilePictureRemovedSuccessfully =>
+      'Profile picture removed successfully!';
+
+  @override
+  String get failedToRemoveProfilePicture => 'Failed to remove profile picture';
+
+  @override
+  String get servicesOfferedLabel => 'Services Offered';
+
+  @override
+  String get experienceLevel => 'Experience Level';
+
+  @override
+  String get selectExperienceLevel => 'Select experience level';
+
+  @override
+  String get entry => 'Entry';
+
+  @override
+  String get mid => 'Mid';
+
+  @override
+  String get senior => 'Senior';
+
+  @override
+  String get hourlyRateDzd => 'Hourly Rate (DZD)';
+
+  @override
+  String get pleaseSelectAtLeastOneService =>
+      'Please select at least one service';
+
+  @override
+  String get wilayaRequired => 'Wilaya is required';
+
+  @override
+  String get baladiyaMunicipality => 'Baladiya (Municipality)';
+
+  @override
+  String get streetAddressOptional => 'Street Address (Optional)';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get areYouSureDeleteAccount =>
+      'Are you sure you want to delete your account? This action is irreversible and all your posts will be deleted.';
+
+  @override
+  String get yesDeleteAccount => 'Yes, Delete Account';
+
+  @override
+  String get accountDeletedSuccessfully => 'Account deleted successfully';
+
+  @override
+  String get settings => 'Settings';
+
+  @override
+  String get cleaner => 'Cleaner';
+
+  @override
+  String get individual => 'Individual';
+
+  @override
+  String get agencyProfileComingSoon => 'Agency profile coming soon';
+
+  @override
+  String get noPastBookingsYet => 'No past bookings yet.';
+
+  @override
+  String get noCleanersInTeamYet => 'No cleaners in your team yet.';
+
+  @override
+  String get errorLoadingCleanerProfile => 'Error loading cleaner profile';
+
+  @override
+  String get addCleaner => 'Add Cleaner';
+
+  @override
+  String get requiredServices => 'Required Services';
+
+  @override
+  String get yourBid => 'Your Bid';
+
+  @override
+  String get yourPriceDa => 'Your Price (DA)';
+
+  @override
+  String get enterYourBidPrice => 'Enter your bid price';
+
+  @override
+  String get pleaseEnterBidPrice => 'Please enter a bid price';
+
+  @override
+  String get pleaseEnterValidPrice => 'Please enter a valid price';
+
+  @override
+  String get messageOptional => 'Message (Optional)';
+
+  @override
+  String get addShortMessageToClient => 'Add a short message to the client...';
+
+  @override
+  String estimatedHoursFormat(int hours) {
+    return 'Est. $hours hours';
+  }
+
+  @override
+  String get noReviewsYet => 'No reviews yet.';
+
+  @override
+  String get bid => 'Bid';
+
+  @override
+  String minutesAgo(int minutes) {
+    return '${minutes}m ago';
+  }
+
+  @override
+  String hoursAgo(int hours) {
+    return '${hours}h ago';
+  }
+
+  @override
+  String get phone => 'Phone';
+
+  @override
+  String get partOf => 'Part of';
+
+  @override
+  String get allReviews => 'All Reviews';
+
+  @override
+  String get cleaningHistory => 'Cleaning History';
+
+  @override
+  String get noCleaningHistoryAvailable => 'No cleaning history available';
+
+  @override
+  String get cleanerIdNotFound => 'Cleaner ID not found';
+
+  @override
+  String get cleaningJob => 'Cleaning Job';
+
+  @override
+  String get activePosts => 'Active Posts';
+
+  @override
+  String get noPostsYet => 'No posts yet.';
+
+  @override
+  String get noActivePosts => 'No active posts.';
+
+  @override
+  String get myPostsOnlyForClients => 'My Posts is only available for clients.';
+
+  @override
+  String get activePostsOnlyForClients =>
+      'Active Posts is only available for clients.';
+
+  @override
+  String reviewsCount(int count) {
+    return '$count Reviews';
+  }
+
+  @override
+  String get cleanSpaceFeatures => 'CleanSpace Features';
+
+  @override
+  String get everythingYouNeed => 'Everything you need in one app';
+
+  @override
+  String get findVerifiedCleaners => 'Find Verified Cleaners';
+
+  @override
+  String get browseTrustedProfessionals =>
+      'Browse trusted professionals with verified profiles and ratings';
+
+  @override
+  String get easyBooking => 'Easy Booking';
+
+  @override
+  String get postYourJob =>
+      'Post your job and receive offers from qualified cleaners';
+
+  @override
+  String get jobOpportunities => 'Job Opportunities';
+
+  @override
+  String get findStableWork =>
+      'Find stable work and grow your cleaning business';
+
+  @override
+  String get cleaspaceExperience => 'CLEASPACE EXPERIENCE';
+
+  @override
+  String get allInOnePlatform =>
+      'All-in-one platform for trusted cleaning services.';
+
+  @override
+  String get verifiedProfessionals => 'Verified Professionals';
+
+  @override
+  String get everyCleanerPasses =>
+      'Every cleaner and agency passes identity and quality checks for full trust.';
+
+  @override
+  String get smartMatching => 'Smart Matching';
+
+  @override
+  String get browseCuratedLists =>
+      'Browse curated lists or let CleanSpace suggest best-fit cleaners.';
+
+  @override
+  String get transparentPricing => 'Transparent Pricing';
+
+  @override
+  String get seeClearHourlyRates =>
+      'See clear hourly rates before booking. No hidden surprises.';
+
+  @override
+  String get cleaspaceAlgeria => 'CLEASPACE ALGERIA';
+
+  @override
+  String get readyToLaunch => 'Ready to launch your next clean space?';
+
+  @override
+  String get createAccountDescription =>
+      'Create an account to book trusted cleaners, manage agencies, or offer your cleaning services to Algeria\'s growing market.';
+
+  @override
+  String get next => 'Next';
+
+  @override
+  String get skipToLogin => 'Skip to login';
+
+  @override
+  String get iAlreadyHaveAccount => 'I already have an account';
+
+  @override
+  String get createAccountPage => 'Create Account Page';
+
+  @override
+  String get uploadProfilePicture => 'Upload Profile Picture';
+
+  @override
+  String get uploadAClearPhoto => 'Upload a clear photo';
+
+  @override
+  String get photoSelected => 'Photo selected';
 }

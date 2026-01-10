@@ -28,6 +28,10 @@
   "individualCleaner": "منظف فردي",
   "agencyName": "اسم الوكالة",
   "businessId": "رقم تسجيل الأعمال",
+  "enterAgencyName": "أدخل اسم الوكالة",
+  "enterBusinessRegistrationId": "أدخل رقم تسجيل الأعمال",
+  "agencyNameRequired": "اسم الوكالة مطلوب",
+  "businessIdRequired": "رقم تسجيل الأعمال مطلوب",
   "services": "الخدمات المقدمة",
   "hourlyRate": "السعر بالساعة",
   "home": "الرئيسية",
@@ -38,7 +42,7 @@
   "cleanerTeam": "فريق المنظفين",
   "jobsCompleted": "وظائف مكتملة",
   "addNewJob": "إضافة وظيفة جديدة",
-  "noActiveListings": "لا توجد قوائم نشطة بعد.\nاضغط على زر + لإضافة وظيفة جديدة.",
+  "noActiveListings": "لا توجد قوائم نشطة بعد.",
   "noPastBookings": "لا توجد حجوزات سابقة بعد.",
   "noCleaners": "لا يوجد منظفون في فريقك بعد.",
   "postedOn": "نُشر في: {date}",
@@ -168,6 +172,16 @@
   "minPrice": "الحد الأدنى للسعر",
   "maxPrice": "الحد الأقصى للسعر",
   "noCleanersFound": "لم يتم العثور على منظفين",
+  "addToTeam": "إضافة إلى الفريق",
+  "invalidProfile": "ملف شخصي غير صالح",
+  "cleanerAlreadyInTeam": "هذا المنظف موجود بالفعل في فريقك",
+  "cleanerAddedSuccessfully": "تمت إضافة المنظف بنجاح!",
+  "errorAddingCleaner": "خطأ في إضافة المنظف",
+  "remove": "إزالة",
+  "removeCleaner": "إزالة المنظف",
+  "areYouSureRemoveCleaner": "هل أنت متأكد أنك تريد إزالة هذا المنظف من فريقك؟",
+  "cleanerRemovedSuccessfully": "تمت إزالة المنظف بنجاح!",
+  "errorRemovingCleaner": "خطأ في إزالة المنظف",
   "availableJobs": "الوظائف المتاحة",
   "pending": "قيد الانتظار",
   "assigned": "معين",
@@ -254,5 +268,217 @@
     }
   },
   "posted": "نُشر",
-  "weeks": "أسابيع"
+  "weeks": "أسابيع",
+  "homeCleaning": "تنظيف المنازل",
+  "officeCleaning": "تنظيف المكاتب",
+  "specialtyCleaning": "تنظيف متخصص",
+  "industrialCleaning": "تنظيف صناعي",
+  "clickToUpload": "انقر للتحميل",
+  "dragAndDrop": " أو اسحب وأفلت",
+  "maximumPhotosReached": "تم الوصول إلى الحد الأقصى 5 صور",
+  "egPlaceholder": "مثال: 3",
+  "fromDzdPerHr": "من {hourlyRate} دج/ساعة",
+  "@fromDzdPerHr": {
+    "placeholders": {
+      "hourlyRate": {
+        "type": "String"
+      }
+    }
+  },
+  "active": "نشط",
+  "available": "متاح",
+  "history": "السجل",
+  "profile": "الملف الشخصي",
+  "noActiveListingsYet": "لا توجد قوائم نشطة بعد.",
+  "errorLoadingProfile": "خطأ في تحميل الملف الشخصي",
+  "noUserDataAvailable": "لا توجد بيانات مستخدم متاحة",
+  "unknown": "غير معروف",
+  "anErrorOccurred": "حدث خطأ",
+  "justNow": "الآن",
+  "yesterday": "أمس",
+  "done": "تم",
+  "assigned": "مُعيَّن",
+  "pending": "قيد الانتظار",
+  "budgetNegotiable": "الميزانية قابلة للتفاوض",
+  "untitledJob": "وظيفة بدون عنوان",
+  "location": "الموقع",
+  "deleteJob": "حذف الوظيفة",
+  "areYouSureDeleteJob": "هل أنت متأكد أنك تريد حذف \"{title}\"؟",
+  "@areYouSureDeleteJob": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "overview": "نظرة عامة",
+  "verified": "مُتحقق منه",
+  "partOfAgency": "جزء من {agency}",
+  "@partOfAgency": {
+    "placeholders": {
+      "agency": {
+        "type": "String"
+      }
+    }
+  },
+  "reviews": "التقييمات",
+  "experience": "الخبرة",
+  "age": "العمر",
+  "languages": "اللغات",
+  "servicesOffered": "الخدمات المقدمة",
+  "noCleaningHistoryYet": "لا يوجد سجل تنظيف بعد.",
+  "jobDetails": "تفاصيل الوظيفة",
+  "postedBy": "نشر بواسطة",
+  "description": "الوصف",
+  "budget": "الميزانية",
+  "estimatedHours": "مقدر {hours} ساعة",
+  "@estimatedHours": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "submitBid": "تقديم عرض",
+  "yourBidPrice": "سعر عرضك (دج)",
+  "enterBidPrice": "أدخل سعر عرضك",
+  "messageToClient": "رسالة للعميل (اختياري)",
+  "enterMessage": "أدخل رسالتك",
+  "pleaseLoginToSubmitBid": "يرجى تسجيل الدخول لتقديم عرض",
+  "unableToGetUserId": "تعذر الحصول على معرف المستخدم",
+  "pleaseEnterValidBidPrice": "يرجى إدخال سعر عرض صالح",
+  "bidSubmittedSuccessfully": "تم تقديم العرض بنجاح!",
+  "errorSubmittingBid": "خطأ في تقديم العرض",
+  "errorSubmittingBidInvalidData": "خطأ في تقديم العرض: تنسيق البيانات غير صالح. يرجى المحاولة مرة أخرى.",
+  "errorSubmittingBidUnexpected": "خطأ في تقديم العرض: حدث خطأ غير متوقع",
+  "profilePicture": "صورة الملف الشخصي",
+  "changePhoto": "تغيير الصورة",
+  "removePhoto": "إزالة الصورة",
+  "profilePictureUpdatedSuccessfully": "تم تحديث صورة الملف الشخصي بنجاح!",
+  "profilePictureRemovedSuccessfully": "تم إزالة صورة الملف الشخصي بنجاح!",
+  "failedToRemoveProfilePicture": "فشل في إزالة صورة الملف الشخصي",
+  "servicesOfferedLabel": "الخدمات المقدمة",
+  "experienceLevel": "مستوى الخبرة",
+  "selectExperienceLevel": "اختر مستوى الخبرة",
+  "entry": "مبتدئ",
+  "mid": "متوسط",
+  "senior": "خبير",
+  "hourlyRateDzd": "السعر بالساعة (دج)",
+  "pleaseSelectAtLeastOneService": "يرجى اختيار خدمة واحدة على الأقل",
+  "accountDetails": "تفاصيل الحساب",
+  "birthdate": "تاريخ الميلاد",
+  "gender": "الجنس",
+  "wilayaProvince": "الولاية",
+  "selectYourWilaya": "اختر ولايتك",
+  "wilayaRequired": "الولاية مطلوبة",
+  "baladiyaMunicipality": "البلدية",
+  "selectYourBaladiya": "اختر بلديتك (اختياري)",
+  "streetAddressOptional": "عنوان الشارع (اختياري)",
+  "enterStreetName": "أدخل اسم الشارع، رقم المبنى، إلخ.",
+  "bio": "السيرة الذاتية",
+  "tellUsAboutYourself": "أخبرنا عن نفسك...",
+  "deleteAccount": "حذف الحساب",
+  "areYouSureDeleteAccount": "هل أنت متأكد أنك تريد حذف حسابك؟ هذا الإجراء لا يمكن التراجع عنه وستتم حذف جميع منشوراتك.",
+  "yesDeleteAccount": "نعم، احذف الحساب",
+  "accountDeletedSuccessfully": "تم حذف الحساب بنجاح",
+  "editProfile": "تعديل الملف الشخصي",
+  "settings": "الإعدادات",
+  "cleaner": "منظف",
+  "individual": "فردي",
+  "agencyProfileComingSoon": "ملف الوكالة قادم قريباً",
+  "noPastBookingsYet": "لا توجد حجوزات سابقة بعد.",
+  "noCleanersInTeamYet": "لا يوجد منظفون في فريقك بعد.",
+  "errorLoadingCleanerProfile": "خطأ في تحميل ملف المنظف",
+  "cleanerTeam": "فريق المنظفين",
+  "addCleaner": "إضافة منظف",
+  "requiredServices": "الخدمات المطلوبة",
+  "yourBid": "عرضك",
+  "yourPriceDa": "سعرك (دج)",
+  "enterYourBidPrice": "أدخل سعر عرضك",
+  "pleaseEnterBidPrice": "يرجى إدخال سعر عرض",
+  "pleaseEnterValidPrice": "يرجى إدخال سعر صالح",
+  "messageOptional": "الرسالة (اختياري)",
+  "addShortMessageToClient": "أضف رسالة قصيرة للعميل...",
+  "estimatedHoursFormat": "مقدر {hours} ساعة",
+  "@estimatedHoursFormat": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "noReviewsYet": "لا توجد تقييمات بعد.",
+  "bid": "عرض",
+  "minutesAgo": "منذ {minutes} دقيقة",
+  "@minutesAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "منذ {hours} ساعة",
+  "@hoursAgo": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "منذ {days} يوم",
+  "@daysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "phone": "الهاتف",
+  "partOf": "جزء من",
+  "allReviews": "جميع التقييمات",
+  "cleaningHistory": "سجل التنظيف",
+  "noCleaningHistoryAvailable": "لا يوجد سجل تنظيف متاح",
+  "cleanerIdNotFound": "لم يتم العثور على معرف المنظف",
+  "cleaningJob": "وظيفة تنظيف",
+  "activePosts": "المنشورات النشطة",
+  "noPostsYet": "لا توجد منشورات بعد.",
+  "noActivePosts": "لا توجد منشورات نشطة.",
+  "myPostsOnlyForClients": "منشوراتي متاحة للعملاء فقط.",
+  "activePostsOnlyForClients": "المنشورات النشطة متاحة للعملاء فقط.",
+  "reviewsCount": "{count} تقييم",
+  "@reviewsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "cleanSpaceFeatures": "مميزات CleanSpace",
+  "everythingYouNeed": "كل ما تحتاجه في تطبيق واحد",
+  "findVerifiedCleaners": "العثور على منظفين موثوقين",
+  "browseTrustedProfessionals": "تصفح المحترفين الموثوقين مع الملفات الشخصية والتصنيفات الم verified",
+  "easyBooking": "الحجز السهل",
+  "postYourJob": "انشر وظيفتك واحصل على عروض من المنظفين المؤهلين",
+  "jobOpportunities": "فرص العمل",
+  "findStableWork": "ابحث عن عمل مستقر ونمّي أعمال التنظيف الخاصة بك",
+  "cleaspaceExperience": "تجربة CLEASPACE",
+  "allInOnePlatform": "منصة شاملة لخدمات التنظيف الموثوقة.",
+  "verifiedProfessionals": "المهنيون الموثوقون",
+  "everyCleanerPasses": "كل منظف ووكالة يمر بفحوصات الهوية والجودة للثقة الكاملة.",
+  "smartMatching": "المطابقة الذكية",
+  "browseCuratedLists": "تصفح القوائم المنسقة أو دع CleanSpace يقترح أفضل المنظفين المناسبين.",
+  "transparentPricing": "التسعير الشفاف",
+  "seeClearHourlyRates": "شاهد أسعار الساعة الواضحة قبل الحجز. لا مفاجآت خفية.",
+  "cleaspaceAlgeria": "CLEASPACE الجزائر",
+  "readyToLaunch": "هل أنت مستعد لإطلاق مساحة نظيفة جديدة؟",
+  "createAccountDescription": "أنشئ حسابًا لحجز منظفين موثوقين، أو إدارة الوكالات، أو تقديم خدمات التنظيف الخاصة بك إلى السوق المتنامي في الجزائر.",
+  "next": "التالي",
+  "skipToLogin": "تخطي إلى تسجيل الدخول",
+  "createAccount": "إنشاء حساب",
+  "iAlreadyHaveAccount": "لدي حساب بالفعل",
+  "createAccountPage": "صفحة إنشاء الحساب",
+  "selectYourWilaya": "اختر ولايتك",
+  "uploadProfilePicture": "رفع صورة الملف الشخصي",
+  "uploadAClearPhoto": "قم بتحميل صورة واضحة",
+  "photoSelected": "تم اختيار الصورة"
 }

@@ -10,6 +10,7 @@ import '../../models/job_model.dart';
 import '../../models/notification_item.dart';
 import '../../models/booking_model.dart';
 import '../bookings/bookings_repo.dart';
+import '../bookings/bookings_repo.dart';
 import 'jobs_repo.dart';
 
 class JobsDB extends AbstractJobsRepo {
@@ -298,6 +299,8 @@ class JobsDB extends AbstractJobsRepo {
       jobMap['assigned_worker_id'] = jobWithStatus.assignedWorkerId ?? null;
       jobMap['is_deleted'] = false; // BOOL
       jobMap['status'] = 'open'; // Ensure status is 'open'
+      // Ensure job_images field is always present (empty array if null)
+      jobMap['job_images'] = jobWithStatus.jobImages ?? <String>[];
       jobMap['posted_date'] = FieldValue.serverTimestamp(); // Use serverTimestamp for consistency
       jobMap['created_at'] = Timestamp.fromDate(now);
       jobMap['updated_at'] = Timestamp.fromDate(now);
@@ -401,6 +404,8 @@ class JobsDB extends AbstractJobsRepo {
       final now = DateTime.now();
       final jobMap = job.copyWith(updatedAt: now).toMap();
       jobMap.remove('id');
+      // Ensure job_images field is always present (empty array if null)
+      jobMap['job_images'] = job.jobImages ?? <String>[];
       jobMap['updated_at'] = Timestamp.fromDate(now);
       
       await FirebaseConfig.firestore
@@ -480,6 +485,66 @@ class JobsDB extends AbstractJobsRepo {
         }
       } else {
         throw Exception('Job document disappeared after update');
+      }
+      
+      // Send notifications after deletion
+      try {
+        final job = await getJobById(jobId);
+        if (job != null) {
+          // Notify client
+          if (job.clientId != null) {
+            await NotificationServiceEnhanced.createNotification(
+              userId: job.clientId.toString(),
+              title: 'Job Deleted',
+              body: 'Your job "${job.title}" has been deleted.',
+              type: NotificationType.jobDeleted,
+              jobId: jobId,
+              clientId: job.clientId,
+              route: '/myPosts',
+            );
+          }
+          
+          // Notify assigned worker/agency if job was assigned
+          if (job.assignedWorkerId != null) {
+            await NotificationServiceEnhanced.createNotification(
+              userId: job.assignedWorkerId.toString(),
+              title: 'Job Deleted',
+              body: 'The job "${job.title}" you were assigned to has been deleted by the client.',
+              type: NotificationType.jobDeleted,
+              senderId: job.clientId?.toString(),
+              jobId: jobId,
+              clientId: job.clientId,
+              workerId: job.assignedWorkerId,
+              route: '/availableJobs',
+            );
+          }
+          
+          // Also notify all applicants (bookings with pending status)
+          try {
+            final bookingsRepo = AbstractBookingsRepo.getInstance();
+            final applications = await bookingsRepo.getApplicationsForJob(jobId);
+            for (final application in applications) {
+              if (application.status == BookingStatus.pending && application.providerId != null) {
+                await NotificationServiceEnhanced.createNotification(
+                  userId: application.providerId.toString(),
+                  title: 'Job Deleted',
+                  body: 'The job "${job.title}" you applied to has been deleted by the client.',
+                  type: NotificationType.jobDeleted,
+                  senderId: job.clientId?.toString(),
+                  jobId: jobId,
+                  clientId: job.clientId,
+                  workerId: application.providerId,
+                  route: '/availableJobs',
+                );
+              }
+            }
+          } catch (e) {
+            print('Error notifying applicants about job deletion: $e');
+          }
+        }
+      } catch (e) {
+        print('Error sending deletion notifications: $e');
+        // Don't fail the deletion if notification fails
       }
       
       DebugLogger.log('deleteJob', 'SUCCESS', data: {'jobId': jobId});
@@ -636,6 +701,7 @@ class JobsDB extends AbstractJobsRepo {
                 title: 'Job Completed!',
                 body: 'Job "${job.title}" has been completed. You can now leave a review.',
                 type: NotificationType.jobCompleted,
+                senderId: job.assignedWorkerId?.toString(),
                 jobId: jobId,
                 clientId: job.clientId,
                 workerId: job.assignedWorkerId,
@@ -650,6 +716,7 @@ class JobsDB extends AbstractJobsRepo {
                 title: 'Job Completed!',
                 body: 'Job "${job.title}" has been completed. You can now leave a review.',
                 type: NotificationType.jobCompleted,
+                senderId: job.clientId?.toString(),
                 jobId: jobId,
                 clientId: job.clientId,
                 workerId: job.assignedWorkerId,
@@ -752,6 +819,7 @@ class JobsDB extends AbstractJobsRepo {
                 title: 'Job Completed!',
                 body: 'Job "${job.title}" has been completed. You can now leave a review.',
                 type: NotificationType.jobCompleted,
+                senderId: job.assignedWorkerId?.toString(),
                 jobId: jobId,
                 clientId: job.clientId,
                 workerId: job.assignedWorkerId,
@@ -766,6 +834,7 @@ class JobsDB extends AbstractJobsRepo {
                 title: 'Job Completed!',
                 body: 'Job "${job.title}" has been completed. You can now leave a review.',
                 type: NotificationType.jobCompleted,
+                senderId: job.clientId?.toString(),
                 jobId: jobId,
                 clientId: job.clientId,
                 workerId: job.assignedWorkerId,
@@ -775,13 +844,14 @@ class JobsDB extends AbstractJobsRepo {
               );
             }
           } else {
-            // Only worker confirmed - notify client
+            // Only worker confirmed - notify client with job_marked_done
             if (job.clientId != null) {
               await NotificationServiceEnhanced.createNotification(
                 userId: job.clientId.toString(),
                 title: 'Worker Marked Job Finished',
                 body: 'The worker has marked "${job.title}" as finished. Please confirm completion.',
-                type: NotificationType.jobCompleted,
+                type: NotificationType.jobMarkedDone,
+                senderId: job.assignedWorkerId?.toString(),
                 jobId: jobId,
                 clientId: job.clientId,
                 workerId: job.assignedWorkerId,
@@ -1435,6 +1505,45 @@ class JobsDB extends AbstractJobsRepo {
     } catch (e, stacktrace) {
       print('getCompletedJobsForClient error: $e --> $stacktrace');
       return [];
+    }
+  }
+
+  @override
+  Future<void> markAllClientJobsAsDeleted(int clientId) async {
+    try {
+      // Get all jobs for this client (including deleted ones to avoid duplicates)
+      final snapshot = await FirebaseConfig.firestore
+          .collection(collectionName)
+          .where('client_id', isEqualTo: clientId)
+          .get();
+      
+      // Use batch write for efficiency
+      final batch = FirebaseConfig.firestore.batch();
+      int count = 0;
+      
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final isDeleted = data['is_deleted'];
+        
+        // Only update if not already deleted
+        if (isDeleted != true && isDeleted != 1) {
+          batch.update(doc.reference, {
+            'is_deleted': true,
+            'updated_at': FieldValue.serverTimestamp(),
+          });
+          count++;
+        }
+      }
+      
+      if (count > 0) {
+        await batch.commit();
+        print('✅ Marked $count jobs as deleted for client $clientId');
+      } else {
+        print('ℹ️ No jobs to mark as deleted for client $clientId');
+      }
+    } catch (e, stacktrace) {
+      print('❌ markAllClientJobsAsDeleted error: $e --> $stacktrace');
+      rethrow;
     }
   }
 }

@@ -1,5 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/profiles/profile_repo.dart';
+import '../../utils/algerian_addresses.dart';
+import '../../data/repositories/cleaner_reviews/cleaner_reviews_repo.dart';
+import '../../core/utils/firestore_type.dart';
+import '../../core/config/firebase_config.dart';
 
 
 
@@ -32,6 +36,7 @@ class SearchError extends SearchState {
 
 class SearchCubit extends Cubit<SearchState> {
   final AbstractProfileRepo _profileRepo = AbstractProfileRepo.getInstance();
+  final AbstractCleanerReviewsRepo _reviewsRepo = AbstractCleanerReviewsRepo.getInstance();
 
   SearchCubit() : super(SearchInitial());
 
@@ -43,22 +48,104 @@ class SearchCubit extends Cubit<SearchState> {
     double? maxRating,
     double? minPrice,
     double? maxPrice,
+    String? userType,
   }) async {
     emit(SearchLoading());
     try {
       
       final allProfiles = await _profileRepo.getAllProfiles();
       // Filter out clients - show all non-client profiles (cleaners, agencies, etc.)
+      // Also filter by userType if specified
       final cleanersAndAgencies = allProfiles.where((profile) {
-        final userType = (profile['user_type'] as String?)?.trim();
+        final profileUserType = (profile['user_type'] as String?)?.trim();
         // Show all profiles that are NOT clients (case-insensitive check)
-        if (userType == null || userType.isEmpty) return false;
-        return userType.toLowerCase() != 'client';
+        if (profileUserType == null || profileUserType.isEmpty) return false;
+        if (profileUserType.toLowerCase() == 'client') return false;
+        
+        // Filter by userType if specified
+        if (userType != null && userType.isNotEmpty) {
+          return profileUserType == userType;
+        }
+        
+        return true;
       }).toList();
       
       print('📊 [SearchCubit] Total profiles: ${allProfiles.length}');
       print('📊 [SearchCubit] Non-client profiles: ${cleanersAndAgencies.length}');
 
+      
+      // Get profile IDs to query reviews in batch
+      final profileIds = cleanersAndAgencies
+          .map((p) => readInt(p['id']))
+          .where((id) => id != null)
+          .cast<int>()
+          .toList();
+      
+      // Query reviews for all profiles at once (more efficient)
+      final reviewsCountMap = <int, int>{};
+      final ratingsMap = <int, double>{};
+      
+      // Query cleaner_reviews collection for all cleaner IDs
+      if (profileIds.isNotEmpty) {
+        try {
+          // Query reviews for each profile (we'll optimize this if needed)
+          for (final profileId in profileIds) {
+            try {
+              final reviewCount = await _reviewsRepo.getReviewCountForCleaner(profileId);
+              final avgRating = await _reviewsRepo.getAverageRatingForCleaner(profileId);
+              reviewsCountMap[profileId] = reviewCount;
+              ratingsMap[profileId] = avgRating;
+            } catch (e) {
+              // If query fails, use aggregate from profile
+              reviewsCountMap[profileId] = 0;
+              ratingsMap[profileId] = 0.0;
+            }
+          }
+        } catch (e) {
+          // If batch query fails, fall back to aggregates
+          print('Error querying reviews: $e');
+        }
+      }
+
+      // Check which Individual Cleaners belong to agencies (from cleaners collection)
+      final cleanerAgencyMap = <int, int>{}; // Map cleaner profile ID to agency ID
+      try {
+        final cleanersSnapshot = await FirebaseConfig.firestore
+            .collection('cleaners')
+            .where('is_active', isEqualTo: true)
+            .get();
+        
+        for (final doc in cleanersSnapshot.docs) {
+          final data = doc.data();
+          final cleanerProfileId = readInt(data['id']);
+          final agencyId = readInt(data['agency_id']);
+          if (cleanerProfileId != null && agencyId != null) {
+            cleanerAgencyMap[cleanerProfileId] = agencyId;
+          }
+        }
+      } catch (e) {
+        print('Error querying cleaners collection: $e');
+      }
+
+      // Get agency names for cleaners that belong to agencies
+      final agencyNamesMap = <int, String>{};
+      if (cleanerAgencyMap.isNotEmpty) {
+        final agencyIds = cleanerAgencyMap.values.toSet();
+        for (final agencyId in agencyIds) {
+          try {
+            final agencyProfile = await _profileRepo.getProfileById(agencyId);
+            if (agencyProfile != null) {
+              final agencyName = agencyProfile['agency_name'] as String? ?? 
+                                agencyProfile['full_name'] as String?;
+              if (agencyName != null && agencyName.isNotEmpty) {
+                agencyNamesMap[agencyId] = agencyName;
+              }
+            }
+          } catch (e) {
+            print('Error fetching agency profile for ID $agencyId: $e');
+          }
+        }
+      }
       
       List<Map<String, dynamic>> results = cleanersAndAgencies.map((profile) {
         final userType = profile['user_type'] as String?;
@@ -68,14 +155,37 @@ class SearchCubit extends Cubit<SearchState> {
             ? (agencyName ?? fullName ?? 'Unknown')
             : (fullName ?? 'Unknown');
         
-        // Use real data only - no dummy defaults
-        final rating = (profile['rating'] as num?)?.toDouble() ?? 0.0;
-        final reviewsCount = profile['reviews_count'] as int? ?? (profile['jobs_completed'] as int?) ?? 0;
+        final profileId = readInt(profile['id']);
+        
+        // Check if this Individual Cleaner belongs to an agency (from cleaners collection)
+        String? cleanerAgencyName;
+        if (userType == 'Individual Cleaner' && profileId != null) {
+          final agencyId = cleanerAgencyMap[profileId];
+          if (agencyId != null) {
+            cleanerAgencyName = agencyNamesMap[agencyId];
+          }
+        }
+        
+        // Use queried reviews count and rating if available, otherwise fall back to aggregates
+        final rating = profileId != null && ratingsMap.containsKey(profileId)
+            ? ratingsMap[profileId]!
+            : ((profile['rating_avg'] as num?)?.toDouble() 
+                ?? (profile['rating'] as num?)?.toDouble() 
+                ?? 0.0);
+        
+        final reviewsCount = profileId != null && reviewsCountMap.containsKey(profileId)
+            ? reviewsCountMap[profileId]!
+            : (profile['rating_count'] as int? 
+                ?? profile['reviews_count'] as int? 
+                ?? 0);
+        
         final bio = profile['bio'] as String?;
         final experienceYears = profile['experience_years'] as int?;
+        final experienceLevel = profile['experience_level'] as String?;
         final age = profile['age'];
         final languages = profile['languages'] as String?;
         final hourlyRate = profile['hourly_rate'];
+        final services = profile['services'] as String?;
         
         return {
           'id': profile['id'],
@@ -83,8 +193,8 @@ class SearchCubit extends Cubit<SearchState> {
           'description': bio ?? '',
           'location': _extractLocation(profile['address'] as String?),
           'price': hourlyRate != null 
-              ? 'From $hourlyRate DZD/hr'
-              : 'Contact for pricing',
+              ? hourlyRate.toString() // Store just the number, UI will format it
+              : null, // UI will handle "Contact for pricing" localization
           'rating': rating,
           'reviews': reviewsCount,
           'image': profile['picture'] as String?,
@@ -95,9 +205,11 @@ class SearchCubit extends Cubit<SearchState> {
           'experience': experienceYears != null 
               ? '$experienceYears+ Years'
               : null,
+          'experience_level': experienceLevel,
+          'services': services,
           'age': age != null ? age.toString() : null,
           'languages': languages,
-          'agency': userType == 'Agency' ? null : (profile['agency_name'] as String?),
+          'agency': userType == 'Agency' ? null : (cleanerAgencyName ?? profile['agency_name'] as String?),
           'profileData': profile,
         };
       }).toList();
@@ -111,6 +223,7 @@ class SearchCubit extends Cubit<SearchState> {
         maxRating: maxRating,
         minPrice: minPrice,
         maxPrice: maxPrice,
+        userType: userType,
       );
 
       emit(SearchLoaded(
@@ -138,6 +251,7 @@ class SearchCubit extends Cubit<SearchState> {
     double? maxRating,
     double? minPrice,
     double? maxPrice,
+    String? userType,
   }) {
     var filtered = results;
 
@@ -190,6 +304,14 @@ class SearchCubit extends Cubit<SearchState> {
       }).toList();
     }
 
+    // Filter by user type (already filtered in loadSearchResults, but double-check here)
+    if (userType != null && userType.isNotEmpty) {
+      filtered = filtered.where((item) {
+        final itemUserType = item['userType'] as String?;
+        return itemUserType == userType;
+      }).toList();
+    }
+
     return filtered;
   }
 
@@ -197,8 +319,23 @@ class SearchCubit extends Cubit<SearchState> {
   String _extractLocation(String? address) {
     if (address == null || address.isEmpty) return 'Unknown';
     
-    final parts = address.split(',');
-    return parts.isNotEmpty ? parts.first.trim() : address;
+    // Extract wilaya and baladiya from the address
+    final wilaya = AlgerianAddresses.extractWilaya(address);
+    if (wilaya == null) {
+      // If no wilaya found, return the original address or first part
+      final parts = address.split(',');
+      return parts.isNotEmpty ? parts.first.trim() : address;
+    }
+    
+    // Try to extract baladiya for the found wilaya
+    final baladiya = AlgerianAddresses.extractBaladiya(address, wilaya);
+    
+    // Format: "Wilaya, Baladiya" if baladiya exists, otherwise just "Wilaya"
+    if (baladiya != null && baladiya.isNotEmpty) {
+      return '$wilaya, $baladiya';
+    } else {
+      return wilaya;
+    }
   }
 
   Future<void> refresh({
@@ -208,6 +345,7 @@ class SearchCubit extends Cubit<SearchState> {
     double? maxRating,
     double? minPrice,
     double? maxPrice,
+    String? userType,
   }) async {
     await loadSearchResults(
       query: query,
@@ -216,6 +354,7 @@ class SearchCubit extends Cubit<SearchState> {
       maxRating: maxRating,
       minPrice: minPrice,
       maxPrice: maxPrice,
+      userType: userType,
     );
   }
 }

@@ -35,6 +35,7 @@ class NotificationBackendService {
     String? route,
     String? id,
     Map<String, dynamic>? additionalData,
+    bool skipSave = false, // If true, skip saving to Firestore (already saved by caller)
   }) async {
     try {
       // Get FCM tokens for the user from Firestore
@@ -56,9 +57,10 @@ class NotificationBackendService {
         return {'success': false, 'message': 'No valid FCM tokens found'};
       }
 
-      // Prepare data payload
+      // Prepare data payload - MUST include user_id for proper filtering
       final dataPayload = <String, dynamic>{
         'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+        'user_id': userId.toString(), // CRITICAL: Include user_id in FCM payload
         if (route != null) 'route': route,
         if (id != null) 'id': id,
         ...?additionalData,
@@ -98,34 +100,36 @@ class NotificationBackendService {
         }
       }
 
-      // Save notification to Firestore for history
-      try {
-        final notificationData = <String, dynamic>{
-          'user_id': userId.toString(),
-          'title': title,
-          'body': body,
-          'data_json': dataPayload,
-          'created_at': FieldValue.serverTimestamp(),
-          'read': false,
-        };
-        
-        // Extract type, sender_id, job_id from additionalData if present
-        if (additionalData != null) {
-          if (additionalData.containsKey('type')) {
-            notificationData['type'] = additionalData['type'];
+      // Save notification to Firestore for history (unless skipSave is true)
+      if (!skipSave) {
+        try {
+          final notificationData = <String, dynamic>{
+            'user_id': userId.toString(),
+            'title': title,
+            'body': body,
+            'data_json': dataPayload,
+            'created_at': FieldValue.serverTimestamp(),
+            'read': false,
+          };
+          
+          // Extract type, sender_id, job_id from additionalData if present
+          if (additionalData != null) {
+            if (additionalData.containsKey('type')) {
+              notificationData['type'] = additionalData['type'];
+            }
+            if (additionalData.containsKey('sender_id')) {
+              notificationData['sender_id'] = additionalData['sender_id'];
+            }
+            if (additionalData.containsKey('job_id')) {
+              final jobId = additionalData['job_id'];
+              notificationData['job_id'] = jobId is int ? jobId : int.tryParse(jobId.toString());
+            }
           }
-          if (additionalData.containsKey('sender_id')) {
-            notificationData['sender_id'] = additionalData['sender_id'];
-          }
-          if (additionalData.containsKey('job_id')) {
-            final jobId = additionalData['job_id'];
-            notificationData['job_id'] = jobId is int ? jobId : int.tryParse(jobId.toString());
-          }
+          
+          await _firestore.collection('notifications').add(notificationData);
+        } catch (e) {
+          print('Error saving notification to Firestore: $e');
         }
-        
-        await _firestore.collection('notifications').add(notificationData);
-      } catch (e) {
-        print('Error saving notification to Firestore: $e');
       }
 
       return {

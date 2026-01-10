@@ -133,7 +133,7 @@ abstract class AppLocalizations {
   /// No description provided for @createAccount.
   ///
   /// In en, this message translates to:
-  /// **'Create Account'**
+  /// **'Create account'**
   String get createAccount;
 
   /// No description provided for @email.
@@ -268,6 +268,30 @@ abstract class AppLocalizations {
   /// **'Business Registration ID'**
   String get businessId;
 
+  /// No description provided for @enterAgencyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter agency name'**
+  String get enterAgencyName;
+
+  /// No description provided for @enterBusinessRegistrationId.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter business registration ID'**
+  String get enterBusinessRegistrationId;
+
+  /// No description provided for @agencyNameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Agency name is required'**
+  String get agencyNameRequired;
+
+  /// No description provided for @businessIdRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Business registration ID is required'**
+  String get businessIdRequired;
+
   /// No description provided for @services.
   ///
   /// In en, this message translates to:
@@ -331,7 +355,7 @@ abstract class AppLocalizations {
   /// No description provided for @noActiveListings.
   ///
   /// In en, this message translates to:
-  /// **'No active listings yet.\nTap the + button to add a new job.'**
+  /// **'No active listings yet.'**
   String get noActiveListings;
 
   /// No description provided for @noPastBookings.
@@ -934,6 +958,66 @@ abstract class AppLocalizations {
   /// **'No cleaners found'**
   String get noCleanersFound;
 
+  /// No description provided for @addToTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Team'**
+  String get addToTeam;
+
+  /// No description provided for @invalidProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid profile'**
+  String get invalidProfile;
+
+  /// No description provided for @cleanerAlreadyInTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'This cleaner is already in your team'**
+  String get cleanerAlreadyInTeam;
+
+  /// No description provided for @cleanerAddedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaner added successfully!'**
+  String get cleanerAddedSuccessfully;
+
+  /// No description provided for @errorAddingCleaner.
+  ///
+  /// In en, this message translates to:
+  /// **'Error adding cleaner'**
+  String get errorAddingCleaner;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @removeCleaner.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Cleaner'**
+  String get removeCleaner;
+
+  /// No description provided for @areYouSureRemoveCleaner.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove this cleaner from your team?'**
+  String get areYouSureRemoveCleaner;
+
+  /// No description provided for @cleanerRemovedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaner removed successfully!'**
+  String get cleanerRemovedSuccessfully;
+
+  /// No description provided for @errorRemovingCleaner.
+  ///
+  /// In en, this message translates to:
+  /// **'Error removing cleaner'**
+  String get errorRemovingCleaner;
+
   /// No description provided for @availableJobs.
   ///
   /// In en, this message translates to:
@@ -1261,8 +1345,8 @@ abstract class AppLocalizations {
   /// No description provided for @daysAgo.
   ///
   /// In en, this message translates to:
-  /// **'{count} days ago'**
-  String daysAgo(int count);
+  /// **'{days}d ago'**
+  String daysAgo(int days);
 
   /// No description provided for @posted.
   ///
@@ -1275,6 +1359,732 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Weeks'**
   String get weeks;
+
+  /// No description provided for @homeCleaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Cleaning'**
+  String get homeCleaning;
+
+  /// No description provided for @officeCleaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Office Cleaning'**
+  String get officeCleaning;
+
+  /// No description provided for @specialtyCleaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Specialty Cleaning'**
+  String get specialtyCleaning;
+
+  /// No description provided for @industrialCleaning.
+  ///
+  /// In en, this message translates to:
+  /// **'Industrial Cleaning'**
+  String get industrialCleaning;
+
+  /// No description provided for @clickToUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Click to upload'**
+  String get clickToUpload;
+
+  /// No description provided for @dragAndDrop.
+  ///
+  /// In en, this message translates to:
+  /// **' or drag and drop'**
+  String get dragAndDrop;
+
+  /// No description provided for @maximumPhotosReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum 5 photos reached'**
+  String get maximumPhotosReached;
+
+  /// No description provided for @egPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., 3'**
+  String get egPlaceholder;
+
+  /// No description provided for @fromDzdPerHr.
+  ///
+  /// In en, this message translates to:
+  /// **'From {hourlyRate} DZD/hr'**
+  String fromDzdPerHr(String hourlyRate);
+
+  /// No description provided for @available.
+  ///
+  /// In en, this message translates to:
+  /// **'Available'**
+  String get available;
+
+  /// No description provided for @noActiveListingsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No active listings yet.'**
+  String get noActiveListingsYet;
+
+  /// No description provided for @errorLoadingProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading profile'**
+  String get errorLoadingProfile;
+
+  /// No description provided for @noUserDataAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No user data available'**
+  String get noUserDataAvailable;
+
+  /// No description provided for @unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get unknown;
+
+  /// No description provided for @anErrorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get anErrorOccurred;
+
+  /// No description provided for @justNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get justNow;
+
+  /// No description provided for @budgetNegotiable.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget negotiable'**
+  String get budgetNegotiable;
+
+  /// No description provided for @untitledJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled Job'**
+  String get untitledJob;
+
+  /// No description provided for @areYouSureDeleteJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{title}\"?'**
+  String areYouSureDeleteJob(String title);
+
+  /// No description provided for @verified.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified'**
+  String get verified;
+
+  /// No description provided for @partOfAgency.
+  ///
+  /// In en, this message translates to:
+  /// **'Part of {agency}'**
+  String partOfAgency(String agency);
+
+  /// No description provided for @experience.
+  ///
+  /// In en, this message translates to:
+  /// **'Experience'**
+  String get experience;
+
+  /// No description provided for @age.
+  ///
+  /// In en, this message translates to:
+  /// **'Age'**
+  String get age;
+
+  /// No description provided for @languages.
+  ///
+  /// In en, this message translates to:
+  /// **'Languages'**
+  String get languages;
+
+  /// No description provided for @servicesOffered.
+  ///
+  /// In en, this message translates to:
+  /// **'Services Offered'**
+  String get servicesOffered;
+
+  /// No description provided for @noCleaningHistoryYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No cleaning history yet.'**
+  String get noCleaningHistoryYet;
+
+  /// No description provided for @jobDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Details'**
+  String get jobDetails;
+
+  /// No description provided for @postedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Posted by'**
+  String get postedBy;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @estimatedHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. {hours} hours'**
+  String estimatedHours(int hours);
+
+  /// No description provided for @submitBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Bid'**
+  String get submitBid;
+
+  /// No description provided for @yourBidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Bid Price (DZD)'**
+  String get yourBidPrice;
+
+  /// No description provided for @enterBidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your bid price'**
+  String get enterBidPrice;
+
+  /// No description provided for @messageToClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Message to Client (Optional)'**
+  String get messageToClient;
+
+  /// No description provided for @enterMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your message'**
+  String get enterMessage;
+
+  /// No description provided for @pleaseLoginToSubmitBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please login to submit a bid'**
+  String get pleaseLoginToSubmitBid;
+
+  /// No description provided for @unableToGetUserId.
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to get user ID'**
+  String get unableToGetUserId;
+
+  /// No description provided for @pleaseEnterValidBidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid bid price'**
+  String get pleaseEnterValidBidPrice;
+
+  /// No description provided for @bidSubmittedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid submitted successfully!'**
+  String get bidSubmittedSuccessfully;
+
+  /// No description provided for @errorSubmittingBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Error submitting bid'**
+  String get errorSubmittingBid;
+
+  /// No description provided for @errorSubmittingBidInvalidData.
+  ///
+  /// In en, this message translates to:
+  /// **'Error submitting bid: Invalid data format. Please try again.'**
+  String get errorSubmittingBidInvalidData;
+
+  /// No description provided for @errorSubmittingBidUnexpected.
+  ///
+  /// In en, this message translates to:
+  /// **'Error submitting bid: An unexpected error occurred'**
+  String get errorSubmittingBidUnexpected;
+
+  /// No description provided for @removePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Photo'**
+  String get removePhoto;
+
+  /// No description provided for @profilePictureUpdatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile picture updated successfully!'**
+  String get profilePictureUpdatedSuccessfully;
+
+  /// No description provided for @profilePictureRemovedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile picture removed successfully!'**
+  String get profilePictureRemovedSuccessfully;
+
+  /// No description provided for @failedToRemoveProfilePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to remove profile picture'**
+  String get failedToRemoveProfilePicture;
+
+  /// No description provided for @servicesOfferedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Services Offered'**
+  String get servicesOfferedLabel;
+
+  /// No description provided for @experienceLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Experience Level'**
+  String get experienceLevel;
+
+  /// No description provided for @selectExperienceLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select experience level'**
+  String get selectExperienceLevel;
+
+  /// No description provided for @entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry'**
+  String get entry;
+
+  /// No description provided for @mid.
+  ///
+  /// In en, this message translates to:
+  /// **'Mid'**
+  String get mid;
+
+  /// No description provided for @senior.
+  ///
+  /// In en, this message translates to:
+  /// **'Senior'**
+  String get senior;
+
+  /// No description provided for @hourlyRateDzd.
+  ///
+  /// In en, this message translates to:
+  /// **'Hourly Rate (DZD)'**
+  String get hourlyRateDzd;
+
+  /// No description provided for @pleaseSelectAtLeastOneService.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one service'**
+  String get pleaseSelectAtLeastOneService;
+
+  /// No description provided for @wilayaRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Wilaya is required'**
+  String get wilayaRequired;
+
+  /// No description provided for @baladiyaMunicipality.
+  ///
+  /// In en, this message translates to:
+  /// **'Baladiya (Municipality)'**
+  String get baladiyaMunicipality;
+
+  /// No description provided for @streetAddressOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Street Address (Optional)'**
+  String get streetAddressOptional;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @areYouSureDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete your account? This action is irreversible and all your posts will be deleted.'**
+  String get areYouSureDeleteAccount;
+
+  /// No description provided for @yesDeleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, Delete Account'**
+  String get yesDeleteAccount;
+
+  /// No description provided for @accountDeletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted successfully'**
+  String get accountDeletedSuccessfully;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @cleaner.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaner'**
+  String get cleaner;
+
+  /// No description provided for @individual.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual'**
+  String get individual;
+
+  /// No description provided for @agencyProfileComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Agency profile coming soon'**
+  String get agencyProfileComingSoon;
+
+  /// No description provided for @noPastBookingsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No past bookings yet.'**
+  String get noPastBookingsYet;
+
+  /// No description provided for @noCleanersInTeamYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No cleaners in your team yet.'**
+  String get noCleanersInTeamYet;
+
+  /// No description provided for @errorLoadingCleanerProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading cleaner profile'**
+  String get errorLoadingCleanerProfile;
+
+  /// No description provided for @addCleaner.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Cleaner'**
+  String get addCleaner;
+
+  /// No description provided for @requiredServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Required Services'**
+  String get requiredServices;
+
+  /// No description provided for @yourBid.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Bid'**
+  String get yourBid;
+
+  /// No description provided for @yourPriceDa.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Price (DA)'**
+  String get yourPriceDa;
+
+  /// No description provided for @enterYourBidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your bid price'**
+  String get enterYourBidPrice;
+
+  /// No description provided for @pleaseEnterBidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a bid price'**
+  String get pleaseEnterBidPrice;
+
+  /// No description provided for @pleaseEnterValidPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid price'**
+  String get pleaseEnterValidPrice;
+
+  /// No description provided for @messageOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Message (Optional)'**
+  String get messageOptional;
+
+  /// No description provided for @addShortMessageToClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a short message to the client...'**
+  String get addShortMessageToClient;
+
+  /// No description provided for @estimatedHoursFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. {hours} hours'**
+  String estimatedHoursFormat(int hours);
+
+  /// No description provided for @noReviewsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews yet.'**
+  String get noReviewsYet;
+
+  /// No description provided for @bid.
+  ///
+  /// In en, this message translates to:
+  /// **'Bid'**
+  String get bid;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m ago'**
+  String minutesAgo(int minutes);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h ago'**
+  String hoursAgo(int hours);
+
+  /// No description provided for @phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phone;
+
+  /// No description provided for @partOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Part of'**
+  String get partOf;
+
+  /// No description provided for @allReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'All Reviews'**
+  String get allReviews;
+
+  /// No description provided for @cleaningHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning History'**
+  String get cleaningHistory;
+
+  /// No description provided for @noCleaningHistoryAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No cleaning history available'**
+  String get noCleaningHistoryAvailable;
+
+  /// No description provided for @cleanerIdNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaner ID not found'**
+  String get cleanerIdNotFound;
+
+  /// No description provided for @cleaningJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaning Job'**
+  String get cleaningJob;
+
+  /// No description provided for @activePosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Posts'**
+  String get activePosts;
+
+  /// No description provided for @noPostsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts yet.'**
+  String get noPostsYet;
+
+  /// No description provided for @noActivePosts.
+  ///
+  /// In en, this message translates to:
+  /// **'No active posts.'**
+  String get noActivePosts;
+
+  /// No description provided for @myPostsOnlyForClients.
+  ///
+  /// In en, this message translates to:
+  /// **'My Posts is only available for clients.'**
+  String get myPostsOnlyForClients;
+
+  /// No description provided for @activePostsOnlyForClients.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Posts is only available for clients.'**
+  String get activePostsOnlyForClients;
+
+  /// No description provided for @reviewsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Reviews'**
+  String reviewsCount(int count);
+
+  /// No description provided for @cleanSpaceFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'CleanSpace Features'**
+  String get cleanSpaceFeatures;
+
+  /// No description provided for @everythingYouNeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything you need in one app'**
+  String get everythingYouNeed;
+
+  /// No description provided for @findVerifiedCleaners.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Verified Cleaners'**
+  String get findVerifiedCleaners;
+
+  /// No description provided for @browseTrustedProfessionals.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse trusted professionals with verified profiles and ratings'**
+  String get browseTrustedProfessionals;
+
+  /// No description provided for @easyBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Easy Booking'**
+  String get easyBooking;
+
+  /// No description provided for @postYourJob.
+  ///
+  /// In en, this message translates to:
+  /// **'Post your job and receive offers from qualified cleaners'**
+  String get postYourJob;
+
+  /// No description provided for @jobOpportunities.
+  ///
+  /// In en, this message translates to:
+  /// **'Job Opportunities'**
+  String get jobOpportunities;
+
+  /// No description provided for @findStableWork.
+  ///
+  /// In en, this message translates to:
+  /// **'Find stable work and grow your cleaning business'**
+  String get findStableWork;
+
+  /// No description provided for @cleaspaceExperience.
+  ///
+  /// In en, this message translates to:
+  /// **'CLEASPACE EXPERIENCE'**
+  String get cleaspaceExperience;
+
+  /// No description provided for @allInOnePlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'All-in-one platform for trusted cleaning services.'**
+  String get allInOnePlatform;
+
+  /// No description provided for @verifiedProfessionals.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified Professionals'**
+  String get verifiedProfessionals;
+
+  /// No description provided for @everyCleanerPasses.
+  ///
+  /// In en, this message translates to:
+  /// **'Every cleaner and agency passes identity and quality checks for full trust.'**
+  String get everyCleanerPasses;
+
+  /// No description provided for @smartMatching.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Matching'**
+  String get smartMatching;
+
+  /// No description provided for @browseCuratedLists.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse curated lists or let CleanSpace suggest best-fit cleaners.'**
+  String get browseCuratedLists;
+
+  /// No description provided for @transparentPricing.
+  ///
+  /// In en, this message translates to:
+  /// **'Transparent Pricing'**
+  String get transparentPricing;
+
+  /// No description provided for @seeClearHourlyRates.
+  ///
+  /// In en, this message translates to:
+  /// **'See clear hourly rates before booking. No hidden surprises.'**
+  String get seeClearHourlyRates;
+
+  /// No description provided for @cleaspaceAlgeria.
+  ///
+  /// In en, this message translates to:
+  /// **'CLEASPACE ALGERIA'**
+  String get cleaspaceAlgeria;
+
+  /// No description provided for @readyToLaunch.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to launch your next clean space?'**
+  String get readyToLaunch;
+
+  /// No description provided for @createAccountDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Create an account to book trusted cleaners, manage agencies, or offer your cleaning services to Algeria\'s growing market.'**
+  String get createAccountDescription;
+
+  /// No description provided for @next.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get next;
+
+  /// No description provided for @skipToLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip to login'**
+  String get skipToLogin;
+
+  /// No description provided for @iAlreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get iAlreadyHaveAccount;
+
+  /// No description provided for @createAccountPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account Page'**
+  String get createAccountPage;
+
+  /// No description provided for @uploadProfilePicture.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Profile Picture'**
+  String get uploadProfilePicture;
+
+  /// No description provided for @uploadAClearPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload a clear photo'**
+  String get uploadAClearPhoto;
+
+  /// No description provided for @photoSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo selected'**
+  String get photoSelected;
 }
 
 class _AppLocalizationsDelegate

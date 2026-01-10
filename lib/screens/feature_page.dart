@@ -1,53 +1,55 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
 class FeaturePage extends StatelessWidget {
   const FeaturePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            "CleanSpace Features",
-            style: TextStyle(
-              color: Color(0xFF157A6E),
+          Text(
+            localizations.cleanSpaceFeatures,
+            style: const TextStyle(
+              color: Color(0xFF3B82F6),
               fontSize: 26,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            "Everything you need in one app",
-            style: TextStyle(color: Colors.grey, fontSize: 15),
+          Text(
+            localizations.everythingYouNeed,
+            style: const TextStyle(color: Colors.grey, fontSize: 15),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 40),
-          _feature(Icons.verified_outlined, "Find Verified Cleaners",
-              "Browse trusted professionals with verified profiles and ratings"),
+          _feature(context, Icons.verified_outlined, localizations.findVerifiedCleaners,
+              localizations.browseTrustedProfessionals),
           const SizedBox(height: 24),
-          _feature(Icons.calendar_today_outlined, "Easy Booking",
-              "Post your job and receive offers from qualified cleaners"),
+          _feature(context, Icons.calendar_today_outlined, localizations.easyBooking,
+              localizations.postYourJob),
           const SizedBox(height: 24),
-          _feature(Icons.work_outline, "Job Opportunities",
-              "Find stable work and grow your cleaning business"),
+          _feature(context, Icons.work_outline, localizations.jobOpportunities,
+              localizations.findStableWork),
         ],
       ),
     );
   }
 
-  Widget _feature(IconData icon, String title, String subtitle) {
+  Widget _feature(BuildContext context, IconData icon, String title, String subtitle) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(12),
           decoration: const BoxDecoration(
-            color: Color(0xFFE6F4F1),
+            color: Color(0xFFEFF6FF),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: Color(0xFF157A6E), size: 28),
+          child: Icon(icon, color: Color(0xFF3B82F6), size: 28),
         ),
         const SizedBox(width: 16),
         Expanded(

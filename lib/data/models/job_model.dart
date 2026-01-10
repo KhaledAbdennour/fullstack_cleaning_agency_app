@@ -10,6 +10,7 @@ class Job {
   final DateTime postedDate;
   final DateTime jobDate;
   final String? coverImageUrl;
+  final List<String>? jobImages; // All job images (up to 5), stored as base64 data URLs
   final int? clientId;
   final int? agencyId;
   final int? assignedWorkerId; // Worker/cleaner assigned to this job
@@ -33,6 +34,7 @@ class Job {
     required this.postedDate,
     required this.jobDate,
     this.coverImageUrl,
+    this.jobImages,
     this.clientId,
     this.agencyId,
     this.assignedWorkerId,
@@ -98,6 +100,7 @@ class Job {
       'posted_date': postedDate.toIso8601String(),
       'job_date': jobDate.toIso8601String(),
       'cover_image_url': coverImageUrl,
+      'job_images': jobImages ?? <String>[], // List of base64 data URLs (up to 5 images), empty array if null
       'client_id': clientId,
       'agency_id': agencyId,
       'assigned_worker_id': assignedWorkerId,
@@ -177,6 +180,9 @@ class Job {
       postedDate: postedDate,
       jobDate: jobDate,
       coverImageUrl: map['cover_image_url'] as String?,
+      jobImages: map['job_images'] != null 
+          ? (map['job_images'] as List<dynamic>).map((e) => e.toString()).toList()
+          : null, // Backward compatible: defaults to null if not present
       clientId: readInt(map['client_id']),
       agencyId: readInt(map['agency_id']),
       assignedWorkerId: readInt(map['assigned_worker_id']),
@@ -220,6 +226,7 @@ class Job {
     DateTime? postedDate,
     DateTime? jobDate,
     String? coverImageUrl,
+    List<String>? jobImages,
     int? clientId,
     int? agencyId,
     int? assignedWorkerId,
@@ -243,6 +250,7 @@ class Job {
       postedDate: postedDate ?? this.postedDate,
       jobDate: jobDate ?? this.jobDate,
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      jobImages: jobImages ?? this.jobImages,
       clientId: clientId ?? this.clientId,
       agencyId: agencyId ?? this.agencyId,
       assignedWorkerId: assignedWorkerId ?? this.assignedWorkerId,

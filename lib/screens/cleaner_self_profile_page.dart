@@ -5,6 +5,9 @@ import '../logic/cubits/cleaner_history_cubit.dart';
 import '../logic/cubits/cleaner_reviews_cubit.dart';
 import '../data/models/cleaning_history_item.dart';
 import '../data/models/cleaner_review.dart';
+import '../data/repositories/profiles/profile_repo.dart';
+import '../utils/image_helper.dart';
+import '../l10n/app_localizations.dart';
 import 'EditProfilePage.dart';
 
 
@@ -95,7 +98,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
   Widget build(BuildContext context) {
     if (_cleanerProfile == null || _cleanerId == null) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6))),
       );
     }
 
@@ -162,7 +165,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                   });
                 },
                 icon: const Icon(Icons.edit, size: 18),
-                label: const Text('Edit'),
+                label: Text(AppLocalizations.of(context)!.edit),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.blue,
                 ),
@@ -173,12 +176,17 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
           CircleAvatar(
             radius: 50,
             backgroundColor: Colors.grey[300],
-            backgroundImage: _cleanerProfile!['picture'] != null
-                ? NetworkImage(_cleanerProfile!['picture'] as String)
-                : null,
-            child: _cleanerProfile!['picture'] == null
-                ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                : null,
+            child: _cleanerProfile!['picture'] != null && (_cleanerProfile!['picture'] as String).isNotEmpty
+                ? ClipOval(
+                    child: AppImage(
+                      imageUrl: _cleanerProfile!['picture'] as String,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorWidget: const Icon(Icons.person, size: 50, color: Colors.grey),
+                    ),
+                  )
+                : const Icon(Icons.person, size: 50, color: Colors.grey),
           ),
           const SizedBox(height: 16),
           
@@ -200,7 +208,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                 );
               },
               child: Text(
-                'Part of ${_cleanerProfile!['agency_name']}',
+                  AppLocalizations.of(context)!.partOfAgency(_cleanerProfile!['agency_name'] as String),
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.blue,
@@ -215,7 +223,7 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
               const Icon(Icons.star, color: Colors.amber, size: 20),
               const SizedBox(width: 4),
               Text(
-                '$rating ($reviewCount Reviews)',
+                '$rating ($reviewCount ${AppLocalizations.of(context)!.reviews})',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -231,14 +239,14 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
               color: Colors.green,
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 16),
-                SizedBox(width: 4),
+                const Icon(Icons.check_circle, color: Colors.white, size: 16),
+                const SizedBox(width: 4),
                 Text(
-                  'Verified',
-                  style: TextStyle(
+                  AppLocalizations.of(context)!.verified,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -261,10 +269,10 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
         unselectedLabelColor: Colors.grey[600],
         indicatorColor: Colors.green,
         indicatorWeight: 3,
-        tabs: const [
-          Tab(text: 'Overview'),
-          Tab(text: 'History'),
-          Tab(text: 'Reviews'),
+        tabs: [
+          Tab(text: AppLocalizations.of(context)!.overview),
+          Tab(text: AppLocalizations.of(context)!.history),
+          Tab(text: AppLocalizations.of(context)!.reviews),
         ],
       ),
     );
@@ -284,8 +292,8 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           
-          const Text(
-            'About Me',
+          Text(
+            AppLocalizations.of(context)!.aboutMe,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -302,11 +310,11 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
           Row(
             children: [
               Expanded(
-                child: _buildInfoCard(Icons.work_outline, 'Experience', experience),
+                child: _buildInfoCard(Icons.work_outline, AppLocalizations.of(context)!.experience, experience),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoCard(Icons.person_outline, 'Age', '28'),
+                child: _buildInfoCard(Icons.person_outline, AppLocalizations.of(context)!.age, '28'),
               ),
             ],
           ),
@@ -314,19 +322,19 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
           Row(
             children: [
               Expanded(
-                child: _buildInfoCard(Icons.location_on_outlined, 'Location', location.split(',').first),
+                child: _buildInfoCard(Icons.location_on_outlined, AppLocalizations.of(context)!.location, location.split(',').first),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildInfoCard(Icons.language_outlined, 'Languages', languages),
+                child: _buildInfoCard(Icons.language_outlined, AppLocalizations.of(context)!.languages, languages),
               ),
             ],
           ),
           const SizedBox(height: 24),
 
           
-          const Text(
-            'Services Offered',
+          Text(
+            AppLocalizations.of(context)!.servicesOffered,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -415,13 +423,13 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
 
   Widget _buildHistoryTab() {
     if (_cleanerId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
     }
 
     return BlocBuilder<CleanerHistoryCubit, CleanerHistoryState>(
       builder: (context, state) {
         if (state is CleanerHistoryLoading && state is! CleanerHistoryLoaded) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
         } else if (state is CleanerHistoryError) {
           return Center(
             child: Column(
@@ -433,16 +441,16 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                   onPressed: () {
                     context.read<CleanerHistoryCubit>().refresh(_cleanerId!);
                   },
-                  child: const Text('Retry'),
+                  child: Text(AppLocalizations.of(context)!.retry),
                 ),
               ],
             ),
           );
         } else if (state is CleanerHistoryLoaded) {
           if (state.items.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'No cleaning history yet.',
+                AppLocalizations.of(context)!.noCleaningHistoryYet,
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             );
@@ -525,13 +533,13 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
 
   Widget _buildReviewsTab() {
     if (_cleanerId == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
     }
 
     return BlocBuilder<CleanerReviewsCubit, CleanerReviewsState>(
       builder: (context, state) {
         if (state is CleanerReviewsLoading && state is! CleanerReviewsLoaded) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
         } else if (state is CleanerReviewsError) {
           return Center(
             child: Column(
@@ -543,16 +551,16 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
                   onPressed: () {
                     context.read<CleanerReviewsCubit>().refresh(_cleanerId!);
                   },
-                  child: const Text('Retry'),
+                  child: Text(AppLocalizations.of(context)!.retry),
                 ),
               ],
             ),
           );
         } else if (state is CleanerReviewsLoaded) {
           if (state.allReviews.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'No reviews yet.',
+                AppLocalizations.of(context)!.noReviewsYet,
                 style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             );
@@ -591,13 +599,34 @@ class _CleanerSelfProfilePageState extends State<CleanerSelfProfilePage>
           Row(
             children: [
               
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey[300],
-                child: Text(
-                  review.reviewerName[0].toUpperCase(),
-                  style: const TextStyle(color: Colors.grey),
-                ),
+              FutureBuilder<Map<String, dynamic>?>(
+                future: review.reviewerId != null
+                    ? AbstractProfileRepo.getInstance().getProfileById(review.reviewerId!)
+                    : Future.value(null),
+                builder: (context, snapshot) {
+                  final reviewerPicture = snapshot.data?['picture'] as String?;
+                  return CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.grey[300],
+                    child: reviewerPicture != null && reviewerPicture.isNotEmpty
+                        ? ClipOval(
+                            child: AppImage(
+                              imageUrl: reviewerPicture,
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                              errorWidget: Text(
+                                review.reviewerName[0].toUpperCase(),
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                          )
+                        : Text(
+                            review.reviewerName[0].toUpperCase(),
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                  );
+                },
               ),
               const SizedBox(width: 12),
               

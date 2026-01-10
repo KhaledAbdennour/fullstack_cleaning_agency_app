@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'EditProfilePage.dart';
+import 'dart:convert';
 import '../widgets/notification_bell_widget.dart';
 import 'data_doctor_page.dart';
-import 'settings_page.dart';
-import 'manage_job_page.dart';
-import 'add-post.dart';
-import 'jobdetails.dart';
+import 'EditProfilePage.dart';
+import 'login.dart';
+import 'support_page.dart';
 import '../logic/cubits/profiles_cubit.dart';
-import '../logic/cubits/client_jobs_cubit.dart';
-import '../data/models/job_model.dart';
+import '../core/services/locale_service.dart';
 import '../utils/image_helper.dart';
 import '../core/debug/debug_logger.dart';
-import '../data/repositories/storage/storage_repo.dart';
 import '../data/repositories/profiles/profile_repo.dart';
+import '../l10n/app_localizations.dart';
+import '../main.dart';
 
 class ClientProfilePage extends StatefulWidget {
   const ClientProfilePage({Key? key}) : super(key: key);
@@ -25,11 +24,11 @@ class ClientProfilePage extends StatefulWidget {
 }
 
 class _ClientProfilePageState extends State<ClientProfilePage> {
-  int _selectedTabIndex = 0;
   int? _clientId;
   String? _avatarUrl;
   bool _isUploadingImage = false;
   final ImagePicker _picker = ImagePicker();
+  bool _notificationsEnabled = true;
 
   @override
   void initState() {
@@ -89,9 +88,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         });
         // #endregion
         
-        if (mounted) {
-          context.read<ClientJobsCubit>().loadClientJobs(userId);
-        }
       } else {
         // #region agent log
         DebugLogger.log('ClientProfilePage', '_loadClientId_NOT_CLIENT', data: {
@@ -140,9 +136,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         });
         // #endregion
         
-        if (mounted) {
-          context.read<ClientJobsCubit>().loadClientJobs(userId);
-        }
       } else {
         // #region agent log
         DebugLogger.log('ClientProfilePage', '_loadClientId_NOT_CLIENT', data: {
@@ -213,32 +206,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     },
   ];
 
-  void _handleEditProfile() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const EditProfileScreen(),
-      ),
-    );
-    // No context usage after Navigator.push - safe
-    
-    if (mounted) {
-      context.read<ProfilesCubit>().loadCurrentUser();
-    }
-  }
-
-  void _handleSettings() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SettingsPage()),
-    );
-  }
-
-  void _handleViewDetails(Map<String, dynamic> job) {
-    
-    
-  }
-
   Future<void> _changePhoto() async {
     if (_clientId == null || _isUploadingImage) return;
 
@@ -280,139 +247,98 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         _isUploadingImage = true;
       });
 
-      String? newImageUrl;
-      
       try {
-        // Upload new image
-        final storageRepo = AbstractStorageRepo.getInstance();
-        newImageUrl = await storageRepo.uploadProfileImage(
-          _clientId!,
-          image.path,
-        );
-
-        if (!mounted) return;
-
-        // Delete old image if it exists (fail silently if file doesn't exist)
-        // Note: deleteProfileImage should not throw, but wrap in try-catch just in case
-        if (_avatarUrl != null && _avatarUrl!.isNotEmpty && _avatarUrl!.startsWith('http')) {
-          try {
-            await storageRepo.deleteProfileImage(_avatarUrl!);
-          } catch (e) {
-            // Ignore all errors from delete - it's not critical if old file can't be deleted
-            // This is expected if the file doesn't exist (e.g., first upload or file was already deleted)
-          }
-        }
-
-        // Update profile with new avatar URL
-        final profileRepo = AbstractProfileRepo.getInstance();
-        final success = await profileRepo.updateAvatarUrl(_clientId!, newImageUrl!);
-
-        if (!mounted) return;
-
-        if (success) {
-          // Update local state first
-          setState(() {
-            _avatarUrl = newImageUrl;
-            _isUploadingImage = false;
-          });
-
-          // Refresh profile state to ensure UI updates with new picture
-          final cubit = context.read<ProfilesCubit>();
-          await cubit.loadCurrentUser();
-
-          // Wait a bit to ensure state is updated
-          await Future.delayed(const Duration(milliseconds: 300));
-
-          if (mounted) {
-            // Force rebuild to show new image
-            setState(() {});
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Profile picture updated successfully!'),
-                backgroundColor: Colors.green,
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
-        } else {
-          setState(() {
-            _isUploadingImage = false;
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Failed to update profile picture'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      } catch (e) {
-        if (!mounted) return;
+        // Convert image to base64 data URL (same approach as post images)
+        final imageFile = File(image.path);
+        final imageBytes = await imageFile.readAsBytes();
+        final base64Image = base64Encode(imageBytes);
         
-        // Check if it's an object-not-found error (file doesn't exist)
-        // This is expected and should be handled silently
-        final errorStr = e.toString().toLowerCase();
-      if (errorStr.contains('object-not-found') || 
-          errorStr.contains('no object exists') ||
-          errorStr.contains('[firebase_storage/object-not-found]')) {
-        // Silently handle - this is expected when old file doesn't exist
-        setState(() {
-          _isUploadingImage = false;
-        });
-        // Still try to update the profile if we have the new image URL from upload
-        // The upload should have succeeded, only the delete failed
-        if (newImageUrl != null && newImageUrl.isNotEmpty) {
-          // Try to update profile with the new image URL (upload succeeded)
-          try {
-            final profileRepo = AbstractProfileRepo.getInstance();
-            final success = await profileRepo.updateAvatarUrl(_clientId!, newImageUrl);
-            
-            if (success) {
-              // Update local state
-              setState(() {
-                _avatarUrl = newImageUrl;
-                _isUploadingImage = false;
-              });
-              
-              // Refresh profile state to show new image
-              final cubit = context.read<ProfilesCubit>();
-              await cubit.loadCurrentUser();
-              
-              if (mounted) {
-                // Force rebuild to show new image
-                setState(() {});
-              }
-            } else {
-              setState(() {
-                _isUploadingImage = false;
-              });
-            }
-          } catch (updateError) {
-            // If profile update also fails, just reset the uploading state
+        final extension = image.path.split('.').last.toLowerCase();
+        String mimeType = 'image/jpeg'; 
+        if (extension == 'png') {
+          mimeType = 'image/png';
+        } else if (extension == 'gif') {
+          mimeType = 'image/gif';
+        } else if (extension == 'webp') {
+          mimeType = 'image/webp';
+        }
+        
+        final imageDataUrl = 'data:$mimeType;base64,$base64Image';
+
+        if (!mounted) return;
+
+        // Update profile with base64 data URL
+        final profileRepo = AbstractProfileRepo.getInstance();
+        print('Updating picture field for user $_clientId with base64 data URL');
+        print('Data URL length: ${imageDataUrl.length}');
+        
+        final success = await profileRepo.updateAvatarUrl(_clientId!, imageDataUrl);
+        print('Update picture field result: $success');
+
+        if (!success) {
+          setState(() {
+            _isUploadingImage = false;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to save picture to database. Please try again.'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+
+        if (!mounted) return;
+
+        // Refresh profile state to get updated picture from database
+        final cubit = context.read<ProfilesCubit>();
+        await cubit.loadCurrentUser();
+
+        // Wait a bit to ensure state is updated
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        if (mounted) {
+          // Get updated user data from cubit state
+          final updatedState = cubit.state;
+          if (updatedState is ProfilesLoaded && updatedState.currentUser != null) {
+            final updatedPicture = updatedState.currentUser!['picture'] as String?;
             setState(() {
+              _avatarUrl = updatedPicture;
+              _isUploadingImage = false;
+            });
+          } else {
+            // Fallback: use the imageDataUrl if state doesn't have it
+            setState(() {
+              _avatarUrl = imageDataUrl;
               _isUploadingImage = false;
             });
           }
-        } else {
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (error) {
+        print('Error processing image: $error');
+        if (mounted) {
           setState(() {
             _isUploadingImage = false;
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to process image: ${error.toString()}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
         }
-        return; // Don't show error message for expected errors
-      }
-      
-        // If it's not an object-not-found error, show error message
-        setState(() {
-          _isUploadingImage = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating profile picture: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     } catch (outerError) {
       // Handle any errors from showing bottom sheet or picking image
@@ -420,6 +346,13 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         setState(() {
           _isUploadingImage = false;
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${outerError.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
     }
   }
@@ -450,9 +383,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     });
     // #endregion
     
-    if (_clientId != null) {
-      context.read<ClientJobsCubit>().loadClientJobs(_clientId!);
-    }
   }
   
   @override
@@ -474,7 +404,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     DebugLogger.log('ClientProfilePage', 'build_CALLED', data: {
       'hypothesisId': 'H1',
       'clientId': _clientId,
-      'selectedTabIndex': _selectedTabIndex,
       'sessionId': 'debug-session',
       'runId': 'run1',
     });
@@ -482,9 +411,9 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     
     // Return full Scaffold so profile page can be used standalone or in HomeScreen
     return Scaffold(
-      backgroundColor: const Color(0xFFE5E7EB),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFE5E7EB),
+        backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
         title: GestureDetector(
@@ -497,28 +426,20 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         ),
         actions: [
           const NotificationBellWidget(),
-          IconButton(
-            icon: const Icon(Icons.settings, color: Color(0xFF6B7280)),
-            onPressed: _handleSettings,
-          ),
         ],
       ),
       body: SingleChildScrollView(
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-          ),
-          child: Column(
-            children: [
+        child: Column(
+          children: [
               _buildProfileHeader(),
               _buildProfileInfo(),
-              const SizedBox(height: 24),
-              _buildTabBar(),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(16),
+                child: _buildSettingsContent(),
+              ),
               const SizedBox(height: 16),
-              _buildTabContent(),
-              const SizedBox(height: 24),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -554,64 +475,61 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
 
         return Column(
           children: [
-            const SizedBox(height: 24),
-            GestureDetector(
-              onTap: _isUploadingImage ? null : _changePhoto,
-              child: Stack(
-                children: [
-                  Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFFE5E7EB),
-                        width: 2,
-                      ),
+            const SizedBox(height: 12),
+            Stack(
+              children: [
+                Container(
+                  width: 130,
+                  height: 130,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3B82F6),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                      width: 2,
                     ),
-                    child: _avatarUrl != null && _avatarUrl!.isNotEmpty
-                        ? ClipOval(
-                            child: AppImage(
-                              imageUrl: _avatarUrl!,
-                              width: 140,
-                              height: 140,
-                              fit: BoxFit.cover,
-                              errorWidget: const Icon(
-                                Icons.person,
-                                size: 70,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Icon(
-                            Icons.person,
-                            size: 70,
-                            color: Colors.white,
-                          ),
                   ),
-                  if (_isUploadingImage)
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Center(
-                          child: const CircularProgressIndicator(
-                            color: Color(0xFF3B82F6),
+                  child: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                      ? ClipOval(
+                          child: AppImage(
+                            imageUrl: _avatarUrl!,
+                            width: 130,
+                            height: 130,
+                            fit: BoxFit.cover,
+                            errorWidget: const Icon(
+                              Icons.person,
+                              size: 65,
+                              color: Colors.white,
+                            ),
                           ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 65,
+                          color: Colors.white,
+                        ),
+                ),
+                if (_isUploadingImage)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: const CircularProgressIndicator(
+                          color: Color(0xFF3B82F6),
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Text(
               displayName,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF1F2937),
               ),
@@ -622,633 +540,334 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     );
   }
 
-  Widget _buildTabBar() {
-    return BlocBuilder<ProfilesCubit, ProfilesState>(
-      builder: (context, state) {
-        bool isClient = true;
-        if (state is ProfilesLoaded && state.currentUser != null) {
-          final userType = state.currentUser!['user_type'] as String?;
-          isClient = userType == 'Client';
-        }
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Row(
-            children: [
-              _buildTab('My Posts', 0),
-            ],
+  Widget _buildSettingsContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Account Section
+        Text(
+          AppLocalizations.of(context)!.account,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF6B7280),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTab(String title, int index) {
-    final bool isSelected = _selectedTabIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedTabIndex = index;
-        });
-        
-        if (index == 0 && _clientId != null) {
-          context.read<ClientJobsCubit>().refresh(_clientId!);
-        }
-      },
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected
-                  ? const Color(0xFF3B82F6)
-                  : const Color(0xFF6B7280),
-            ),
+        ),
+        const SizedBox(height: 8),
+        _buildLanguageTile(),
+        _buildEditProfileTile(),
+        _buildNotificationTile(),
+        const SizedBox(height: 16),
+        // Payment Section
+        Text(
+          AppLocalizations.of(context)!.payment,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF6B7280),
           ),
-          const SizedBox(height: 8),
-          if (isSelected)
-            Container(
-              height: 3,
-              width: 60,
-              decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-
-  Widget _buildTabContent() {
-    return _buildJobPostsList();
-  }
-
-  Widget _buildJobPostsList() {
-    if (_clientId == null) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
-    }
-
-    return BlocBuilder<ClientJobsCubit, ClientJobsState>(
-      builder: (context, state) {
-        if (state is ClientJobsLoading && state is! ClientJobsLoaded) {
-          return const Center(child: CircularProgressIndicator(color: Color(0xFF3B82F6)));
-        } else if (state is ClientJobsError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(state.message),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<ClientJobsCubit>().refresh(_clientId!);
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
-        } else if (state is ClientJobsLoaded) {
-          if (state.jobs.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Text(
-                  'No posts yet. Create your first job posting!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
+        ),
+        const SizedBox(height: 8),
+        _buildTile(
+          icon: Icons.credit_card,
+          title: AppLocalizations.of(context)!.paymentMethods,
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('This functionality is coming soon'),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 2),
               ),
             );
-          }
+          },
+        ),
+        const SizedBox(height: 16),
+        // Support Section
+        Text(
+          AppLocalizations.of(context)!.support,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildTile(
+          icon: Icons.help_outline,
+          title: AppLocalizations.of(context)!.helpSupport,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SupportPage(),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        // Logout Button
+        SizedBox(
+          height: 44,
+          child: ElevatedButton.icon(
+            onPressed: _showLogoutDialog,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF3B82F6).withOpacity(0.1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.logout, color: Color(0xFF3B82F6)),
+            label: Text(
+              AppLocalizations.of(context)!.logout,
+              style: const TextStyle(
+                color: Color(0xFF3B82F6),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-          // Sort jobs by most recent first (postedDate descending) - same as homepage
-          final sortedJobs = List<Job>.from(state.jobs);
-          sortedJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
+  Widget _buildLanguageTile() {
+    final currentLocale = Localizations.localeOf(context);
+    final localeNames = {
+      const Locale('en', ''): 'English',
+      const Locale('fr', ''): 'Français',
+      const Locale('ar', ''): 'العربية',
+    };
 
-          return Column(
-            children: sortedJobs.map((job) {
-              try {
-                
-                if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return _buildJobPostCardFromJob(job);
-              } catch (e, stackTrace) {
-                print('Error building job post card: $e');
-                print('Stack trace: $stackTrace');
-                return const SizedBox.shrink();
-              }
+    return ListTile(
+      leading: const Icon(Icons.language, color: Color(0xFF3B82F6)),
+      title: Text(
+        AppLocalizations.of(context)!.language,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF1F2937),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: Text(
+        localeNames[currentLocale] ?? 'English',
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF3B82F6),
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      onTap: () => _showLanguageDialog(),
+    );
+  }
+
+  void _showLanguageDialog() {
+    final currentLocale = Localizations.localeOf(context);
+    final languages = [
+      {'locale': const Locale('en', ''), 'name': 'English', 'native': 'English'},
+      {'locale': const Locale('fr', ''), 'name': 'French', 'native': 'Français'},
+      {'locale': const Locale('ar', ''), 'name': 'Arabic', 'native': 'العربية'},
+    ];
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(AppLocalizations.of(context)!.language),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: languages.map((lang) {
+              final locale = lang['locale'] as Locale;
+              final isSelected = locale.languageCode == currentLocale.languageCode;
+              return ListTile(
+                title: Text(lang['native'] as String),
+                subtitle: Text(lang['name'] as String),
+                trailing: isSelected
+                    ? const Icon(Icons.check, color: Color(0xFF3B82F6))
+                    : null,
+                onTap: () {
+                  Navigator.pop(context);
+                  _changeLanguage(locale);
+                },
+              );
             }).toList(),
-          );
-        }
-        return const SizedBox.shrink();
+          ),
+        );
       },
     );
   }
 
-  
-  final List<Map<String, dynamic>> cleaningHistory = [
-    {
-      'title': 'Office Building',
-      'date': 'June 5, 2024',
-      'description': 'Standard office cleaning, completed successfully.',
-      'icon': Icons.business,
-      'iconColor': const Color(0xFF3B82F6),
-      'bgColor': const Color(0xFFDBEAFE),
-    },
-    {
-      'title': 'Apartment',
-      'date': 'May 20, 2024',
-      'description': 'Deep cleaning service for a 3-bedroom apartment.',
-      'icon': Icons.apartment,
-      'iconColor': const Color(0xFF3B82F6),
-      'bgColor': const Color(0xFFDBEAFE),
-    },
-    {
-      'title': 'Villa',
-      'date': 'May 10, 2024',
-      'description': 'Full-day cleaning for a large villa, including windows.',
-      'icon': Icons.villa,
-      'iconColor': const Color(0xFF3B82F6),
-      'bgColor': const Color(0xFFDBEAFE),
-    },
-  ];
+  void _changeLanguage(Locale locale) async {
+    await LocaleService.saveLocale(locale);
+    if (!mounted) return;
+    // Find the MyApp widget and update its locale
+    final appState = MyApp.of(context);
+    if (appState != null) {
+      appState.changeLocale(locale);
+    }
+  }
 
-  Widget _buildHistoryList() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Cleaning History',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...cleaningHistory.map(_buildHistoryCard).toList(),
-          const SizedBox(height: 16),
-          Center(
-            child: TextButton(
-              onPressed: () {
-                
-              },
-              child: const Text(
-                'Load More',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-            ),
-          ),
-        ],
+  Widget _buildEditProfileTile() {
+    return ListTile(
+      leading: const Icon(Icons.edit, color: Color(0xFF3B82F6)),
+      title: Text(
+        AppLocalizations.of(context)!.editProfile,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF1F2937),
+          fontWeight: FontWeight.w500,
+        ),
       ),
+      onTap: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EditProfileScreen(),
+          ),
+        );
+        // Refresh profile after editing
+        if (mounted) {
+          context.read<ProfilesCubit>().loadCurrentUser();
+        }
+      },
     );
   }
 
-  Widget _buildHistoryCard(Map<String, dynamic> history) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+  Widget _buildNotificationTile() {
+    return SwitchListTile(
+      secondary: const Icon(Icons.notifications_none, color: Color(0xFF3B82F6)),
+      title: Text(
+        AppLocalizations.of(context)!.notifications,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF1F2937),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      value: _notificationsEnabled,
+      activeColor: const Color(0xFF3B82F6),
+      onChanged: (value) {
+        setState(() {
+          _notificationsEnabled = value;
+        });
+      },
+    );
+  }
+
+  Widget _buildTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      onTap: onTap,
+      leading: Icon(icon, color: const Color(0xFF3B82F6)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 16,
+          color: Color(0xFF1F2937),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: history['bgColor'] as Color,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              history['icon'] as IconData,
-              color: history['iconColor'] as Color,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  history['title'] as String,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  history['date'] as String,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  history['description'] as String,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  
-  final List<Map<String, dynamic>> reviews = [
-    {
-      'name': 'Amina K.',
-      'date': 'June 10, 2024',
-      'rating': 5,
-      'text': 'Fatima was amazing! She left my apartment sparkling clean. Very professional and friendly.',
-      'avatar': 'https://api.dicebear.com/7.x/avataaars/png?seed=amina',
-    },
-    {
-      'name': 'Karim B.',
-      'date': 'May 28, 2024',
-      'rating': 4,
-      'text': 'Great service, very thorough. Would hire again.',
-      'avatar': 'https://api.dicebear.com/7.x/avataaars/png?seed=karim',
-    },
-    {
-      'name': 'Yasmine L.',
-      'date': 'May 15, 2024',
-      'rating': 5,
-      'text': 'Excellent work! My house has never been cleaner. Fatima paid attention to every detail.',
-      'avatar': 'https://api.dicebear.com/7.x/avataaars/png?seed=yasmine',
-      'hasPhotos': true,
-    },
-  ];
-
-  Widget _buildReviewsList() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'All Reviews',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...reviews.map(_buildReviewCard).toList(),
-          const SizedBox(height: 16),
-          Center(
-            child: TextButton(
-              onPressed: () {
-                
-              },
-              child: const Text(
-                'Load More',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewCard(Map<String, dynamic> review) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+  void _showLogoutDialog() {
+    final cubit = context.read<ProfilesCubit>();
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: const Color(0xFFE5E7EB),
-                backgroundImage: NetworkImage(review['avatar'] as String),
-                onBackgroundImageError: (_, __) {},
+              const Icon(Icons.logout, size: 40, color: Color(0xFF3B82F6)),
+              const SizedBox(height: 16),
+              Text(
+                AppLocalizations.of(context)!.logOut,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      review['name'] as String,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
-                      ),
+              const SizedBox(height: 8),
+              Text(
+                AppLocalizations.of(context)!.logOutMessage,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    cubit.logout().then((_) {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Login()),
+                        (route) => false,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(AppLocalizations.of(context)!.loggedOutSuccessfully)),
+                      );
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3B82F6),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      review['date'] as String,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                      ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.yesLogOut,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
                     ),
-                  ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF9FAFB),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    side: const BorderSide(color: Color(0xFFE5E7EB)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.cancel,
+                    style: const TextStyle(
+                      color: Color(0xFF111827),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: List.generate(5, (index) {
-              return Icon(
-                index < (review['rating'] as int)
-                    ? Icons.star
-                    : Icons.star_border,
-                size: 16,
-                color: index < (review['rating'] as int)
-                    ? Colors.amber
-                    : const Color(0xFFD1D5DB),
-              );
-            }),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            review['text'] as String,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF1F2937),
-              height: 1.5,
-            ),
-          ),
-          if (review['hasPhotos'] == true) ...[
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.image,
-                    color: Color(0xFF9CA3AF),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE5E7EB),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.image,
-                    color: Color(0xFF9CA3AF),
-                    size: 24,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildJobPostCardFromJob(Job job) {
-    try {
-      
-      if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      final daysAgo = DateTime.now().difference(job.postedDate).inDays;
-      final daysAgoText = daysAgo == 0 
-          ? 'Today' 
-          : daysAgo == 1 
-              ? 'Yesterday' 
-              : '$daysAgo days ago';
-
-      return InkWell(
-      onTap: () {
-        
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ManageJobPage(job: job),
-          ),
         );
       },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Posted $daysAgoText',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    job.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    job.description,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on_outlined, size: 14, color: Color(0xFF3B82F6)),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          '${job.city}, ${job.country}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF6B7280),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                  ? AppImage(
-                      imageUrl: job.coverImageUrl!,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorWidget: Container(
-                        width: 80,
-                        height: 80,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.image, color: Colors.grey),
-                      ),
-                    )
-                  : Container(
-                      width: 80,
-                      height: 80,
-                      color: Colors.grey[200],
-                      child: const Icon(Icons.image, color: Colors.grey),
-                    ),
-            ),
-          ],
-        ),
-      ),
-    );
-    } catch (e, stackTrace) {
-      print('Error building job post card from job: $e');
-      print('Stack trace: $stackTrace');
-      return const SizedBox.shrink();
-    }
-  }
-
-  Widget _buildJobPostCard(Map<String, dynamic> job) {
-    
-    
-    return InkWell(
-      onTap: () {
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please use the new job card format')),
-        );
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Posted ${job['postedDaysAgo']} days ago',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    job['title'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    job['description'],
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                job['image'],
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 100,
-                    height: 100,
-                    color: const Color(0xFFE5E7EB),
-                    child: const Icon(
-                      Icons.image,
-                      color: Color(0xFF9CA3AF),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

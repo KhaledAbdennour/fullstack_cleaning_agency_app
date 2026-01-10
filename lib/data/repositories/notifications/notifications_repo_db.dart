@@ -3,10 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../core/config/firebase_config.dart';
 import '../../../core/debug/debug_flags.dart';
+import '../../../core/services/notification_service_enhanced.dart';
 import '../../models/notification_item.dart';
 import '../../repositories/profiles/profile_repo.dart';
 import 'notifications_repo.dart';
@@ -221,264 +221,20 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
   
   @override
   Future<List<NotificationItem>> getNotificationsForWorker(String userId) async {
-    print('🔔 [getNotificationsForWorker] START - userId: $userId');
-    try {
-      final snapshot = await FirebaseConfig.firestore
-          .collection(collectionName)
-          .where('user_id', isEqualTo: userId)
-          .where('type', whereIn: [
-            'job_accepted',
-            'job_rejected',
-            'job_completed',
-            'review_added',
-          ])
-          .orderBy('created_at', descending: true)
-          .limit(50)
-          .get();
-      
-      DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Query returned ${snapshot.docs.length} docs');
-      
-      final result = snapshot.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data() as Map);
-        return NotificationItem.fromMap({
-          ...data,
-          'id': doc.id,
-        });
-      }).toList();
-      
-      DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Parsed ${result.length} notifications');
-      return result;
-    } catch (e) {
-      DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Query failed: $e');
-      DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Attempting fallback (no type filter)...');
-      // Fallback if index missing
-      try {
-        final snapshot = await FirebaseConfig.firestore
-            .collection(collectionName)
-            .where('user_id', isEqualTo: userId)
-            .orderBy('created_at', descending: true)
-            .limit(50)
-            .get();
-        
-        DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Fallback query returned ${snapshot.docs.length} docs');
-        
-        final result = snapshot.docs.map((doc) {
-          final data = Map<String, dynamic>.from(doc.data() as Map);
-          final item = NotificationItem.fromMap({
-            ...data,
-            'id': doc.id,
-          });
-          // Filter client-side
-          if (['job_accepted', 'job_rejected', 'job_completed', 'review_added'].contains(item.type)) {
-            return item;
-          }
-          return null;
-        }).whereType<NotificationItem>().toList();
-        
-        DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Filtered to ${result.length} notifications');
-        return result;
-      } catch (e2) {
-        DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Fallback also failed: $e2');
-        // Last resort: no orderBy
-        try {
-          final snapshot = await FirebaseConfig.firestore
-              .collection(collectionName)
-              .where('user_id', isEqualTo: userId)
-              .limit(50)
-              .get();
-          
-          final result = snapshot.docs.map((doc) {
-            final data = Map<String, dynamic>.from(doc.data() as Map);
-            final item = NotificationItem.fromMap({
-              ...data,
-              'id': doc.id,
-            });
-            if (['job_accepted', 'job_rejected', 'job_completed', 'review_added'].contains(item.type)) {
-              return item;
-            }
-            return null;
-          }).whereType<NotificationItem>().toList();
-          
-          result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          DebugFlags.debugPrint('🔔 [getNotificationsForWorker] Last resort returned ${result.length} notifications');
-          return result;
-        } catch (e3) {
-          DebugFlags.debugPrint('🔔 [getNotificationsForWorker] All queries failed: $e3');
-          return [];
-        }
-      }
-    }
+    // Use enhanced service which filters by job interaction
+    return await NotificationServiceEnhanced.getNotificationsForWorker(userId);
   }
   
   @override
   Future<List<NotificationItem>> getNotificationsForAgency(String userId) async {
-    print('🔔 [getNotificationsForAgency] START - userId: $userId');
-    try {
-      final snapshot = await FirebaseConfig.firestore
-          .collection(collectionName)
-          .where('user_id', isEqualTo: userId)
-          .where('type', whereIn: [
-            'job_published',
-            'job_accepted',
-            'job_rejected',
-            'job_completed',
-            'review_added',
-          ])
-          .orderBy('created_at', descending: true)
-          .limit(50)
-          .get();
-      
-      DebugFlags.debugPrint('🔔 [getNotificationsForAgency] Query returned ${snapshot.docs.length} docs');
-      
-      final result = snapshot.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data() as Map);
-        return NotificationItem.fromMap({
-          ...data,
-          'id': doc.id,
-        });
-      }).toList();
-      
-      return result;
-    } catch (e) {
-      DebugFlags.debugPrint('🔔 [getNotificationsForAgency] Query failed: $e');
-      // Fallback if index missing
-      try {
-        final snapshot = await FirebaseConfig.firestore
-            .collection(collectionName)
-            .where('user_id', isEqualTo: userId)
-            .orderBy('created_at', descending: true)
-            .limit(50)
-            .get();
-        
-        final result = snapshot.docs.map((doc) {
-          final data = Map<String, dynamic>.from(doc.data() as Map);
-          final item = NotificationItem.fromMap({
-            ...data,
-            'id': doc.id,
-          });
-          // Filter client-side
-          if (['job_published', 'job_accepted', 'job_rejected', 'job_completed', 'review_added'].contains(item.type)) {
-            return item;
-          }
-          return null;
-        }).whereType<NotificationItem>().toList();
-        
-        DebugFlags.debugPrint('🔔 [getNotificationsForAgency] Fallback returned ${result.length} notifications');
-        return result;
-      } catch (e2) {
-        DebugFlags.debugPrint('🔔 [getNotificationsForAgency] Fallback failed: $e2');
-        // Last resort
-        try {
-          final snapshot = await FirebaseConfig.firestore
-              .collection(collectionName)
-              .where('user_id', isEqualTo: userId)
-              .limit(50)
-              .get();
-          
-          final result = snapshot.docs.map((doc) {
-            final data = Map<String, dynamic>.from(doc.data() as Map);
-            final item = NotificationItem.fromMap({
-              ...data,
-              'id': doc.id,
-            });
-            if (['job_published', 'job_accepted', 'job_rejected', 'job_completed', 'review_added'].contains(item.type)) {
-              return item;
-            }
-            return null;
-          }).whereType<NotificationItem>().toList();
-          
-          result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return result;
-        } catch (e3) {
-          return [];
-        }
-      }
-    }
+    // Use enhanced service which filters by job interaction
+    return await NotificationServiceEnhanced.getNotificationsForAgency(userId);
   }
   
   @override
   Future<List<NotificationItem>> getNotificationsForClient(String userId) async {
-    print('🔔 [getNotificationsForClient] START - userId: $userId');
-    try {
-      final snapshot = await FirebaseConfig.firestore
-          .collection(collectionName)
-          .where('user_id', isEqualTo: userId)
-          .where('type', whereIn: [
-            'job_accepted',
-            'job_rejected',
-            'job_completed',
-            'review_added',
-          ])
-          .orderBy('created_at', descending: true)
-          .limit(50)
-          .get();
-      
-      DebugFlags.debugPrint('🔔 [getNotificationsForClient] Query returned ${snapshot.docs.length} docs');
-      
-      final result = snapshot.docs.map((doc) {
-        final data = Map<String, dynamic>.from(doc.data() as Map);
-        return NotificationItem.fromMap({
-          ...data,
-          'id': doc.id,
-        });
-      }).toList();
-      
-      return result;
-    } catch (e) {
-      DebugFlags.debugPrint('🔔 [getNotificationsForClient] Query failed: $e');
-      // Fallback if index missing
-      try {
-        final snapshot = await FirebaseConfig.firestore
-            .collection(collectionName)
-            .where('user_id', isEqualTo: userId)
-            .orderBy('created_at', descending: true)
-            .limit(50)
-            .get();
-        
-        final result = snapshot.docs.map((doc) {
-          final data = Map<String, dynamic>.from(doc.data() as Map);
-          final item = NotificationItem.fromMap({
-            ...data,
-            'id': doc.id,
-          });
-          // Filter client-side
-          if (['job_accepted', 'job_rejected', 'job_completed', 'review_added'].contains(item.type)) {
-            return item;
-          }
-          return null;
-        }).whereType<NotificationItem>().toList();
-        
-        DebugFlags.debugPrint('🔔 [getNotificationsForClient] Fallback returned ${result.length} notifications');
-        return result;
-      } catch (e2) {
-        DebugFlags.debugPrint('🔔 [getNotificationsForClient] Fallback failed: $e2');
-        // Last resort
-        try {
-          final snapshot = await FirebaseConfig.firestore
-              .collection(collectionName)
-              .where('user_id', isEqualTo: userId)
-              .limit(50)
-              .get();
-          
-          final result = snapshot.docs.map((doc) {
-            final data = Map<String, dynamic>.from(doc.data() as Map);
-            final item = NotificationItem.fromMap({
-              ...data,
-              'id': doc.id,
-            });
-            if (['job_accepted', 'job_rejected', 'job_completed', 'review_added'].contains(item.type)) {
-              return item;
-            }
-            return null;
-          }).whereType<NotificationItem>().toList();
-          
-          result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          return result;
-        } catch (e3) {
-          return [];
-        }
-      }
-    }
+    // Use enhanced service which filters by job ownership
+    return await NotificationServiceEnhanced.getNotificationsForClient(userId);
   }
 
   @override
@@ -631,27 +387,9 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
         payload: jsonEncode(message.data),
       );
 
-      // Store notification if user is logged in
-      final userId = message.data['user_id']?.toString();
-      if (userId != null && userId.isNotEmpty) {
-        final notification = NotificationItem(
-          id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-          title: message.notification?.title ?? '',
-          body: message.notification?.body ?? '',
-          createdAt: message.sentTime ?? DateTime.now(),
-          userId: userId,
-          data: message.data,
-          read: false,
-          type: message.data['type']?.toString(),
-          senderId: message.data['sender_id']?.toString(),
-          jobId: message.data['job_id'] != null
-              ? (message.data['job_id'] is int
-                  ? message.data['job_id'] as int
-                  : int.tryParse(message.data['job_id'].toString()))
-              : null,
-        );
-        await storeReceivedNotification(notification);
-      }
+      // DO NOT store notification here - it's already saved server-side in NotificationServiceEnhanced.createNotification()
+      // Storing here would create duplicates
+      // The notification is already in Firestore, we just need to show the local notification
     } catch (e) {
       print('Error handling foreground message: $e');
     }
@@ -686,44 +424,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // Firebase should already be initialized in main()
   print('Background message: ${message.messageId}');
   
-  // Store notification if possible
-  try {
-      final userId = message.data['user_id']?.toString();
-      if (userId != null && userId.isNotEmpty) {
-        // Initialize Firestore
-        await FirebaseConfig.initialize();
-        
-        final notification = NotificationItem(
-          id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
-          title: message.notification?.title ?? '',
-          body: message.notification?.body ?? '',
-          createdAt: message.sentTime ?? DateTime.now(),
-          userId: userId,
-          data: message.data,
-          read: false,
-          type: message.data['type']?.toString(),
-          senderId: message.data['sender_id']?.toString(),
-          jobId: message.data['job_id'] != null
-              ? (message.data['job_id'] is int
-                  ? message.data['job_id'] as int
-                  : int.tryParse(message.data['job_id'].toString()))
-              : null,
-        );
-        
-        await FirebaseConfig.firestore.collection('notifications').add({
-          'user_id': userId,
-          'title': notification.title,
-          'body': notification.body,
-          'type': notification.type,
-          'sender_id': notification.senderId,
-          'job_id': notification.jobId,
-          'data_json': notification.data,
-          'created_at': Timestamp.fromDate(notification.createdAt),
-          'read': false,
-        });
-      }
-  } catch (e) {
-    print('Error storing background notification: $e');
-  }
+  // DO NOT store notification here - it's already saved server-side in NotificationServiceEnhanced.createNotification()
+  // Storing here would create duplicates
+  // The notification is already in Firestore, we just need to handle the background message
 }
-

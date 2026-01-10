@@ -6,6 +6,7 @@ import 'feature_page.dart';
 import 'experience_page.dart';
 import 'launch_page.dart';
 import '../core/debug/debug_logger.dart';
+import '../l10n/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -191,7 +192,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               height: _currentPage == index ? 10 : 8,
               decoration: BoxDecoration(
                 color: _currentPage == index
-                    ? const Color(0xFF157A6E)
+                    ? const Color(0xFF3B82F6)
                     : const Color(0xFFD1D5DB),
                 shape: BoxShape.circle,
               ),
@@ -203,19 +204,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildNavigationButtons() {
+    final localizations = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
         onPressed: _nextPage,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF157A6E),
+          backgroundColor: const Color(0xFF3B82F6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: Text(
-          _currentPage == 2 ? "Create account" : "Next",
+          _currentPage == 2 ? localizations.createAccount : localizations.next,
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
@@ -227,22 +229,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildSecondaryButton() {
-    String text =
-        _currentPage == 2 ? "I already have an account" : "Skip to login";
+    final localizations = AppLocalizations.of(context)!;
+    final text = _currentPage == 2 ? localizations.iAlreadyHaveAccount : localizations.skipToLogin;
     return SizedBox(
       width: double.infinity,
       height: 48,
       child: OutlinedButton(
         onPressed: _skipToLogin,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFF157A6E)),
+          side: const BorderSide(color: Color(0xFF3B82F6)),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         child: Text(
           text,
           style: const TextStyle(
-            color: Color(0xFF157A6E),
+            color: Color(0xFF3B82F6),
             fontWeight: FontWeight.w600,
           ),
         ),

@@ -348,7 +348,7 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
               userId: review.cleanerId.toString(),
               title: 'New Review Received',
               body: '${review.reviewerName} left you a ${review.rating}-star review.',
-              type: NotificationType.reviewAdded,
+              type: NotificationType.reviewReceived,
               senderId: review.reviewerId?.toString(),
               jobId: review.jobId,
             );

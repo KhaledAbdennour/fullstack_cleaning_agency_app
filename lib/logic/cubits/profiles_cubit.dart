@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/profiles/profile_repo.dart';
+import '../../data/repositories/jobs/jobs_repo.dart';
 import '../../core/debug/debug_logger.dart';
 
 
@@ -178,9 +179,58 @@ class ProfilesCubit extends Cubit<ProfilesState> {
   Future<void> updateProfile(int id, Map<String, dynamic> profileData) async {
     emit(ProfilesLoading());
     try {
-      final success = await _repo.updateProfile(id, profileData);
-      if (success) {
+      // Get current user to compare email/phone
+      final currentUser = await _repo.getCurrentUser();
+      if (currentUser == null) {
+        emit(ProfilesError('User not found'));
+        return;
+      }
+
+      // Validate email uniqueness if email is being changed
+      if (profileData['email'] != null && 
+          profileData['email'] is String && 
+          (profileData['email'] as String).isNotEmpty) {
+        final newEmail = profileData['email'] as String;
+        final currentEmail = currentUser['email'] as String?;
         
+        // Only check if email is different from current email
+        if (newEmail != currentEmail) {
+          final existingEmail = await _repo.getProfileByEmail(newEmail);
+          if (existingEmail != null && existingEmail['id'] != id) {
+            emit(ProfilesError('Email already exists'));
+            return;
+          }
+        }
+      }
+
+      // Validate phone uniqueness if phone is being changed
+      if (profileData['phone'] != null && 
+          profileData['phone'] is String && 
+          (profileData['phone'] as String).isNotEmpty) {
+        final newPhone = profileData['phone'] as String;
+        final currentPhone = currentUser['phone'] as String?;
+        
+        // Only check if phone is different from current phone
+        if (newPhone != currentPhone) {
+          final existingPhone = await _repo.getProfileByPhone(newPhone);
+          if (existingPhone != null && existingPhone['id'] != id) {
+            emit(ProfilesError('Phone number already exists'));
+            return;
+          }
+        }
+      }
+
+      // Filter out null values - Firestore doesn't accept null in update operations
+      final filteredData = <String, dynamic>{};
+      profileData.forEach((key, value) {
+        if (value != null) {
+          filteredData[key] = value;
+        }
+      });
+
+      final success = await _repo.updateProfile(id, filteredData);
+      if (success) {
+        // Reload current user to get updated data
         final user = await _repo.getCurrentUser();
         emit(ProfilesLoaded(user));
       } else {
@@ -199,6 +249,29 @@ class ProfilesCubit extends Cubit<ProfilesState> {
       emit(ProfilesLoaded(null));
     } catch (e) {
       emit(ProfilesError('Logout failed: $e'));
+    }
+  }
+
+  Future<void> deleteAccount(int userId) async {
+    emit(ProfilesLoading());
+    try {
+      // Mark all user's jobs as deleted
+      final jobsRepo = AbstractJobsRepo.getInstance();
+      await jobsRepo.markAllClientJobsAsDeleted(userId);
+      
+      // Delete the profile
+      final success = await _repo.deleteProfile(userId);
+      if (!success) {
+        emit(ProfilesError('Failed to delete account'));
+        return;
+      }
+      
+      // Clear current user session
+      await _repo.clearCurrentUser();
+      emit(LogoutSuccess());
+      emit(ProfilesLoaded(null));
+    } catch (e) {
+      emit(ProfilesError('Account deletion failed: $e'));
     }
   }
 }

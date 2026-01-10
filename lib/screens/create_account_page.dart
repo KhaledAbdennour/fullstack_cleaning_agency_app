@@ -3,14 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'homescreen.dart';
 import 'client_profile_page.dart';
 import '../logic/cubits/profiles_cubit.dart';
 import '../utils/validators.dart';
 import '../utils/algerian_addresses.dart';
 import '../utils/role_based_home.dart';
-import '../data/repositories/storage/storage_repo.dart';
 import '../data/repositories/profiles/profile_repo.dart';
+import '../l10n/app_localizations.dart';
 import 'login.dart';
 
 class CreateAccountPage extends StatefulWidget {
@@ -33,10 +34,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _agencyNameController = TextEditingController();
   final TextEditingController _businessIdController = TextEditingController();
-  final TextEditingController _servicesController = TextEditingController();
   final TextEditingController _hourlyRateController = TextEditingController();
   String experienceLevel = 'Entry';
   String _selectedGender = 'Male';
+  Set<String> _selectedServices = {};
   String? _selectedWilaya;
   String? _selectedBaladiya;
   final ImagePicker _picker = ImagePicker();
@@ -67,9 +68,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             }
           },
         ),
-        title: const Text(
-          'Create Account Page',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)!.createAccountPage,
+          style: const TextStyle(
             color: Color(0xFF6B7280),
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -167,8 +168,10 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                     value: _selectedWilaya,
                     decoration: InputDecoration(
                       labelText: 'Wilaya (Province)',
-                      hintText: 'Select your wilaya',
+                      hintText: AppLocalizations.of(context)!.selectYourWilaya,
                       prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF6B7280)),
+                      floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+                      labelStyle: const TextStyle(color: Color(0xFF6B7280)),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -212,6 +215,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                         hintText: 'Select your baladiya (optional)',
                         hintMaxLines: 1,
                         prefixIcon: const Icon(Icons.location_city_outlined, color: Color(0xFF6B7280)),
+                        floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+                        labelStyle: const TextStyle(color: Color(0xFF6B7280)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -307,45 +312,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   const SizedBox(height: 20),
 
                   _buildUploadTile(
-                    title: 'Upload Profile Picture',
-                    subtitle: 'Upload a clear photo',
+                    title: AppLocalizations.of(context)!.uploadProfilePicture,
+                    subtitle: _selectedProfileImage != null 
+                        ? AppLocalizations.of(context)!.photoSelected 
+                        : AppLocalizations.of(context)!.uploadAClearPhoto,
                     icon: Icons.photo_camera_outlined,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Profile picture upload coming soon!')),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-
-                  const Text(
-                    'Identity Verification',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF111827),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'For the safety of our community, we require ID verification.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildUploadTile(
-                    title: 'Upload ID',
-                    subtitle: 'Front and back of your ID',
-                    icon: Icons.badge_outlined,
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('ID verification upload coming soon!')),
-                      );
-                    },
+                    onTap: _pickProfileImage,
                   ),
                   const SizedBox(height: 24),
                   
@@ -404,7 +376,6 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         _bioController.dispose();
         _agencyNameController.dispose();
         _businessIdController.dispose();
-        _servicesController.dispose();
         _hourlyRateController.dispose();
         super.dispose();
   }
@@ -429,7 +400,8 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
       inputFormatters = [FilteringTextInputFormatter.digitsOnly];
     } else if (isPhone) {
       inputFormatters = [
-        FilteringTextInputFormatter.allow(RegExp(r'^\+?[\d]*$')),
+        FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(10),
       ];
     } else if (isName) {
       inputFormatters = [
@@ -484,11 +456,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             ? Icon(icon, color: const Color(0xFF6B7280))
             : null,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+        labelStyle: const TextStyle(color: Color(0xFF6B7280)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF047857), width: 1.5),
+          borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -508,11 +482,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         hintText: 'mm/dd/yyyy',
         suffixIcon: const Icon(Icons.calendar_today_outlined,
             color: Color(0xFF6B7280)),
+        floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+        labelStyle: const TextStyle(color: Color(0xFF6B7280)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF047857), width: 1.5),
+          borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -525,6 +501,24 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           initialDate: DateTime(2000),
           firstDate: DateTime(1900),
           lastDate: DateTime.now(),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                colorScheme: const ColorScheme.light(
+                  primary: Color(0xFF3B82F6), // Header background
+                  onPrimary: Colors.white, // Header text
+                  onSurface: Color(0xFF111827), // Calendar text
+                  surface: Colors.white,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFF3B82F6), // Buttons
+                  ),
+                ),
+              ),
+              child: child!,
+            );
+          },
         );
         if (pickedDate != null) {
           setState(() {
@@ -562,12 +556,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: _selectedGender == 'Male'
-                        ? const Color(0xFFD1FAE5)
+                        ? const Color(0xFF3B82F6).withOpacity(0.1)
                         : const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _selectedGender == 'Male'
-                          ? const Color(0xFF047857)
+                          ? const Color(0xFF3B82F6)
                           : const Color(0xFFE5E7EB),
                     ),
                   ),
@@ -579,7 +573,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             ? Icons.radio_button_checked
                             : Icons.radio_button_off,
                         color: _selectedGender == 'Male'
-                            ? const Color(0xFF047857)
+                            ? const Color(0xFF3B82F6)
                             : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 8),
@@ -607,12 +601,12 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
                     color: _selectedGender == 'Female'
-                        ? const Color(0xFFD1FAE5)
+                        ? const Color(0xFF3B82F6).withOpacity(0.1)
                         : const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: _selectedGender == 'Female'
-                          ? const Color(0xFF047857)
+                          ? const Color(0xFF3B82F6)
                           : const Color(0xFFE5E7EB),
                     ),
                   ),
@@ -624,7 +618,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             ? Icons.radio_button_checked
                             : Icons.radio_button_off,
                         color: _selectedGender == 'Female'
-                            ? const Color(0xFF047857)
+                            ? const Color(0xFF3B82F6)
                             : const Color(0xFF9CA3AF),
                       ),
                       const SizedBox(width: 8),
@@ -725,13 +719,40 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
   }
 
   Future<void> _pickProfileImage() async {
+    if (_isUploadingImage) return;
+
     try {
+      // Show options to pick from gallery or camera
+      final ImageSource? source = await showModalBottomSheet<ImageSource>(
+        context: context,
+        builder: (context) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (source == null || !mounted) return;
+
       final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
+        source: source,
         maxWidth: 800,
         maxHeight: 800,
         imageQuality: 85,
       );
+
       if (image != null && mounted) {
         setState(() {
           _selectedProfileImage = image;
@@ -747,6 +768,82 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
         );
       }
     }
+  }
+
+  Widget _buildServicesCheckboxes() {
+    final services = ['Home', 'Office', 'Industrial', 'Specialty'];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Services Offered *',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: services.map((service) {
+            final isSelected = _selectedServices.contains(service);
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedServices.remove(service);
+                  } else {
+                    _selectedServices.add(service);
+                  }
+                });
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF3B82F6).withOpacity(0.1)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF3B82F6)
+                        : const Color(0xFFE5E7EB),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                      color: isSelected
+                          ? const Color(0xFF3B82F6)
+                          : const Color(0xFF9CA3AF),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      service,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected
+                            ? const Color(0xFF3B82F6)
+                            : const Color(0xFF111827),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
   }
 
   Widget _buildUploadTile({
@@ -821,11 +918,11 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                   const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFFD1FAE5)
+                    ? const Color(0xFF3B82F6).withOpacity(0.1)
                     : const Color(0xFFF3F4F6),
                 border: Border.all(
                   color: isSelected
-                      ? const Color(0xFF047857)
+                      ? const Color(0xFF3B82F6)
                       : const Color(0xFFE5E7EB),
                 ),
                 borderRadius: BorderRadius.circular(10),
@@ -837,7 +934,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                         ? Icons.radio_button_checked
                         : Icons.radio_button_off,
                     color: isSelected
-                        ? const Color(0xFF047857)
+                        ? const Color(0xFF3B82F6)
                         : const Color(0xFF9CA3AF),
                   ),
                   const SizedBox(width: 12),
@@ -884,6 +981,50 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           hint: 'Enter registration ID',
           validator: (value) => Validators.validateBusinessId(value),
         ),
+        const SizedBox(height: 16),
+        _buildServicesCheckboxes(),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Flexible(
+              flex: 1,
+              child: DropdownButtonFormField<String>(
+                value: experienceLevel,
+                decoration: InputDecoration(
+                  labelText: 'Experience Level',
+                  floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+                  labelStyle: const TextStyle(color: Color(0xFF6B7280)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Entry', child: Text('Entry')),
+                  DropdownMenuItem(value: 'Mid', child: Text('Mid')),
+                  DropdownMenuItem(value: 'Senior', child: Text('Senior')),
+                ],
+                onChanged: (value) =>
+                    setState(() => experienceLevel = value!),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              flex: 1,
+              child: _buildTextField(
+                controller: _hourlyRateController,
+                label: 'Hourly Rate (DZD)',
+                hint: 'e.g., 3000',
+                isInteger: true,
+                isPhone: true,
+                validator: (value) => Validators.validateHourlyRate(value),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -901,12 +1042,7 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
           ),
         ),
         const SizedBox(height: 12),
-        _buildTextField(
-          controller: _servicesController,
-          label: 'Services Offered',
-          hint: 'E.g., Deep Cleaning, Office Cleaning...',
-          validator: (value) => Validators.validateServices(value),
-        ),
+        _buildServicesCheckboxes(),
         const SizedBox(height: 16),
         Row(
           children: [
@@ -916,8 +1052,13 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                 value: experienceLevel,
                 decoration: InputDecoration(
                   labelText: 'Experience Level',
+                  floatingLabelStyle: const TextStyle(color: Color(0xFF3B82F6)),
+                  labelStyle: const TextStyle(color: Color(0xFF6B7280)),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Color(0xFF3B82F6), width: 1.5),
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                 ),
@@ -950,48 +1091,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   Widget _buildCreateButton() {
     return BlocListener<ProfilesCubit, ProfilesState>(
-      listener: (context, state) async {
+      listener: (context, state) {
         if (state is SignupSuccess) {
-          // Upload profile picture if selected (async, non-blocking)
-          if (_selectedProfileImage != null && state.user['id'] != null) {
-            final userId = state.user['id'] as int;
-            try {
-              setState(() {
-                _isUploadingImage = true;
-              });
-              
-              final storageRepo = AbstractStorageRepo.getInstance();
-              final imageUrl = await storageRepo.uploadProfileImage(
-                userId,
-                _selectedProfileImage!.path,
-              );
-              
-              // Update profile with avatar URL
-              final profileRepo = AbstractProfileRepo.getInstance();
-              await profileRepo.updateAvatarUrl(userId, imageUrl);
-              
-              if (mounted) {
-                setState(() {
-                  _isUploadingImage = false;
-                });
-              }
-            } catch (e) {
-              // Image upload failed, but account is created - show warning
-              if (mounted) {
-                setState(() {
-                  _isUploadingImage = false;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Account created, but profile picture upload failed: $e'),
-                    backgroundColor: Colors.orange,
-                    duration: const Duration(seconds: 5),
-                  ),
-                );
-              }
-            }
-          }
-          
+          // Profile picture is now included in the initial signup, no need to upload separately
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -1022,10 +1124,53 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
             child: ElevatedButton(
               onPressed: (isLoading || _isUploadingImage)
                   ? null
-                  : () {
+                  : () async {
                       if (_formKey.currentState!.validate()) {
                         
                         final fullName = _fullNameController.text.trim().replaceAll(RegExp(r'\s+'), ' ');
+                        
+                        // Convert profile picture to base64 if selected
+                        String? pictureDataUrl;
+                        if (_selectedProfileImage != null) {
+                          try {
+                            setState(() {
+                              _isUploadingImage = true;
+                            });
+                            
+                            final imageFile = File(_selectedProfileImage!.path);
+                            final imageBytes = await imageFile.readAsBytes();
+                            final base64Image = base64Encode(imageBytes);
+                            
+                            final extension = _selectedProfileImage!.path.split('.').last.toLowerCase();
+                            String mimeType = 'image/jpeg'; 
+                            if (extension == 'png') {
+                              mimeType = 'image/png';
+                            } else if (extension == 'gif') {
+                              mimeType = 'image/gif';
+                            } else if (extension == 'webp') {
+                              mimeType = 'image/webp';
+                            }
+                            
+                            pictureDataUrl = 'data:$mimeType;base64,$base64Image';
+                            
+                            setState(() {
+                              _isUploadingImage = false;
+                            });
+                          } catch (e) {
+                            setState(() {
+                              _isUploadingImage = false;
+                            });
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error processing profile picture: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                            return;
+                          }
+                        }
                         
                         final profileData = <String, dynamic>{
                           'username': _usernameController.text.trim(),
@@ -1039,12 +1184,22 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                           'bio': _bioController.text.trim(),
                           'user_type': selectedRole,
                         };
+                        
+                        // Add profile picture if available
+                        if (pictureDataUrl != null) {
+                          profileData['picture'] = pictureDataUrl;
+                        }
 
                         if (selectedRole == 'Agency') {
                           profileData['agency_name'] =
                               _agencyNameController.text.trim();
                           profileData['business_id'] =
                               _businessIdController.text.trim();
+                          profileData['services'] =
+                              _selectedServices.join(', ');
+                          profileData['experience_level'] = experienceLevel;
+                          profileData['hourly_rate'] =
+                              _hourlyRateController.text.trim();
                           
                           if (profileData['bio'] == null || (profileData['bio'] as String).isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -1055,9 +1210,19 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             );
                             return;
                           }
+                          
+                          if (_selectedServices.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please select at least one service'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
                         } else if (selectedRole == 'Individual Cleaner') {
                           profileData['services'] =
-                              _servicesController.text.trim();
+                              _selectedServices.join(', ');
                           profileData['experience_level'] = experienceLevel;
                           profileData['hourly_rate'] =
                               _hourlyRateController.text.trim();
@@ -1071,16 +1236,28 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
                             );
                             return;
                           }
+                          
+                          if (_selectedServices.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please select at least one service'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            return;
+                          }
                         }
 
                         context.read<ProfilesCubit>().signup(profileData);
                       }
                     },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF047857),
+                backgroundColor: const Color(0xFF3B82F6),
+                disabledBackgroundColor: const Color(0xFF3B82F6).withOpacity(0.6),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
+                elevation: 0,
               ),
               child: (isLoading || _isUploadingImage)
                   ? const SizedBox(

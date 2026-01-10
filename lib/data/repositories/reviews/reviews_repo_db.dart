@@ -316,13 +316,13 @@ class ReviewsDB extends AbstractReviewsRepo {
         // Review is already saved, so we continue
       }
 
-      // Step 6: Send notification to reviewee
+      // Step 6: Send notification to reviewee (cleaner/agency receives review)
       try {
         await NotificationServiceEnhanced.createNotification(
           userId: revieweeId,
           title: 'New Review Received',
           body: 'You received a $rating-star review.',
-          type: NotificationType.reviewAdded,
+          type: NotificationType.reviewReceived,
           senderId: reviewerId,
           jobId: jobId,
         );

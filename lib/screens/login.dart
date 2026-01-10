@@ -43,20 +43,6 @@ class _LoginState extends State<Login> {
   }
 
   
-  void _handleGoogleLogin() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google login coming soon!')),
-    );
-  }
-
-  
-  void _handleFacebookLogin() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Facebook login coming soon!')),
-    );
-  }
-
-  
 void _handleCreateAccount() {
   Navigator.push(
     context,
@@ -104,12 +90,6 @@ void _handleCreateAccount() {
                       const SizedBox(height: 24),
                       _buildLoginButton(state is ProfilesLoading),
                       const SizedBox(height: 24),
-                      _buildDivider(),
-                      const SizedBox(height: 24),
-                      _buildGoogleButton(),
-                      const SizedBox(height: 16),
-                      _buildFacebookButton(),
-                      const SizedBox(height: 24),
                       _buildCreateAccountText(),
                       const SizedBox(height: 40),
                     ],
@@ -129,7 +109,7 @@ void _handleCreateAccount() {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: const Color(0xFF6BA89A),
+        color: const Color(0xFF3B82F6),
         borderRadius: BorderRadius.circular(8),
       ),
       child: const Column(
@@ -264,14 +244,14 @@ void _handleCreateAccount() {
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: _handleForgotPassword,
-        child: const Text(
-          'Forgot Password?',
-          style: TextStyle(
-            color: Color(0xFF4299E1),
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+          child: const Text(
+            'Forgot Password?',
+            style: TextStyle(
+              color: Color(0xFF3B82F6),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
       ),
     );
   }
@@ -285,7 +265,7 @@ void _handleCreateAccount() {
       child: ElevatedButton(
         onPressed: isLoading ? null : _handleLogin,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4299E1),
+          backgroundColor: const Color(0xFF3B82F6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
@@ -313,99 +293,6 @@ void _handleCreateAccount() {
   }
 
   
-  Widget _buildDivider() {
-    return Row(
-      children: [
-        Expanded(
-          child: Divider(
-            color: Colors.grey[300],
-            thickness: 1,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Text(
-            'OR',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Divider(
-            color: Colors.grey[300],
-            thickness: 1,
-          ),
-        ),
-      ],
-    );
-  }
-
-  
-  Widget _buildGoogleButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton.icon(
-        onPressed: _handleGoogleLogin,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey[300]!),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        icon: Image.network(
-          'https://www.google.com/favicon.ico',
-          width: 20,
-          height: 20,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.login, color: Colors.grey);
-          },
-        ),
-        label: const Text(
-          'Login with Google',
-          style: TextStyle(
-            color: Color(0xFF2D3748),
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  
-  Widget _buildFacebookButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton.icon(
-        onPressed: _handleFacebookLogin,
-        style: OutlinedButton.styleFrom(
-          side: BorderSide(color: Colors.grey[300]!),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        icon: const Icon(
-          Icons.facebook,
-          color: Color(0xFF1877F2),
-          size: 24,
-        ),
-        label: const Text(
-          'Login with Facebook',
-          style: TextStyle(
-            color: Color(0xFF2D3748),
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  
   Widget _buildCreateAccountText() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -427,7 +314,7 @@ void _handleCreateAccount() {
           child: const Text(
             'Create one now',
             style: TextStyle(
-              color: Color(0xFF4299E1),
+              color: Color(0xFF3B82F6),
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
