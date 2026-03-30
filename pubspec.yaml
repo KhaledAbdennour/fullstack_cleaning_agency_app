@@ -1,5 +1,5 @@
 name: mob_dev_project
-description: "A new Flutter project."
+description: "CleanSpace mobile application for clients, cleaners, and agencies."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.2
+  sdk: ">=3.0.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -54,6 +54,7 @@ dependencies:
   get_it: ^7.6.4
   cloud_functions: ^4.6.6
   image: ^4.3.0
+  firebase_crashlytics: ^3.5.7
 
 dev_dependencies:
   flutter_test:
@@ -65,6 +66,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  integration_test:
+    sdk: flutter
+  mocktail: ^1.0.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

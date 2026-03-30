@@ -38,12 +38,11 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Use safe type helper to get cleaner ID
+
     _cleanerId = readInt(widget.cleaner['id']);
 
     _loadRating();
     if (_cleanerId != null) {
-      // Load history and reviews when tab is selected
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _cleanerId != null) {
           context.read<CleanerHistoryCubit>().loadHistory(_cleanerId!);
@@ -55,7 +54,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
 
   Future<void> _loadRating() async {
     if (_cleanerId == null) {
-      // Fallback to profile rating or default to 0.0
       final profileRating = widget.cleaner['rating'] as num?;
       setState(() {
         _rating = profileRating?.toDouble() ?? 0.0;
@@ -80,7 +78,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
         });
       }
     } catch (e) {
-      // Fallback to profile rating or default to 0.0
       final profileRating = widget.cleaner['rating'] as num?;
       if (mounted) {
         setState(() {
@@ -189,18 +186,13 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               type: BottomNavigationBarType.fixed,
               selectedItemColor: const Color(0xFF3B82F6),
               unselectedItemColor: Colors.grey,
-              currentIndex:
-                  1, // Search tab is highlighted since we're viewing a cleaner profile
+              currentIndex: 1,
               onTap: (index) {
-                // Pop back to HomeScreen and navigate to the correct tab
                 if (Navigator.of(context).canPop()) {
-                  // Pop back to HomeScreen
                   Navigator.of(context).pop();
 
-                  // Wait a moment for navigation to complete, then replace with HomeScreen at correct tab
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (context.mounted) {
-                      // Replace current route with HomeScreen at the correct tab
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
                           builder: (context) =>
@@ -210,7 +202,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                     }
                   });
                 } else {
-                  // No route to pop, push HomeScreen with correct tab
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(
                       builder: (context) => HomeScreen(initialTabIndex: index),
@@ -330,7 +321,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
           setState(() {
             _selectedTab = index;
           });
-          // Load data when tab is selected
+
           if (_cleanerId != null) {
             if (index == 1) {
               context.read<CleanerHistoryCubit>().loadHistory(_cleanerId!);
@@ -344,9 +335,8 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
           decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(
-                color: isSelected
-                    ? const Color(0xFF3B82F6)
-                    : Colors.transparent,
+                color:
+                    isSelected ? const Color(0xFF3B82F6) : Colors.transparent,
                 width: 2,
               ),
             ),
@@ -583,7 +573,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item.title ?? AppLocalizations.of(context)!.cleaningJob,
+                  item.title,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -744,7 +734,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '${'⭐' * review.rating.floor()}${'☆' * (5 - review.rating.floor())}',
+                          '${'' * review.rating.floor()}${'' * (5 - review.rating.floor())}',
                           style: const TextStyle(fontSize: 14),
                         ),
                       ],
@@ -891,8 +881,7 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   Widget _buildProfileImage() {
-    final imageUrl =
-        widget.cleaner['image'] as String? ??
+    final imageUrl = widget.cleaner['image'] as String? ??
         widget.cleaner['picture'] as String?;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return AppImage(
@@ -911,10 +900,8 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   String _getAgeDisplay() {
-    // Try to get birthdate from profileData first, then fallback to direct cleaner data
     final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
-    final birthdate =
-        profileData?['birthdate'] as String? ??
+    final birthdate = profileData?['birthdate'] as String? ??
         widget.cleaner['birthdate'] as String?;
 
     if (birthdate != null && birthdate.isNotEmpty) {
@@ -924,7 +911,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
       }
     }
 
-    // Fallback to age field if birthdate calculation fails
     final ageString = widget.cleaner['age'] as String?;
     if (ageString != null && ageString.isNotEmpty) {
       return '$ageString years';
@@ -934,7 +920,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   String _getPhoneDisplay() {
-    // Try to get phone from profileData first, then fallback to direct cleaner data
     final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
     final phone =
         profileData?['phone'] as String? ?? widget.cleaner['phone'] as String?;
@@ -947,19 +932,15 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   String _getExperienceDisplay() {
-    // Try to get experience_level from profileData first, then fallback to direct cleaner data
     final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
-    final experienceLevel =
-        profileData?['experience_level'] as String? ??
+    final experienceLevel = profileData?['experience_level'] as String? ??
         widget.cleaner['experience_level'] as String?;
 
     if (experienceLevel != null && experienceLevel.isNotEmpty) {
-      // Capitalize first letter
       return experienceLevel[0].toUpperCase() +
           experienceLevel.substring(1).toLowerCase();
     }
 
-    // Fallback to experience years if available
     final experienceYears = widget.cleaner['experience'] as String?;
     if (experienceYears != null && experienceYears.isNotEmpty) {
       return experienceYears;
@@ -969,16 +950,13 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   String _getHourlyRateDisplay() {
-    // Try to get hourly_rate from profileData first, then fallback to direct cleaner data
     final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
-    final hourlyRate =
-        profileData?['hourly_rate'] as String? ??
+    final hourlyRate = profileData?['hourly_rate'] as String? ??
         widget.cleaner['hourly_rate'] as String? ??
         profileData?['hourlyRate'] as String? ??
         widget.cleaner['hourlyRate'] as String?;
 
     if (hourlyRate != null && hourlyRate.isNotEmpty) {
-      // Format as "XXX DZD/hr" if it's a number
       final rateValue = double.tryParse(hourlyRate);
       if (rateValue != null) {
         return '${rateValue.toStringAsFixed(0)} DZD/hr';
@@ -990,13 +968,11 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   bool _hasAgency() {
-    // Check if cleaner has an agency
     final agency = widget.cleaner['agency'] as String?;
     return agency != null && agency.isNotEmpty;
   }
 
   String _getAgencyDisplay() {
-    // Try to get agency from cleaner data
     final agency = widget.cleaner['agency'] as String?;
 
     if (agency != null && agency.isNotEmpty) {
@@ -1007,10 +983,8 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
   }
 
   Widget _buildServicesList() {
-    // Try to get services from profileData first, then fallback to direct cleaner data
     final profileData = widget.cleaner['profileData'] as Map<String, dynamic>?;
-    final servicesString =
-        profileData?['services'] as String? ??
+    final servicesString = profileData?['services'] as String? ??
         widget.cleaner['services'] as String?;
 
     if (servicesString == null || servicesString.isEmpty) {
@@ -1027,7 +1001,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
       );
     }
 
-    // Split comma-separated services
     final services = servicesString
         .split(',')
         .map((s) => s.trim())
@@ -1048,7 +1021,6 @@ class _CleanerProfilePageState extends State<CleanerProfilePage> {
       );
     }
 
-    // Map service names to icons
     IconData getServiceIcon(String service) {
       final lowerService = service.toLowerCase();
       if (lowerService.contains('home') ||

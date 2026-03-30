@@ -16,7 +16,7 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
   @override
   void initState() {
     super.initState();
-    // Load listings to get agencies
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<ListingsCubit>().loadListings();
@@ -60,14 +60,13 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
               ),
             );
           } else if (state is ListingsLoaded) {
-            // Get all agencies and sort by rating descending
             final allAgencies = List<Map<String, dynamic>>.from(
               state.topAgencies,
             );
             allAgencies.sort((a, b) {
               final ratingA = (a['rating'] as num?)?.toDouble() ?? 0.0;
               final ratingB = (b['rating'] as num?)?.toDouble() ?? 0.0;
-              return ratingB.compareTo(ratingA); // Higher rating first
+              return ratingB.compareTo(ratingA);
             });
 
             if (allAgencies.isEmpty) {
@@ -127,7 +126,6 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Agency logo/image
               Container(
                 width: 60,
                 height: 60,
@@ -156,7 +154,6 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                 ),
               ),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +177,6 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-
                     Row(
                       children: [
                         const Icon(
@@ -202,7 +198,6 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -224,7 +219,6 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -248,7 +242,6 @@ class _AgenciesListPageState extends State<AgenciesListPage> {
             ],
           ),
           const SizedBox(height: 12),
-
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

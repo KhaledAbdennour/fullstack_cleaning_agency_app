@@ -1,0 +1,19 @@
+Participant,Task,Success,Time_Seconds,Notes
+Participant 1,Account Creation,Yes,45,Completed successfully, minor confusion with password requirements
+Participant 1,Post Job Listing,Yes,180,Found posting feature quickly, took time to fill all fields
+Participant 1,Browse Jobs,Yes,120,Filter options not immediately obvious, browsed manually
+Participant 1,Apply to Job,Partial,150,Application submitted but unclear confirmation message
+Participant 1,Manage Notifications,Yes,90,Notifications clear, badge count updated correctly
+Participant 1,Edit Profile,Partial,200,Photo upload failed silently, other fields saved successfully
+Participant 2,Account Creation,Yes,60,Slight confusion with email format validation
+Participant 2,Post Job Listing,Yes,210,Required to think about job details, form was clear
+Participant 2,Browse Jobs,Yes,180,Used filters successfully after exploring, found relevant jobs
+Participant 2,Apply to Job,Yes,120,Clear application process, good confirmation
+Participant 2,Manage Notifications,Partial,100,Badge count did not update immediately after reading
+Participant 2,Edit Profile,Partial,190,Photo upload failed, profile text fields worked well
+Participant 3,Account Creation,Yes,30,Very quick, familiar with registration patterns
+Participant 3,Post Job Listing,Yes,150,Efficient use of form, understood all fields
+Participant 3,Browse Jobs,Yes,90,Quickly found and used filters, efficient navigation
+Participant 3,Apply to Job,Yes,100,Straightforward process, appreciated clear UI
+Participant 3,Manage Notifications,Yes,75,All features worked as expected
+Participant 3,Edit Profile,Yes,140,Photo upload worked, minor text sizing issue on small screen

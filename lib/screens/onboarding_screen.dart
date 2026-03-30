@@ -32,7 +32,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // #region agent log
       DebugLogger.log(
         'OnboardingScreen',
         '_nextPage_COMPLETED',
@@ -44,14 +43,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'runId': 'run1',
         },
       );
-      // #endregion
 
-      // Mark onboarding as seen when user completes it
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('has_seen_onboarding', true);
 
-        // #region agent log
         final verified = prefs.getBool('has_seen_onboarding') ?? false;
         DebugLogger.log(
           'OnboardingScreen',
@@ -64,9 +60,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'runId': 'run1',
           },
         );
-        // #endregion
       } catch (e) {
-        // #region agent log
         DebugLogger.error(
           'OnboardingScreen',
           '_nextPage_SET_FLAG_ERROR',
@@ -78,7 +72,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             'runId': 'run1',
           },
         );
-        // #endregion
       }
 
       if (mounted) {
@@ -87,15 +80,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           MaterialPageRoute(builder: (context) => const CreateAccountPage()),
         );
       }
-    }
-  }
-
-  void _previousPage() {
-    if (_currentPage > 0) {
-      _controller.previousPage(
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
     }
   }
 
@@ -110,7 +94,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _skipToLogin() async {
-    // #region agent log
     DebugLogger.log(
       'OnboardingScreen',
       '_skipToLogin_CALLED',
@@ -120,14 +103,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
-    // Mark onboarding as seen
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('has_seen_onboarding', true);
 
-      // #region agent log
       final verified = prefs.getBool('has_seen_onboarding') ?? false;
       DebugLogger.log(
         'OnboardingScreen',
@@ -140,9 +120,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'runId': 'run1',
         },
       );
-      // #endregion
     } catch (e) {
-      // #region agent log
       DebugLogger.error(
         'OnboardingScreen',
         '_skipToLogin_SET_FLAG_ERROR',
@@ -154,7 +132,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'runId': 'run1',
         },
       );
-      // #endregion
     }
 
     if (mounted) {

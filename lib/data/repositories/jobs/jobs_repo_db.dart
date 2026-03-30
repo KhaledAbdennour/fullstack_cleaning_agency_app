@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/config/firebase_config.dart';
 import '../../../core/services/notification_backend_service.dart';
@@ -14,40 +12,8 @@ import 'jobs_repo.dart';
 
 class JobsDB extends AbstractJobsRepo {
   static const String collectionName = 'jobs';
-  static const String _logPath =
-      'c:\\Users\\wailo\\Desktop\\mob_dev_project\\.cursor\\debug.log';
 
-  void _agentLog(
-    String hypothesisId,
-    String message,
-    Map<String, dynamic> data,
-  ) {
-    // #region agent log
-    try {
-      final logFile = File(_logPath);
-      logFile.parent.createSync(recursive: true);
-      final logLine = jsonEncode({
-        'sessionId': 'debug-session',
-        'runId': 'run1',
-        'hypothesisId': hypothesisId,
-        'location': 'jobs_repo_db.dart',
-        'message': message,
-        'data': data,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
-      logFile.writeAsStringSync('$logLine\n', mode: FileMode.append);
-    } catch (e) {
-      // fallback to console so we still get runtime evidence
-      print(
-        'agentLog jobs_repo_db.dart [$hypothesisId] $message $data (log write failed: $e)',
-      );
-    }
-    // #endregion
-  }
-
-  // Keep SQL code for reference
-  static const String sqlCode =
-      '''
+  static const String sqlCode = '''
     CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -76,25 +42,22 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<List<Job>> getActiveJobsForAgency(int agencyId) async {
     try {
-      // Fetch without orderBy to avoid composite index; filter client-side
       final jobsSnapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('agency_id', isEqualTo: agencyId)
           .where('client_id', isNull: true)
           .get();
 
-      // Also get jobs where agency has bookings (in progress OR pending)
       final bookingsSnapshot = await FirebaseConfig.firestore
           .collection('bookings')
           .where('provider_id', isEqualTo: agencyId)
           .where(
-            'status',
-            whereIn: [
-              BookingStatus.inProgress.name,
-              BookingStatus.pending.name,
-            ],
-          )
-          .get();
+        'status',
+        whereIn: [
+          BookingStatus.inProgress.name,
+          BookingStatus.pending.name,
+        ],
+      ).get();
 
       final bookingJobIds = bookingsSnapshot.docs
           .map((doc) => doc.data()['job_id'] as int? ?? 0)
@@ -103,7 +66,6 @@ class JobsDB extends AbstractJobsRepo {
 
       final allJobs = <Job>[];
 
-      // Add agency-owned jobs
       for (final doc in jobsSnapshot.docs) {
         try {
           final data = doc.data();
@@ -119,7 +81,6 @@ class JobsDB extends AbstractJobsRepo {
         }
       }
 
-      // Add jobs with bookings
       if (bookingJobIds.isNotEmpty) {
         final bookedJobsSnapshot = await FirebaseConfig.firestore
             .collection(collectionName)
@@ -134,9 +95,7 @@ class JobsDB extends AbstractJobsRepo {
             final data = doc.data();
             data['id'] = int.tryParse(doc.id) ?? 0;
             final job = Job.fromMap(data);
-            // Include jobs with pending/inProgress bookings regardless of job status
-            // (they should show in Active Listings as "Pending")
-            // BUT exclude jobs where both client_done and worker_done are true (completed)
+
             if (!job.isDeleted &&
                 !(job.clientDone && job.workerDone) &&
                 !allJobs.any((j) => j.id == job.id)) {
@@ -148,20 +107,16 @@ class JobsDB extends AbstractJobsRepo {
         }
       }
 
-      // Sort by most recent first:
-      // 1. Use updated_at if available (most recent activity)
-      // 2. Otherwise use postedDate (when job was posted)
       allJobs.sort((a, b) {
-        // Compare by updated_at first (if both have it)
         if (a.updatedAt != null && b.updatedAt != null) {
           final updatedCmp = b.updatedAt!.compareTo(a.updatedAt!);
           if (updatedCmp != 0) return updatedCmp;
         } else if (a.updatedAt != null) {
-          return -1; // a has updatedAt, b doesn't - a comes first
+          return -1;
         } else if (b.updatedAt != null) {
-          return 1; // b has updatedAt, a doesn't - b comes first
+          return 1;
         }
-        // Fall back to postedDate (most recent first)
+
         return b.postedDate.compareTo(a.postedDate);
       });
       return allJobs;
@@ -174,14 +129,12 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<List<Job>> getPastJobsForAgency(int agencyId) async {
     try {
-      // Get agency-owned jobs
       final agencyJobsSnapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('agency_id', isEqualTo: agencyId)
           .where('client_id', isNull: true)
           .get();
 
-      // Also get jobs where worker was assigned and both parties confirmed completion
       final assignedJobsSnapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('assigned_worker_id', isEqualTo: agencyId)
@@ -189,7 +142,6 @@ class JobsDB extends AbstractJobsRepo {
 
       final allJobs = <Job>[];
 
-      // Add agency-owned completed/cancelled jobs
       for (final doc in agencyJobsSnapshot.docs) {
         try {
           final data = doc.data();
@@ -205,13 +157,12 @@ class JobsDB extends AbstractJobsRepo {
         }
       }
 
-      // Add assigned jobs where both client_done and worker_done are true
       for (final doc in assignedJobsSnapshot.docs) {
         try {
           final data = doc.data();
           data['id'] = int.tryParse(doc.id) ?? 0;
           final job = Job.fromMap(data);
-          // Include if both parties confirmed completion (client_done && worker_done)
+
           if (!job.isDeleted &&
               job.clientDone &&
               job.workerDone &&
@@ -223,7 +174,6 @@ class JobsDB extends AbstractJobsRepo {
         }
       }
 
-      // Sort by most recent first
       allJobs.sort((a, b) {
         if (a.updatedAt != null && b.updatedAt != null) {
           final updatedCmp = b.updatedAt!.compareTo(a.updatedAt!);
@@ -292,7 +242,6 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<Job> createJob(Job job) async {
     try {
-      // Validate required fields
       if (job.clientId == null) {
         throw Exception(
           'Client ID is required to create a job. Please ensure you are logged in.',
@@ -300,10 +249,9 @@ class JobsDB extends AbstractJobsRepo {
       }
 
       final now = DateTime.now();
-      // Ensure new jobs start with 'open' status (visible to workers)
-      // Convert 'active' to 'open' for consistency
-      final jobWithStatus =
-          (job.status == JobStatus.active || job.status == JobStatus.open)
+
+      final jobWithStatus = (job.status == JobStatus.active ||
+              job.status == JobStatus.open)
           ? job.copyWith(status: JobStatus.open, createdAt: now, updatedAt: now)
           : job.copyWith(createdAt: now, updatedAt: now);
 
@@ -321,17 +269,15 @@ class JobsDB extends AbstractJobsRepo {
       final jobMap = jobWithStatus.toMap();
 
       final id = jobMap.remove('id');
-      // Normalize ownership/assignment fields to explicit nulls
+
       jobMap['agency_id'] = jobWithStatus.agencyId;
-      jobMap['client_id'] =
-          jobWithStatus.clientId; // This should not be null after validation
+      jobMap['client_id'] = jobWithStatus.clientId;
       jobMap['assigned_worker_id'] = jobWithStatus.assignedWorkerId;
-      jobMap['is_deleted'] = false; // BOOL
-      jobMap['status'] = 'open'; // Ensure status is 'open'
-      // Ensure job_images field is always present (empty array if null)
+      jobMap['is_deleted'] = false;
+      jobMap['status'] = 'open';
+
       jobMap['job_images'] = jobWithStatus.jobImages ?? <String>[];
-      jobMap['posted_date'] =
-          FieldValue.serverTimestamp(); // Use serverTimestamp for consistency
+      jobMap['posted_date'] = FieldValue.serverTimestamp();
       jobMap['created_at'] = Timestamp.fromDate(now);
       jobMap['updated_at'] = Timestamp.fromDate(now);
 
@@ -339,7 +285,6 @@ class JobsDB extends AbstractJobsRepo {
       if (id != null && id is int) {
         docId = id.toString();
       } else {
-        // Generate new ID
         final snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .orderBy('id', descending: true)
@@ -366,7 +311,6 @@ class JobsDB extends AbstractJobsRepo {
           .doc(docId)
           .set(jobMap);
 
-      // Verify write - read back to check field types
       final createdSnap = await FirebaseConfig.firestore
           .collection(collectionName)
           .doc(docId)
@@ -402,18 +346,14 @@ class JobsDB extends AbstractJobsRepo {
         updatedAt: now,
       );
 
-      // Send notification to workers/agencies when client creates a job
       if (job.clientId != null) {
-        // Client created a job - notify workers/agencies (async, don't block)
         Future.microtask(() async {
           try {
-            // Get all agencies/workers (user_type: 'Agency' or 'Individual Cleaner')
             final profilesSnapshot = await FirebaseConfig.firestore
                 .collection('profiles')
-                .where('user_type', whereIn: ['Agency', 'Individual Cleaner'])
-                .get();
+                .where('user_type',
+                    whereIn: ['Agency', 'Individual Cleaner']).get();
 
-            // Send to each worker individually
             for (final profileDoc in profilesSnapshot.docs) {
               final userId = profileDoc.id;
               try {
@@ -460,7 +400,7 @@ class JobsDB extends AbstractJobsRepo {
       final now = DateTime.now();
       final jobMap = job.copyWith(updatedAt: now).toMap();
       jobMap.remove('id');
-      // Ensure job_images field is always present (empty array if null)
+
       jobMap['job_images'] = job.jobImages ?? <String>[];
       jobMap['updated_at'] = Timestamp.fromDate(now);
 
@@ -489,9 +429,7 @@ class JobsDB extends AbstractJobsRepo {
         data: {'jobId': jobId, 'docPath': docRef.path},
       );
 
-      // Use transaction to ensure atomicity and prevent race conditions
       await FirebaseConfig.firestore.runTransaction((transaction) async {
-        // Get the document
         final doc = await transaction.get(docRef);
 
         if (!doc.exists) {
@@ -509,9 +447,8 @@ class JobsDB extends AbstractJobsRepo {
           },
         );
 
-        // Update the document with is_deleted flag within transaction
         transaction.update(docRef, {
-          'is_deleted': true, // Explicit bool
+          'is_deleted': true,
           'updated_at': FieldValue.serverTimestamp(),
         });
 
@@ -522,10 +459,8 @@ class JobsDB extends AbstractJobsRepo {
         );
       });
 
-      // Wait a bit for transaction to complete
       await Future.delayed(const Duration(milliseconds: 300));
 
-      // Verify the update was successful - use GetOptions to read from server
       final updatedDoc = await docRef.get(
         const GetOptions(source: Source.server),
       );
@@ -544,7 +479,6 @@ class JobsDB extends AbstractJobsRepo {
           },
         );
 
-        // Check if is_deleted is actually true (handle both bool and int types)
         if (isDeleted != true && isDeleted != 1) {
           final error = Exception(
             'Failed to mark job as deleted - is_deleted is $isDeleted (type: ${isDeleted.runtimeType})',
@@ -566,11 +500,9 @@ class JobsDB extends AbstractJobsRepo {
         throw Exception('Job document disappeared after update');
       }
 
-      // Send notifications after deletion
       try {
         final job = await getJobById(jobId);
         if (job != null) {
-          // Notify client
           if (job.clientId != null) {
             await NotificationServiceEnhanced.createNotification(
               userId: job.clientId.toString(),
@@ -583,7 +515,6 @@ class JobsDB extends AbstractJobsRepo {
             );
           }
 
-          // Notify assigned worker/agency if job was assigned
           if (job.assignedWorkerId != null) {
             await NotificationServiceEnhanced.createNotification(
               userId: job.assignedWorkerId.toString(),
@@ -599,7 +530,6 @@ class JobsDB extends AbstractJobsRepo {
             );
           }
 
-          // Also notify all applicants (bookings with pending status)
           try {
             final bookingsRepo = AbstractBookingsRepo.getInstance();
             final applications = await bookingsRepo.getApplicationsForJob(
@@ -628,7 +558,6 @@ class JobsDB extends AbstractJobsRepo {
         }
       } catch (e) {
         print('Error sending deletion notifications: $e');
-        // Don't fail the deletion if notification fails
       }
 
       DebugLogger.log('deleteJob', 'SUCCESS', data: {'jobId': jobId});
@@ -653,9 +582,9 @@ class JobsDB extends AbstractJobsRepo {
           .collection(collectionName)
           .doc(jobId.toString())
           .update({
-            'status': status.name,
-            'updated_at': FieldValue.serverTimestamp(),
-          });
+        'status': status.name,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
     } catch (e, stacktrace) {
       print('changeJobStatus error: $e --> $stacktrace');
       rethrow;
@@ -757,7 +686,6 @@ class JobsDB extends AbstractJobsRepo {
           },
         );
 
-        // Update client_done flag (as bool) and recompute status atomically
         final updates = <String, dynamic>{
           'client_done': true,
           'updated_at': FieldValue.serverTimestamp(),
@@ -776,7 +704,6 @@ class JobsDB extends AbstractJobsRepo {
         );
       });
 
-      // Read back updated job AFTER transaction
       final job = await getJobById(jobId);
       DebugLogger.log(
         'markClientDone',
@@ -791,7 +718,6 @@ class JobsDB extends AbstractJobsRepo {
       if (job != null) {
         try {
           if (job.workerDone) {
-            // Both confirmed - add to history and notify both parties
             await _addJobToHistory(job);
 
             if (job.clientId != null) {
@@ -827,7 +753,6 @@ class JobsDB extends AbstractJobsRepo {
               );
             }
           } else {
-            // Only client confirmed - notify worker
             if (job.assignedWorkerId != null) {
               await NotificationServiceEnhanced.createNotification(
                 userId: job.assignedWorkerId.toString(),
@@ -893,7 +818,6 @@ class JobsDB extends AbstractJobsRepo {
           },
         );
 
-        // Update worker_done flag (as bool) and recompute status atomically
         final updates = <String, dynamic>{
           'worker_done': true,
           'updated_at': FieldValue.serverTimestamp(),
@@ -912,7 +836,6 @@ class JobsDB extends AbstractJobsRepo {
         );
       });
 
-      // Read back updated job AFTER transaction
       final job = await getJobById(jobId);
       DebugLogger.log(
         'markWorkerDone',
@@ -927,7 +850,6 @@ class JobsDB extends AbstractJobsRepo {
       if (job != null) {
         try {
           if (job.clientDone) {
-            // Both confirmed - add to history and notify both parties
             await _addJobToHistory(job);
 
             if (job.clientId != null) {
@@ -963,7 +885,6 @@ class JobsDB extends AbstractJobsRepo {
               );
             }
           } else {
-            // Only worker confirmed - notify client with job_marked_done
             if (job.clientId != null) {
               await NotificationServiceEnhanced.createNotification(
                 userId: job.clientId.toString(),
@@ -1010,7 +931,6 @@ class JobsDB extends AbstractJobsRepo {
         data: {'agencyId': agencyId},
       );
 
-      // Get jobs this agency/worker has already applied to
       final appliedJobIdsSnapshot = await FirebaseConfig.firestore
           .collection('bookings')
           .where('provider_id', isEqualTo: agencyId)
@@ -1032,14 +952,8 @@ class JobsDB extends AbstractJobsRepo {
         data: {'agencyId': agencyId, 'appliedJobIds': appliedJobIds.toList()},
       );
 
-      // Get jobs that are:
-      // - Status open/pending (available for application)
-      // - Not deleted (is_deleted == false)
-      // - Not assigned (assigned_worker_id == null)
-      // NOTE: Do NOT filter by agency_id - we want client-created jobs (agency_id is null)
       QuerySnapshot snapshot;
       try {
-        // Baseline query: status in ['open','pending'], is_deleted == false, assigned_worker_id == null
         snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .where('status', whereIn: ['open', 'pending'])
@@ -1066,7 +980,6 @@ class JobsDB extends AbstractJobsRepo {
           data: {'agencyId': agencyId, 'error': e.toString()},
         );
 
-        // If index is missing, provide helpful error message
         if (e.toString().contains('FAILED_PRECONDITION') ||
             e.toString().contains('index')) {
           print(
@@ -1077,15 +990,13 @@ class JobsDB extends AbstractJobsRepo {
           );
         }
 
-        // Fallback: get all jobs, filter client-side (less efficient but works)
         DebugLogger.log(
           'getAvailableJobsForAgency',
           'QUERY_FALLBACK',
           data: {'agencyId': agencyId, 'error': e.toString()},
         );
-        snapshot = await FirebaseConfig.firestore
-            .collection(collectionName)
-            .get();
+        snapshot =
+            await FirebaseConfig.firestore.collection(collectionName).get();
       }
 
       final jobs = <Job>[];
@@ -1100,8 +1011,7 @@ class JobsDB extends AbstractJobsRepo {
           final clientId = data['client_id'];
           final assignedWorkerId = data['assigned_worker_id'];
           final isDeletedRaw = data['is_deleted'];
-          final isDeleted =
-              (isDeletedRaw is bool && isDeletedRaw) ||
+          final isDeleted = (isDeletedRaw is bool && isDeletedRaw) ||
               (isDeletedRaw is int && isDeletedRaw == 1);
 
           String? filterReason;
@@ -1188,7 +1098,7 @@ class JobsDB extends AbstractJobsRepo {
         stacktrace,
         data: {'agencyId': agencyId},
       );
-      rethrow; // DO NOT return [] - let error propagate
+      rethrow;
     }
   }
 
@@ -1209,10 +1119,6 @@ class JobsDB extends AbstractJobsRepo {
       QuerySnapshot snapshot;
       bool usedFallback = false;
       try {
-        // Primary query (requires index):
-        // where client_id == clientId (int)
-        // where is_deleted == false (bool)
-        // orderBy posted_date desc
         snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .where('client_id', isEqualTo: clientId)
@@ -1231,8 +1137,7 @@ class JobsDB extends AbstractJobsRepo {
         );
       } catch (e, stack) {
         final errorStr = e.toString();
-        final isIndexError =
-            errorStr.contains('FAILED_PRECONDITION') ||
+        final isIndexError = errorStr.contains('FAILED_PRECONDITION') ||
             errorStr.contains('requires an index') ||
             errorStr.contains('index');
 
@@ -1243,10 +1148,9 @@ class JobsDB extends AbstractJobsRepo {
             data: {'clientId': clientId, 'error': errorStr},
           );
           print(
-            '[getJobsForClient] Index missing, using fallback query (no orderBy)',,
+            '[getJobsForClient] Index missing, using fallback query (no orderBy)',
           );
 
-          // Fallback query WITHOUT orderBy (doesn't require composite index)
           try {
             snapshot = await FirebaseConfig.firestore
                 .collection(collectionName)
@@ -1268,10 +1172,9 @@ class JobsDB extends AbstractJobsRepo {
               fallbackStack,
               data: {'clientId': clientId},
             );
-            rethrow; // If fallback also fails, rethrow
+            rethrow;
           }
         } else {
-          // Non-index error - rethrow immediately
           DebugLogger.error(
             'getJobsForClient',
             'QUERY_FAILED',
@@ -1287,15 +1190,12 @@ class JobsDB extends AbstractJobsRepo {
       int docIndex = 0;
       for (final doc in snapshot.docs) {
         try {
-          // Safe casting: create a new mutable map
           final raw = doc.data();
           final data = Map<String, dynamic>.from(raw as Map);
-          final docId =
-              int.tryParse(doc.id) ??
+          final docId = int.tryParse(doc.id) ??
               (data['id'] is int ? data['id'] as int : 0);
           data['id'] = docId;
 
-          // Log field types for first 3 docs (diagnostics for H3/H4)
           if (docIndex < 3) {
             DebugLogger.log(
               'getJobsForClient',
@@ -1318,7 +1218,6 @@ class JobsDB extends AbstractJobsRepo {
 
           final job = Job.fromMap(data);
 
-          // Additional safety check (shouldn't be needed if query is correct)
           if (job.isDeleted) {
             DebugLogger.log(
               'getJobsForClient',
@@ -1341,7 +1240,6 @@ class JobsDB extends AbstractJobsRepo {
         }
       }
 
-      // If fallback was used, sort client-side by postedDate descending
       if (usedFallback) {
         jobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
         DebugLogger.log(
@@ -1377,7 +1275,7 @@ class JobsDB extends AbstractJobsRepo {
         stacktrace,
         data: {'clientId': clientId},
       );
-      rethrow; // DO NOT return [] - let error propagate
+      rethrow;
     }
   }
 
@@ -1394,8 +1292,6 @@ class JobsDB extends AbstractJobsRepo {
         },
       );
 
-      // Fetch without orderBy to avoid composite index; filter and sort client-side
-      // Only get jobs with status='open' for homepage display
       final snapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('agency_id', isNull: true)
@@ -1414,14 +1310,12 @@ class JobsDB extends AbstractJobsRepo {
                 !job.isDeleted &&
                 job.status == JobStatus.open &&
                 job.assignedWorkerId == null,
-          ) // Only unassigned open jobs
+          )
           .toList();
 
-      // Sort by posted_date descending (most recent first)
       jobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
       final result = jobs.length > limit ? jobs.sublist(0, limit) : jobs;
 
-      // Debug log: first 3 jobs
       if (result.isNotEmpty) {
         final firstThree = result
             .take(3)
@@ -1432,8 +1326,8 @@ class JobsDB extends AbstractJobsRepo {
                 'assignedWorkerId': job.assignedWorkerId,
                 'isDeleted': job.isDeleted,
                 'statusType': job.status.runtimeType.toString(),
-                'assignedWorkerIdType': job.assignedWorkerId.runtimeType
-                    .toString(),
+                'assignedWorkerIdType':
+                    job.assignedWorkerId.runtimeType.toString(),
                 'isDeletedType': job.isDeleted.runtimeType.toString(),
               },
             )
@@ -1481,7 +1375,6 @@ class JobsDB extends AbstractJobsRepo {
         final jobData = jobDoc.data()!;
         final status = jobData['status'] as String?;
 
-        // Only allow starting if job is assigned
         if (status != JobStatus.assigned.name &&
             status != JobStatus.open.name &&
             status != JobStatus.pending.name) {
@@ -1511,29 +1404,21 @@ class JobsDB extends AbstractJobsRepo {
         if (!jobDoc.exists) {
           throw Exception('Job not found');
         }
-
-        final jobData = jobDoc.data()!;
-        final assignedWorkerId = jobData['assigned_worker_id'] as int?;
-        final clientId = jobData['client_id'] as int?;
-
-        // Update job status to cancelled
         transaction.update(jobRef, {
           'status': JobStatus.cancelled.name,
           'updated_at': FieldValue.serverTimestamp(),
         });
 
-        // Cancel all pending bookings for this job
         final bookingsSnapshot = await FirebaseConfig.firestore
             .collection('bookings')
             .where('job_id', isEqualTo: jobId)
             .where(
-              'status',
-              whereIn: [
-                BookingStatus.pending.name,
-                BookingStatus.inProgress.name,
-              ],
-            )
-            .get();
+          'status',
+          whereIn: [
+            BookingStatus.pending.name,
+            BookingStatus.inProgress.name,
+          ],
+        ).get();
 
         for (final doc in bookingsSnapshot.docs) {
           transaction.update(doc.reference, {
@@ -1543,11 +1428,9 @@ class JobsDB extends AbstractJobsRepo {
         }
       });
 
-      // Send notifications (after transaction)
       final job = await getJobById(jobId);
       if (job != null) {
         try {
-          // Notify assigned worker if any
           if (job.assignedWorkerId != null) {
             await NotificationBackendService.sendToUser(
               userId: job.assignedWorkerId.toString(),
@@ -1558,7 +1441,6 @@ class JobsDB extends AbstractJobsRepo {
             );
           }
 
-          // Notify all applicants (pending bookings)
           final bookingsRepo = AbstractBookingsRepo.getInstance();
           final applications = await bookingsRepo.getApplicationsForJob(jobId);
           for (final booking in applications) {
@@ -1584,11 +1466,9 @@ class JobsDB extends AbstractJobsRepo {
     }
   }
 
-  // ===== Added implementations to satisfy AbstractJobsRepo =====
   @override
   Future<List<Job>> getActiveJobsForWorker(int workerId) async {
     try {
-      // TRUTH LOG: Query start
       DebugLogger.log(
         'getActiveJobsForWorker',
         'QUERY_START',
@@ -1625,7 +1505,6 @@ class JobsDB extends AbstractJobsRepo {
           final data = Map<String, dynamic>.from(raw as Map);
           data['id'] = int.tryParse(doc.id) ?? 0;
 
-          // TRUTH LOG: Document fields
           final assignedWorkerIdRaw = data['assigned_worker_id'];
           final statusRaw = data['status']?.toString();
           final isDeletedRaw = data['is_deleted'];
@@ -1702,7 +1581,6 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<List<Job>> getCompletedJobsForWorker(int workerId) async {
     try {
-      // Get jobs where worker was assigned and both parties confirmed completion
       final snapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('assigned_worker_id', isEqualTo: workerId)
@@ -1716,14 +1594,13 @@ class JobsDB extends AbstractJobsRepo {
         data['id'] = int.tryParse(doc.id) ?? 0;
         try {
           final job = Job.fromMap(data);
-          // Only include jobs where both client_done and worker_done are true
+
           if (job.clientDone && job.workerDone) {
             jobs.add(job);
           }
         } catch (_) {}
       }
 
-      // Sort by most recent first (use updated_at or completed_at if available)
       jobs.sort((a, b) {
         if (a.updatedAt != null && b.updatedAt != null) {
           return b.updatedAt!.compareTo(a.updatedAt!);
@@ -1805,13 +1682,11 @@ class JobsDB extends AbstractJobsRepo {
   @override
   Future<void> markAllClientJobsAsDeleted(int clientId) async {
     try {
-      // Get all jobs for this client (including deleted ones to avoid duplicates)
       final snapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('client_id', isEqualTo: clientId)
           .get();
 
-      // Use batch write for efficiency
       final batch = FirebaseConfig.firestore.batch();
       int count = 0;
 
@@ -1819,7 +1694,6 @@ class JobsDB extends AbstractJobsRepo {
         final data = doc.data();
         final isDeleted = data['is_deleted'];
 
-        // Only update if not already deleted
         if (isDeleted != true && isDeleted != 1) {
           batch.update(doc.reference, {
             'is_deleted': true,
@@ -1833,7 +1707,7 @@ class JobsDB extends AbstractJobsRepo {
         await batch.commit();
         print('Marked $count jobs as deleted for client $clientId');
       } else {
-        print('ℹ️ No jobs to mark as deleted for client $clientId');
+        print('[JobsDB] No jobs to mark as deleted for client $clientId');
       }
     } catch (e, stacktrace) {
       print('markAllClientJobsAsDeleted error: $e --> $stacktrace');

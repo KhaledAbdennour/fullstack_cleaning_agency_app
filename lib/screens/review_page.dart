@@ -26,7 +26,6 @@ class _ReviewPageState extends State<ReviewPage> {
   int _rating = 0;
   final TextEditingController _feedbackController = TextEditingController();
   bool _isSubmitting = false;
-  Job? _job;
   bool _isLoadingJob = true;
   String? _jobStatusError;
 
@@ -56,7 +55,6 @@ class _ReviewPageState extends State<ReviewPage> {
 
       if (mounted) {
         setState(() {
-          _job = job;
           _isLoadingJob = false;
           if (job == null) {
             _jobStatusError = 'Job not found';
@@ -87,7 +85,6 @@ class _ReviewPageState extends State<ReviewPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Pre-submit gating is already enforced in ManageJobPage; add extra debug line here
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
       appBar: AppBar(
@@ -129,8 +126,6 @@ class _ReviewPageState extends State<ReviewPage> {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // Show job status message if not completed
               if (_isLoadingJob)
                 const Center(
                   child: Padding(
@@ -160,7 +155,6 @@ class _ReviewPageState extends State<ReviewPage> {
                     ],
                   ),
                 ),
-
               const Text(
                 "How would you rate your experience?",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -188,7 +182,6 @@ class _ReviewPageState extends State<ReviewPage> {
                 }),
               ),
               const SizedBox(height: 24),
-
               const Text(
                 "Share your feedback",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
@@ -211,13 +204,11 @@ class _ReviewPageState extends State<ReviewPage> {
                 ),
               ),
               const SizedBox(height: 32),
-
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed:
-                      (_isSubmitting ||
+                  onPressed: (_isSubmitting ||
                           _rating == 0 ||
                           widget.cleanerId == null ||
                           _isLoadingJob ||
@@ -227,7 +218,6 @@ class _ReviewPageState extends State<ReviewPage> {
                           setState(() => _isSubmitting = true);
 
                           try {
-                            // Get current user
                             final profilesCubit = context.read<ProfilesCubit>();
                             await profilesCubit.loadCurrentUser();
                             final state = profilesCubit.state;
@@ -236,15 +226,11 @@ class _ReviewPageState extends State<ReviewPage> {
                                 state.currentUser != null) {
                               final reviewerId =
                                   state.currentUser!['id'] as int?;
-                              final reviewerName =
-                                  state.currentUser!['full_name'] as String? ??
-                                  'Anonymous';
 
                               if (reviewerId == null) {
                                 throw Exception('User ID not found');
                               }
 
-                              // Verify job is completed before allowing review
                               if (widget.jobId != null) {
                                 final jobsRepo = AbstractJobsRepo.getInstance();
                                 final job = await jobsRepo.getJobById(
@@ -275,7 +261,6 @@ class _ReviewPageState extends State<ReviewPage> {
                                 }
                               }
 
-                              // Submit review using new reviews repository
                               if (widget.cleanerId == null ||
                                   widget.jobId == null) {
                                 throw Exception(
@@ -302,19 +287,16 @@ class _ReviewPageState extends State<ReviewPage> {
                                   ),
                                 );
 
-                                // Refresh reviews in cleaner profile if viewing it
-                                // The review will automatically appear when the profile is viewed
                                 Navigator.pop(
                                   context,
                                   true,
-                                ); // Return true to indicate success
+                                );
                               }
                             } else {
                               throw Exception('User not logged in');
                             }
                           } catch (e) {
                             if (mounted) {
-                              // Safely format error message (avoid encoding FieldValue or showing type cast errors)
                               String errorMsg = 'Error submitting review';
                               try {
                                 final errorStr = e.toString();

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'jobdetails.dart';
 import 'client_profile_page.dart';
 import 'find_cleaner_page.dart';
 import 'cleaner_profile_page.dart';
@@ -33,16 +32,16 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showIndividualsList = false;
   bool _showAddPost = false;
   bool _showAddPostInHome = false;
-  bool _showActivePosts = false; // Flag to show active posts content
+  bool _showActivePosts = false;
 
   @override
   void initState() {
     super.initState();
-    // Set initial tab index if provided
+
     if (widget.initialTabIndex != null) {
       _currentIndex = widget.initialTabIndex!;
     }
-    // #region agent log
+
     DebugLogger.log(
       'HomeScreen',
       'initState',
@@ -53,7 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
     context.read<ListingsCubit>().loadListings();
   }
@@ -61,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void didUpdateWidget(HomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // #region agent log
+
     DebugLogger.log(
       'HomeScreen',
       'didUpdateWidget',
@@ -72,13 +70,12 @@ class _HomeScreenState extends State<HomeScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // #region agent log
+
     DebugLogger.log(
       'HomeScreen',
       'didChangeDependencies',
@@ -89,12 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
   }
 
   @override
   Widget build(BuildContext context) {
-    // Hide AppBar when showing profile page (it has its own AppBar)
     final showAppBar = _currentIndex != 3;
 
     return Scaffold(
@@ -143,11 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF3B82F6),
         unselectedItemColor: Colors.grey,
-        currentIndex: _showActivePosts
-            ? 0
-            : _currentIndex, // Highlight home when showing active posts
+        currentIndex: _showActivePosts ? 0 : _currentIndex,
         onTap: (index) {
-          // #region agent log
           DebugLogger.log(
             'HomeScreen',
             'BOTTOM_NAV_TAP',
@@ -159,17 +151,15 @@ class _HomeScreenState extends State<HomeScreen> {
               'runId': 'run1',
             },
           );
-          // #endregion
 
           setState(() {
             _currentIndex = index;
-            // Reset active posts flag when navigating away from home (unless staying on home)
+
             if (index != 0) {
               _showActivePosts = false;
             }
           });
 
-          // #region agent log
           DebugLogger.log(
             'HomeScreen',
             'STATE_UPDATED',
@@ -180,15 +170,13 @@ class _HomeScreenState extends State<HomeScreen> {
               'runId': 'run1',
             },
           );
-          // #endregion
 
           if (index == 0) {
-            // Reset agencies, individuals list view, add post, and active posts when going back to home
             setState(() {
               _showAgenciesList = false;
               _showIndividualsList = false;
               _showAddPostInHome = false;
-              _showActivePosts = false; // Reset active posts flag
+              _showActivePosts = false;
             });
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
@@ -196,13 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             });
           } else if (index == 2) {
-            // Reset add post flag and active posts flag when navigating to My Posts tab via bottom nav
             setState(() {
               _showAddPost = false;
-              _showActivePosts =
-                  false; // Reset active posts flag to show all posts
+              _showActivePosts = false;
             });
-            // Refresh My Posts when navigating to My Posts tab
+
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 final profilesCubit = context.read<ProfilesCubit>();
@@ -219,7 +205,6 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             });
           } else if (index == 3) {
-            // Refresh profile page jobs when navigating to profile tab
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 final profilesCubit = context.read<ProfilesCubit>();
@@ -260,7 +245,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
-    // #region agent log
     DebugLogger.log(
       'HomeScreen',
       '_buildBody_CALLED',
@@ -271,10 +255,9 @@ class _HomeScreenState extends State<HomeScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
     Widget bodyWidget;
-    // If showing active posts, display it but keep home tab highlighted
+
     if (_showActivePosts) {
       bodyWidget = _buildActivePostsContent();
     } else {
@@ -286,9 +269,8 @@ class _HomeScreenState extends State<HomeScreen> {
           bodyWidget = _buildSearchContent();
           break;
         case 2:
-          bodyWidget = _showAddPost
-              ? _buildAddPostContent()
-              : _buildMyPostsContent();
+          bodyWidget =
+              _showAddPost ? _buildAddPostContent() : _buildMyPostsContent();
           break;
         case 3:
           bodyWidget = const ClientProfilePage();
@@ -298,7 +280,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // #region agent log
     DebugLogger.log(
       'HomeScreen',
       '_buildBody_RETURN',
@@ -311,30 +292,25 @@ class _HomeScreenState extends State<HomeScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
     return bodyWidget;
   }
 
   Widget _buildHomeContent() {
-    // Load listings when home content is first built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<ListingsCubit>().loadListings();
       }
     });
 
-    // Show add post form if flag is set
     if (_showAddPostInHome) {
       return _buildAddPostContent();
     }
 
-    // Show agencies list if flag is set
     if (_showAgenciesList) {
       return _buildAgenciesListContent();
     }
 
-    // Show individuals list if flag is set
     if (_showIndividualsList) {
       return _buildIndividualsListContent();
     }
@@ -364,18 +340,21 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (state is ListingsLoaded) {
           return LayoutBuilder(
             builder: (context, constraints) {
-              // Use constraints.maxHeight which already accounts for app bar and bottom nav bar
+              // Use responsive card heights but allow scrolling on small screens
               final availableHeight = constraints.maxHeight;
               final topPadding = 16.0;
               final bottomPadding = 16.0;
-              final spacing = 16.0 * 2; // spacing between 3 cards (2 gaps)
+              final spacing = 16.0 * 2;
               final totalPaddingAndSpacing =
                   topPadding + bottomPadding + spacing;
-              final cardHeight =
-                  (availableHeight - totalPaddingAndSpacing) /
-                  3; // Divide equally among 3 cards
 
-              return Padding(
+              // Base target so that all three cards usually fit,
+              // but never go below a safe minimum to avoid overflows.
+              final targetCardHeight =
+                  (availableHeight - totalPaddingAndSpacing) / 3;
+              final cardHeight = targetCardHeight.clamp(180.0, 260.0);
+
+              return SingleChildScrollView(
                 padding: EdgeInsets.fromLTRB(
                   16.0,
                   topPadding,
@@ -402,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAddPostCard(BuildContext context, double cardHeight) {
-    final coverHeight = cardHeight * 0.75; // 75% for cover, 25% for text
+    final coverHeight = cardHeight * 0.75;
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -425,7 +404,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Stack(
           children: [
-            // Cover image
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
@@ -455,7 +433,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            // "Add Post" text at the bottom
             Positioned(
               bottom: 0,
               left: 0,
@@ -486,7 +463,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildViewAllAgenciesCard(BuildContext context, double cardHeight) {
-    final coverHeight = cardHeight * 0.75; // 75% for cover, 25% for text
+    final coverHeight = cardHeight * 0.75;
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       builder: (context, profileState) {
         if (profileState is! ProfilesLoaded ||
@@ -513,12 +490,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
         return GestureDetector(
           onTap: () {
-            // Show active posts content within HomeScreen
             setState(() {
               _showActivePosts = true;
-              _currentIndex = 0; // Keep home tab highlighted
+              _currentIndex = 0;
             });
-            // Load jobs if needed
+
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 context.read<ClientJobsCubit>().loadClientJobs(userId);
@@ -552,7 +528,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: Stack(
         children: [
-          // Cover image
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: AppImage(
@@ -580,7 +555,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // "Active Posts" text at the bottom
           Positioned(
             bottom: 0,
             left: 0,
@@ -638,19 +612,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         } else if (state is ListingsLoaded) {
-          // Filter to only agencies and sort by rating descending
           final allAgencies = List<Map<String, dynamic>>.from(state.topAgencies)
               .where((agency) {
-                // Double-check: ensure it's an agency (should already be filtered in cubit)
-                return agency['name'] != null;
-              })
-              .toList();
+            return agency['name'] != null;
+          }).toList();
 
-          // Sort by rating descending (highest rating first)
           allAgencies.sort((a, b) {
             final ratingA = (a['rating'] as num?)?.toDouble() ?? 0.0;
             final ratingB = (b['rating'] as num?)?.toDouble() ?? 0.0;
-            return ratingB.compareTo(ratingA); // Higher rating first
+            return ratingB.compareTo(ratingA);
           });
 
           if (allAgencies.isEmpty) {
@@ -726,7 +696,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Agency logo/image
               Container(
                 width: 60,
                 height: 60,
@@ -755,7 +724,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -779,7 +747,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-
                     Row(
                       children: [
                         const Icon(
@@ -801,7 +768,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -823,7 +789,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -847,7 +812,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -899,7 +863,6 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, profileState) {
         if (profileState is! ProfilesLoaded ||
             profileState.currentUser == null) {
-          // Show placeholder while loading
           return _buildPlaceholderCard(cardHeight);
         }
 
@@ -907,11 +870,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final userType = profileState.currentUser!['user_type'] as String?;
 
         if (userId == null || userType != 'Client') {
-          // Show placeholder for non-clients
           return _buildPlaceholderCard(cardHeight);
         }
 
-        // Load client jobs when card is first built
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             context.read<ClientJobsCubit>().loadClientJobs(userId);
@@ -923,11 +884,9 @@ class _HomeScreenState extends State<HomeScreen> {
             if (state is ClientJobsLoading ||
                 state is! ClientJobsLoaded ||
                 state.jobs.isEmpty) {
-              // Show placeholder while loading or if no jobs
               return _buildPlaceholderCard(cardHeight);
             }
 
-            // Find the latest edited post (sort by updatedAt descending, fallback to postedDate)
             final sortedJobs = List<Job>.from(state.jobs);
             sortedJobs.sort((a, b) {
               final aDate = a.updatedAt ?? a.postedDate;
@@ -937,7 +896,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
             final latestJob = sortedJobs.first;
 
-            // Build the job card constrained to cardHeight
             return _buildLatestJobCard(latestJob, cardHeight);
           },
         );
@@ -1014,7 +972,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return _buildPlaceholderCard(cardHeight);
       }
 
-      // Calculate time ago
       final now = DateTime.now();
       final difference = now.difference(job.postedDate);
       String timeAgoText;
@@ -1025,12 +982,14 @@ class _HomeScreenState extends State<HomeScreen> {
           } else {
             timeAgoText = AppLocalizations.of(
               context,
-            )!.minutesAgo(difference.inMinutes);
+            )!
+                .minutesAgo(difference.inMinutes);
           }
         } else {
           timeAgoText = AppLocalizations.of(
             context,
-          )!.hoursAgo(difference.inHours);
+          )!
+              .hoursAgo(difference.inHours);
         }
       } else if (difference.inDays == 1) {
         timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1041,7 +1000,6 @@ class _HomeScreenState extends State<HomeScreen> {
             '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
       }
 
-      // Get status color
       Color statusColor;
       switch (job.status) {
         case JobStatus.open:
@@ -1069,9 +1027,7 @@ class _HomeScreenState extends State<HomeScreen> {
           statusColor = Colors.grey;
       }
 
-      // Calculate image height and content height to fit within cardHeight
-      final imageHeight = cardHeight * 0.6; // 60% for image
-      final contentHeight = cardHeight * 0.4; // 40% for content
+      final imageHeight = cardHeight * 0.6;
 
       return InkWell(
         onTap: () {
@@ -1099,41 +1055,39 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cover image
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
                 child:
                     job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                    ? AppImage(
-                        imageUrl: job.coverImageUrl!,
-                        height: imageHeight,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget: Container(
-                          height: imageHeight,
-                          width: double.infinity,
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.image,
-                            size: 32,
-                            color: Colors.grey,
+                        ? AppImage(
+                            imageUrl: job.coverImageUrl!,
+                            height: imageHeight,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorWidget: Container(
+                              height: imageHeight,
+                              width: double.infinity,
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.image,
+                                size: 32,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            height: imageHeight,
+                            width: double.infinity,
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.image,
+                              size: 32,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                      )
-                    : Container(
-                        height: imageHeight,
-                        width: double.infinity,
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image,
-                          size: 32,
-                          color: Colors.grey,
-                        ),
-                      ),
               ),
-              // Content - constrained to fit remaining height
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -1141,7 +1095,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Title and status row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1181,7 +1134,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      // Time posted
                       Text(
                         timeAgoText,
                         style: const TextStyle(
@@ -1190,7 +1142,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      // Location
                       Row(
                         children: [
                           const Icon(
@@ -1249,20 +1200,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         } else if (state is ListingsLoaded) {
-          // Filter to only individuals/cleaners and sort by rating descending
           final allIndividuals =
               List<Map<String, dynamic>>.from(state.topCleaners).where((
-                individual,
-              ) {
-                // Double-check: ensure it's an individual (should already be filtered in cubit)
-                return individual['name'] != null;
-              }).toList();
+            individual,
+          ) {
+            return individual['name'] != null;
+          }).toList();
 
-          // Sort by rating descending (highest rating first)
           allIndividuals.sort((a, b) {
             final ratingA = (a['rating'] as num?)?.toDouble() ?? 0.0;
             final ratingB = (b['rating'] as num?)?.toDouble() ?? 0.0;
-            return ratingB.compareTo(ratingA); // Higher rating first
+            return ratingB.compareTo(ratingA);
           });
 
           if (allIndividuals.isEmpty) {
@@ -1307,8 +1255,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Map<String, dynamic> individual,
   ) {
     final name = individual['name'] as String? ?? 'Unknown Individual';
-    final description =
-        individual['bio'] as String? ??
+    final description = individual['bio'] as String? ??
         'Professional cleaning service provider.';
     final location = individual['location'] as String? ?? 'Unknown';
     final priceValue = individual['hourly_rate'];
@@ -1339,7 +1286,6 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Individual profile image
               Container(
                 width: 60,
                 height: 60,
@@ -1368,7 +1314,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1392,7 +1337,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-
                     Row(
                       children: [
                         const Icon(
@@ -1414,7 +1358,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -1436,7 +1379,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -1460,7 +1402,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -1508,123 +1449,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentCardFromJob(BuildContext context, Job job) {
-    try {
-      if (job.title.isEmpty || job.city.isEmpty || job.country.isEmpty) {
-        return const SizedBox.shrink();
-      }
-
-      return GestureDetector(
-        onTap: () {
-          try {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ManageJobPage(job: job)),
-            );
-          } catch (e) {
-            print('Error navigating to job details: $e');
-          }
-        },
-        child: Container(
-          width: 280,
-          margin: const EdgeInsets.only(right: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 110,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  image: null,
-                ),
-                child:
-                    job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
-                        ),
-                        child: AppImage(
-                          imageUrl: job.coverImageUrl!,
-                          height: 110,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorWidget: const Center(
-                            child: Icon(
-                              Icons.image,
-                              size: 48,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
-                      )
-                    : const Center(
-                        child: Icon(Icons.image, size: 48, color: Colors.grey),
-                      ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12.0,
-                  vertical: 10.0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      job.title,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        height: 1.1,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 3),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: 12,
-                          color: Color(0xFF3B82F6),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            '${job.city}, ${job.country}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 11,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } catch (e, stackTrace) {
-      print('Error building recent card from job: $e');
-      print('Stack trace: $stackTrace');
-      return const SizedBox.shrink();
-    }
-  }
-
   Widget _buildSearchContent() {
     return Container(
       color: const Color(0xFFF9FAFB),
@@ -1662,7 +1486,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        // Load client jobs when My Posts content is first built
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             context.read<ClientJobsCubit>().loadClientJobs(userId);
@@ -1692,10 +1515,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             } else if (state is ClientJobsLoaded) {
-              // Show all non-deleted jobs (including completed)
-              final allJobs = state.jobs
-                  .where((job) => !job.isDeleted)
-                  .toList();
+              final allJobs =
+                  state.jobs.where((job) => !job.isDeleted).toList();
 
               if (allJobs.isEmpty) {
                 return Center(
@@ -1718,7 +1539,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
 
-              // Sort jobs by most recent first (postedDate descending)
               final sortedJobs = List<Job>.from(allJobs);
               sortedJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
 
@@ -1775,7 +1595,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        // Load client jobs when Active Posts content is first built
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
             context.read<ClientJobsCubit>().loadClientJobs(userId);
@@ -1805,7 +1624,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             } else if (state is ClientJobsLoaded) {
-              // Filter out completed jobs and deleted jobs - ONLY show active posts
               final activeJobs = state.jobs
                   .where(
                     (job) =>
@@ -1834,7 +1652,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }
 
-              // Sort jobs by most recent first (postedDate descending)
               final sortedJobs = List<Job>.from(activeJobs);
               sortedJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
 
@@ -1871,7 +1688,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return const SizedBox.shrink();
       }
 
-      // Calculate time ago with better precision
       final now = DateTime.now();
       final difference = now.difference(job.postedDate);
       String timeAgoText;
@@ -1882,12 +1698,14 @@ class _HomeScreenState extends State<HomeScreen> {
           } else {
             timeAgoText = AppLocalizations.of(
               context,
-            )!.minutesAgo(difference.inMinutes);
+            )!
+                .minutesAgo(difference.inMinutes);
           }
         } else {
           timeAgoText = AppLocalizations.of(
             context,
-          )!.hoursAgo(difference.inHours);
+          )!
+              .hoursAgo(difference.inHours);
         }
       } else if (difference.inDays == 1) {
         timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1898,7 +1716,6 @@ class _HomeScreenState extends State<HomeScreen> {
             '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
       }
 
-      // Get status color
       Color statusColor;
       switch (job.status) {
         case JobStatus.open:
@@ -1951,47 +1768,44 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cover image
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
                 child:
                     job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                    ? AppImage(
-                        imageUrl: job.coverImageUrl!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget: Container(
-                          height: 180,
-                          width: double.infinity,
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.image,
-                            size: 48,
-                            color: Colors.grey,
+                        ? AppImage(
+                            imageUrl: job.coverImageUrl!,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorWidget: Container(
+                              height: 180,
+                              width: double.infinity,
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.image,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            height: 180,
+                            width: double.infinity,
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.image,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                      )
-                    : Container(
-                        height: 180,
-                        width: double.infinity,
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                      ),
               ),
-              // Content
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and status row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2030,7 +1844,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Description
                     Text(
                       job.description,
                       maxLines: 2,
@@ -2041,7 +1854,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Budget (Min - Max) with blue icon - under description, above location
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
@@ -2057,12 +1869,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               job.budgetMin != null && job.budgetMax != null
                                   ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                                   : job.budgetMin != null
-                                  ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                                  : job.budgetMax != null
-                                  ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                                  : AppLocalizations.of(
-                                      context,
-                                    )!.budgetNegotiable,
+                                      ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                                      : job.budgetMax != null
+                                          ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                          : AppLocalizations.of(
+                                              context,
+                                            )!
+                                              .budgetNegotiable,
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF6B7280),
@@ -2073,7 +1886,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    // Location with blue icon
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
@@ -2097,7 +1909,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    // Date with blue icon and time ago in parentheses - under location
                     Row(
                       children: [
                         const Icon(
@@ -2132,486 +1943,4 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildRecentCard(
-    BuildContext context,
-    String title,
-    String location,
-    Color color, {
-    String? imageUrl,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const JobDetailsScreen()),
-        );
-      },
-      child: Container(
-        width: 280,
-        margin: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                image: imageUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(imageUrl),
-                        fit: BoxFit.cover,
-                        onError: (exception, stackTrace) {},
-                      )
-                    : null,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: Colors.grey,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        location,
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAgencyCard(
-    BuildContext context,
-    String name,
-    double rating,
-    String? logoUrl, {
-    Map<String, dynamic>? agencyData,
-  }) {
-    try {
-      final safeName = name.isEmpty ? 'Unknown Agency' : name;
-      final safeRating = rating.isNaN || rating < 0
-          ? 0.0
-          : (rating > 5.0 ? 5.0 : rating);
-      final location = agencyData?['location'] as String? ?? 'Algiers';
-
-      return GestureDetector(
-        onTap: () {
-          try {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CleanerProfilePage(
-                  cleaner: {
-                    'name': safeName,
-                    'rating': safeRating,
-                    'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
-                    'isVerified': agencyData?['is_verified'] as bool? ?? false,
-                    'description':
-                        agencyData?['bio'] as String? ??
-                        'Professional cleaning service provider.',
-                    'image': logoUrl ?? agencyData?['image'],
-                    'type': 'Agency',
-                    'location': location,
-                    'price': agencyData?['hourly_rate'] != null
-                        ? 'From ${agencyData?['hourly_rate']} DZD/hr'
-                        : AppLocalizations.of(context)!.contactForPricing,
-                    'profileData': agencyData,
-                  },
-                ),
-              ),
-            );
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error opening agency profile: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.7,
-          constraints: const BoxConstraints(minWidth: 200, maxWidth: 250),
-          margin: const EdgeInsets.only(right: 16),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ClipOval(
-                child: logoUrl != null && logoUrl.isNotEmpty
-                    ? AppImage(
-                        imageUrl: logoUrl,
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                        errorWidget: Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.business,
-                            size: 35,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.business,
-                          size: 35,
-                          color: Colors.grey,
-                        ),
-                      ),
-              ),
-              const SizedBox(height: 6),
-              Flexible(
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Flexible(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ...List.generate(
-                      5,
-                      (index) => Icon(
-                        Icons.star,
-                        color: index < rating.floor()
-                            ? Colors.amber
-                            : Colors.grey[300],
-                        size: 12,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        '(${rating.toStringAsFixed(1)})',
-                        style: const TextStyle(fontSize: 11),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final agencyProfileData = {
-                      'name': safeName,
-                      'rating': safeRating,
-                      'reviews': agencyData?['jobsCompleted'] as int? ?? 0,
-                      'isVerified':
-                          agencyData?['is_verified'] as bool? ?? false,
-                      'description':
-                          agencyData?['bio'] as String? ??
-                          'Professional cleaning service provider.',
-                      'image': logoUrl ?? agencyData?['image'],
-                      'type': 'Agency',
-                      'location': location,
-                      'price': agencyData?['hourly_rate'] != null
-                          ? 'From ${agencyData?['hourly_rate']} DZD/hr'
-                          : AppLocalizations.of(context)!.contactForPricing,
-                      'profileData': agencyData,
-                    };
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            CleanerProfilePage(cleaner: agencyProfileData),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
-                    minimumSize: const Size(0, 32),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'View',
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } catch (e, stackTrace) {
-      print('Error building agency card: $e');
-      print('Stack trace: $stackTrace');
-
-      return const SizedBox.shrink();
-    }
-  }
-
-  Widget _buildIndividualCard(
-    BuildContext context,
-    String name,
-    double rating,
-    bool isVerified,
-    String? imageUrl, {
-    Map<String, dynamic>? cleanerData,
-  }) {
-    try {
-      final safeName = name.isEmpty ? 'Unknown Cleaner' : name;
-      final safeRating = rating.isNaN || rating < 0
-          ? 0.0
-          : (rating > 5.0 ? 5.0 : rating);
-      final location = cleanerData?['location'] as String? ?? 'Algiers';
-
-      // Use real data from cleanerData if available, otherwise minimal fallback
-      final data = cleanerData != null
-          ? {
-              ...cleanerData,
-              'name': safeName,
-              'rating': safeRating,
-              'reviews': cleanerData['jobsCompleted'] as int? ?? 0,
-              'isVerified': cleanerData['is_verified'] as bool? ?? false,
-              'description':
-                  cleanerData['bio'] as String? ??
-                  'Professional cleaning service provider.',
-              'location': location,
-              'price': cleanerData['hourly_rate'] != null
-                  ? 'From ${cleanerData['hourly_rate']} DZD/hr'
-                  : AppLocalizations.of(context)!.contactForPricing,
-              'image': imageUrl ?? cleanerData['image'],
-              'type': 'Individual',
-              'aboutMe':
-                  cleanerData['bio'] as String? ??
-                  'Professional cleaning service provider.',
-              'experience': cleanerData['experience_years'] != null
-                  ? '${cleanerData['experience_years']}+ Years'
-                  : '5+ Years',
-              'age': cleanerData['age']?.toString() ?? '28',
-              'languages':
-                  cleanerData['languages'] as String? ?? 'Arabic, French',
-              'profileData': cleanerData,
-            }
-          : {
-              'name': safeName,
-              'rating': safeRating,
-              'reviews': 0,
-              'isVerified': false,
-              'description': 'Professional cleaning service provider.',
-              'location': location,
-              'price': AppLocalizations.of(context)!.contactForPricing,
-              'image': imageUrl,
-              'type': 'Individual',
-              'aboutMe': 'Professional cleaning service provider.',
-              'experience': '5+ Years',
-              'age': '28',
-              'languages': 'Arabic, French',
-            };
-
-      return GestureDetector(
-        onTap: () {
-          try {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CleanerProfilePage(cleaner: data),
-              ),
-            );
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error opening cleaner profile: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.7,
-          constraints: const BoxConstraints(minWidth: 200, maxWidth: 250),
-          margin: const EdgeInsets.only(right: 16),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ClipOval(
-                child: imageUrl != null && imageUrl.isNotEmpty
-                    ? AppImage(
-                        imageUrl: imageUrl,
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                        errorWidget: Container(
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            size: 35,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        width: 70,
-                        height: 70,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 35,
-                          color: Colors.grey,
-                        ),
-                      ),
-              ),
-              const SizedBox(height: 6),
-              Flexible(
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Flexible(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ...List.generate(
-                      5,
-                      (index) => Icon(
-                        Icons.star,
-                        color: index < rating.floor()
-                            ? Colors.amber
-                            : Colors.grey[300],
-                        size: 12,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        '(${rating.toStringAsFixed(1)})',
-                        style: const TextStyle(fontSize: 11),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CleanerProfilePage(cleaner: data),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
-                    minimumSize: const Size(0, 32),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'View',
-                    style: TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    } catch (e, stackTrace) {
-      print('Error building individual card: $e');
-      print('Stack trace: $stackTrace');
-
-      return const SizedBox.shrink();
-    }
-  }
 }

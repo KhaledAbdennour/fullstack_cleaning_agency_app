@@ -39,7 +39,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
   }
 
   Widget _buildImageCarousel() {
-    // Get all images from job_images field, or fallback to cover_image_url
     List<String> images = [];
     if (widget.job.jobImages != null && widget.job.jobImages!.isNotEmpty) {
       images = widget.job.jobImages!;
@@ -207,10 +206,8 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
       await bookingsRepo.createBooking(booking);
 
       if (mounted) {
-        // Refresh available jobs (to remove the job from available list)
         context.read<AvailableJobsCubit>().refresh(providerId);
 
-        // Refresh active listings (to show the job as pending)
         context.read<ActiveListingsCubit>().refresh(providerId);
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -226,15 +223,15 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
       }
     } catch (e) {
       if (mounted) {
-        // Safely format error message (avoid encoding FieldValue in error string)
         String errorMsg = 'Error submitting bid';
         try {
           final errorStr = e.toString();
-          // Remove FieldValue references from error message
+
           if (errorStr.contains('FieldValue')) {
             errorMsg = AppLocalizations.of(
               context,
-            )!.errorSubmittingBidInvalidData;
+            )!
+                .errorSubmittingBidInvalidData;
           } else {
             errorMsg =
                 'Error submitting bid: ${errorStr.length > 100 ? errorStr.substring(0, 100) : errorStr}';
@@ -278,7 +275,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildImageCarousel(),
-
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
@@ -297,7 +293,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   BlocBuilder<ProfilesCubit, ProfilesState>(
                     builder: (context, state) {
                       if (state is ProfilesLoaded &&
@@ -308,7 +303,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                           builder: (context, snapshot) {
                             final clientName =
                                 snapshot.data?['full_name'] as String? ??
-                                'Client';
+                                    'Client';
                             final clientPhoto =
                                 snapshot.data?['picture'] as String?;
                             return Row(
@@ -316,8 +311,7 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                                 CircleAvatar(
                                   radius: 35,
                                   backgroundColor: const Color(0xFF3B82F6),
-                                  child:
-                                      clientPhoto != null &&
+                                  child: clientPhoto != null &&
                                           clientPhoto.isNotEmpty
                                       ? ClipOval(
                                           child: AppImage(
@@ -388,15 +382,14 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                     widget.job.budgetMin != null && widget.job.budgetMax != null
                         ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMin!.toStringAsFixed(0)} - DA ${widget.job.budgetMax!.toStringAsFixed(0)}'
                         : widget.job.budgetMin != null
-                        ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMin!.toStringAsFixed(0)}'
-                        : widget.job.budgetMax != null
-                        ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMax!.toStringAsFixed(0)}'
-                        : '${AppLocalizations.of(context)!.budget}: ${AppLocalizations.of(context)!.budgetNegotiable}',
+                            ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMin!.toStringAsFixed(0)}'
+                            : widget.job.budgetMax != null
+                                ? '${AppLocalizations.of(context)!.budget}: DA ${widget.job.budgetMax!.toStringAsFixed(0)}'
+                                : '${AppLocalizations.of(context)!.budget}: ${AppLocalizations.of(context)!.budgetNegotiable}',
                   ),
                 ],
               ),
             ),
-
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(20),
@@ -419,7 +412,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                 ],
               ),
             ),
-
             if (widget.job.requiredServices != null &&
                 widget.job.requiredServices!.isNotEmpty)
               Container(
@@ -467,7 +459,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                   ],
                 ),
               ),
-
             Container(
               margin: const EdgeInsets.all(16),
               padding: const EdgeInsets.all(20),
@@ -488,7 +479,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     Text(
                       AppLocalizations.of(context)!.yourPriceDa,
                       style: const TextStyle(
@@ -503,7 +493,8 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(
                           context,
-                        )!.enterYourBidPrice,
+                        )!
+                            .enterYourBidPrice,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -513,19 +504,20 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                         if (value == null || value.isEmpty) {
                           return AppLocalizations.of(
                             context,
-                          )!.pleaseEnterBidPrice;
+                          )!
+                              .pleaseEnterBidPrice;
                         }
                         final price = double.tryParse(value);
                         if (price == null || price <= 0) {
                           return AppLocalizations.of(
                             context,
-                          )!.pleaseEnterValidPrice;
+                          )!
+                              .pleaseEnterValidPrice;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 20),
-
                     Text(
                       AppLocalizations.of(context)!.messageOptional,
                       style: const TextStyle(
@@ -540,7 +532,8 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(
                           context,
-                        )!.addShortMessageToClient,
+                        )!
+                            .addShortMessageToClient,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -550,7 +543,6 @@ class _JobDetailsBidPageState extends State<JobDetailsBidPage> {
                 ),
               ),
             ),
-
             Container(
               margin: const EdgeInsets.all(16),
               width: double.infinity,

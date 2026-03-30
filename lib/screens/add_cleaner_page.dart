@@ -235,21 +235,6 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
     }
 
     try {
-      final profileRepo = AbstractProfileRepo.getInstance();
-
-      final profileData = {
-        'username': _emailController.text.trim().split('@').first,
-        'password': 'temp123',
-        'email': _emailController.text.trim(),
-        'full_name': _fullNameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'user_type': 'Individual Cleaner',
-        'bio': 'Professional cleaner',
-        'services': _selectedServices.join(', '),
-        'experience_years': _getExperienceYears(),
-        'picture': _profileImage?.path,
-      };
-
       final cleanersRepo = AbstractCleanersRepo.getInstance();
 
       final cleaner = Cleaner(
@@ -286,21 +271,6 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
     }
   }
 
-  int _getExperienceYears() {
-    switch (_selectedExperienceLevel) {
-      case 'Beginner':
-        return 0;
-      case 'Intermediate':
-        return 2;
-      case 'Advanced':
-        return 5;
-      case 'Expert':
-        return 10;
-      default:
-        return 0;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -332,7 +302,6 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
               children: [
                 _buildProfilePictureSection(),
                 const SizedBox(height: 24),
-
                 _buildSectionTitle('Personal Information'),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -361,19 +330,16 @@ class _AddCleanerPageState extends State<AddCleanerPage> {
                   validator: (value) => Validators.validateEmail(value),
                 ),
                 const SizedBox(height: 24),
-
                 _buildSectionTitle('Professional Details'),
                 const SizedBox(height: 16),
                 _buildServicesSection(),
                 const SizedBox(height: 16),
                 _buildExperienceDropdown(),
                 const SizedBox(height: 24),
-
                 _buildSectionTitle('Existing Profile'),
                 const SizedBox(height: 16),
                 _buildLinkExistingProfileSection(),
                 const SizedBox(height: 32),
-
                 SizedBox(
                   width: double.infinity,
                   height: 56,

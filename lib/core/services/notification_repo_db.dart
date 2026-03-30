@@ -8,7 +8,6 @@ class NotificationRepoDB extends AbstractNotificationRepo {
   static const String collectionName = 'notifications';
   static const String devicesCollectionName = 'user_devices';
 
-  // FCM Server Key - should be stored securely in production
   static const String fcmServerKey =
       '6B6_LDeZoDxT14kvBMKuHuGkYhGDmNMbhFPUFmScS0';
 
@@ -92,7 +91,6 @@ class NotificationRepoDB extends AbstractNotificationRepo {
     Map<String, dynamic>? data,
   }) async {
     try {
-      // Get FCM tokens for the user
       final devicesSnapshot = await FirebaseConfig.firestore
           .collection(devicesCollectionName)
           .where('user_id', isEqualTo: userId)
@@ -108,7 +106,6 @@ class NotificationRepoDB extends AbstractNotificationRepo {
         return;
       }
 
-      // Send notification to all devices via FCM HTTP v1 API
       for (final token in tokens) {
         await _sendFCMNotification(
           token: token!,
@@ -118,7 +115,6 @@ class NotificationRepoDB extends AbstractNotificationRepo {
         );
       }
 
-      // Save notification to Firestore for history
       await FirebaseConfig.firestore.collection(collectionName).add({
         'user_id': userId,
         'title': title,

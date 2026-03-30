@@ -4,13 +4,10 @@ import '../logic/cubits/profiles_cubit.dart';
 import '../logic/cubits/agency_dashboard_cubit.dart';
 import '../logic/cubits/available_jobs_cubit.dart';
 import '../data/models/job_model.dart';
-import '../data/models/cleaner_model.dart';
 import '../data/models/booking_model.dart';
 import 'job_details_bid_page.dart';
 import 'jobdetails.dart';
 import 'cleaner_profile_page.dart';
-import 'login.dart';
-import '../data/repositories/profiles/profile_repo.dart';
 import '../data/repositories/bookings/bookings_repo.dart';
 import '../utils/image_helper.dart';
 import '../utils/age_helper.dart';
@@ -33,11 +30,9 @@ class AgencyDashboardPage extends StatefulWidget {
 class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   int _currentIndex = 0;
   int? _agencyId;
-  final int _totalJobsCompleted = 0;
   final ScrollController _activeListingsScrollController = ScrollController();
   final ScrollController _pastBookingsScrollController = ScrollController();
 
-  // Filter state for available jobs
   Set<String> _selectedWilayas = {};
   double? _minPrice;
   double? _maxPrice;
@@ -72,13 +67,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             break;
           case 1:
             context.read<AvailableJobsCubit>().loadAvailableJobs(
-              _agencyId!,
-              wilayas: _selectedWilayas.isEmpty
-                  ? null
-                  : _selectedWilayas.toList(),
-              minPrice: _minPrice,
-              maxPrice: _maxPrice,
-            );
+                  _agencyId!,
+                  wilayas: _selectedWilayas.isEmpty
+                      ? null
+                      : _selectedWilayas.toList(),
+                  minPrice: _minPrice,
+                  maxPrice: _maxPrice,
+                );
             break;
           case 2:
             context.read<PastBookingsCubit>().loadPastBookings(_agencyId!);
@@ -98,7 +93,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             context.read<PastBookingsCubit>().loadPastBookings(_agencyId!);
             break;
           case 3:
-            // Profile tab - will show agency profile page
             break;
         }
       }
@@ -134,8 +128,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         if (profileState is ProfilesLoaded &&
             profileState.currentUser != null) {
           final user = profileState.currentUser!;
-          final agencyName =
-              user['agency_name'] as String? ??
+          final agencyName = user['agency_name'] as String? ??
               user['full_name'] as String? ??
               'CleanSpace';
 
@@ -187,7 +180,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           ),
         ],
       ),
-
       actions: [
         NotificationBellWidget(),
         if (_getUserType() == 'Agency')
@@ -214,105 +206,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           tooltip: AppLocalizations.of(context)!.settings,
         ),
       ],
-    );
-  }
-
-  void _showLogoutDialog() {
-    final cubit = context.read<ProfilesCubit>();
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 24,
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.logout, size: 40, color: Color(0xFF3B82F6)),
-              const SizedBox(height: 16),
-              const Text(
-                'Log Out?',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Are you sure you want to log out of your CleanSpace account?',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    cubit.logout().then((_) {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Login()),
-                        (route) => false,
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppLocalizations.of(context)!.loggedOutSuccessfully,
-                          ),
-                        ),
-                      );
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    'Yes, Log Out',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFE5E7EB)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -445,16 +338,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
 
           final agencyProfile = <String, dynamic>{
             'id': user['id'],
-            'name':
-                user['agency_name'] as String? ??
+            'name': user['agency_name'] as String? ??
                 user['full_name'] as String? ??
                 'Unknown',
             'image': user['picture'] as String?,
             'rating': (user['rating'] as num?)?.toDouble() ?? 4.5,
             'reviews': user['reviews_count'] as int? ?? 0,
             'isVerified': user['is_verified'] as bool? ?? false,
-            'aboutMe':
-                user['bio'] as String? ??
+            'aboutMe': user['bio'] as String? ??
                 'Professional cleaning service provider.',
             'experience': user['experience_years'] != null
                 ? '${user['experience_years']}+ Years'
@@ -462,7 +353,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             'age': AgeHelper.formatAge(user['birthdate'] as String?),
             'languages': user['languages'] as String? ?? 'Arabic, French',
             'location': _extractLocation(user['address'] as String?),
-            'agency': null, // Agency doesn't belong to another agency
+            'agency': null,
             'type': 'Agency',
             'userType': 'Agency',
             'profileData': user,
@@ -592,8 +483,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             'rating': (user['rating'] as num?)?.toDouble() ?? 4.5,
             'reviews': user['reviews_count'] as int? ?? 0,
             'isVerified': user['is_verified'] as bool? ?? false,
-            'aboutMe':
-                user['bio'] as String? ??
+            'aboutMe': user['bio'] as String? ??
                 'Professional cleaning service provider.',
             'experience': user['experience_years'] != null
                 ? '${user['experience_years']}+ Years'
@@ -660,8 +550,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   }
 
   String _extractLocation(String? address) {
-    if (address == null || address.isEmpty)
+    if (address == null || address.isEmpty) {
       return AppLocalizations.of(context)!.unknown;
+    }
 
     final parts = address.split(',');
     return parts.isNotEmpty ? parts.first.trim() : address;
@@ -716,11 +607,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
               itemCount: state.jobs.length,
               itemBuilder: (context, index) {
                 final job = state.jobs[index];
-                final highlight =
-                    widget.highlightJobId != null &&
+                final highlight = widget.highlightJobId != null &&
                     job.id == widget.highlightJobId;
-                // Check if this job has a pending booking or is assigned to this worker
-                // Use available job card design for pending/assigned jobs
+
                 if (_agencyId != null) {
                   final isAssigned = job.assignedWorkerId == _agencyId;
                   if (isAssigned) {
@@ -806,10 +695,9 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     itemCount: state.jobs.length,
                     itemBuilder: (context, index) {
                       final job = state.jobs[index];
-                      final highlight =
-                          widget.highlightJobId != null &&
+                      final highlight = widget.highlightJobId != null &&
                           job.id == widget.highlightJobId;
-                      // Use the same card builder for all jobs in history
+
                       return _buildPastBookingCard(job, highlight: highlight);
                     },
                   ),
@@ -836,7 +724,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
 
     return Column(
       children: [
-        // Filter buttons
         Container(
           padding: const EdgeInsets.all(16),
           color: Colors.white,
@@ -849,8 +736,8 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                   value: _selectedWilayas.isEmpty
                       ? AppLocalizations.of(context)!.all
                       : _selectedWilayas.length == 1
-                      ? _selectedWilayas.first
-                      : '${_selectedWilayas.length} ${AppLocalizations.of(context)!.all.toLowerCase()}',
+                          ? _selectedWilayas.first
+                          : '${_selectedWilayas.length} ${AppLocalizations.of(context)!.all.toLowerCase()}',
                   onTap: () {
                     _showLocationFilter();
                   },
@@ -872,7 +759,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             ],
           ),
         ),
-        // Jobs list
         Expanded(
           child: BlocBuilder<AvailableJobsCubit, AvailableJobsState>(
             builder: (context, state) {
@@ -899,13 +785,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                           onPressed: () {
                             try {
                               context.read<AvailableJobsCubit>().refresh(
-                                _agencyId!,
-                                wilayas: _selectedWilayas.isEmpty
-                                    ? null
-                                    : _selectedWilayas.toList(),
-                                minPrice: _minPrice,
-                                maxPrice: _maxPrice,
-                              );
+                                    _agencyId!,
+                                    wilayas: _selectedWilayas.isEmpty
+                                        ? null
+                                        : _selectedWilayas.toList(),
+                                    minPrice: _minPrice,
+                                    maxPrice: _maxPrice,
+                                  );
                             } catch (e) {
                               print('Error refreshing available jobs: $e');
                             }
@@ -929,13 +815,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     onRefresh: () async {
                       try {
                         await context.read<AvailableJobsCubit>().refresh(
-                          _agencyId!,
-                          wilayas: _selectedWilayas.isEmpty
-                              ? null
-                              : _selectedWilayas.toList(),
-                          minPrice: _minPrice,
-                          maxPrice: _maxPrice,
-                        );
+                              _agencyId!,
+                              wilayas: _selectedWilayas.isEmpty
+                                  ? null
+                                  : _selectedWilayas.toList(),
+                              minPrice: _minPrice,
+                              maxPrice: _maxPrice,
+                            );
                       } catch (e) {
                         print('Error refreshing: $e');
                       }
@@ -981,13 +867,13 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         onPressed: () {
                           try {
                             context.read<AvailableJobsCubit>().refresh(
-                              _agencyId!,
-                              wilayas: _selectedWilayas.isEmpty
-                                  ? null
-                                  : _selectedWilayas.toList(),
-                              minPrice: _minPrice,
-                              maxPrice: _maxPrice,
-                            );
+                                  _agencyId!,
+                                  wilayas: _selectedWilayas.isEmpty
+                                      ? null
+                                      : _selectedWilayas.toList(),
+                                  minPrice: _minPrice,
+                                  maxPrice: _maxPrice,
+                                );
                           } catch (e) {
                             print('Error refreshing: $e');
                           }
@@ -1020,7 +906,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       return const SizedBox.shrink();
     }
 
-    // Get status color and label
     Color statusColor;
     String statusLabel;
     if (showDoneStatus) {
@@ -1033,7 +918,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       statusColor = Colors.orange;
       statusLabel = AppLocalizations.of(context)!.pending;
     } else {
-      // For open jobs, use green; otherwise use grey
       if (job.status == JobStatus.open) {
         statusColor = Colors.green;
       } else {
@@ -1042,7 +926,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       statusLabel = job.statusLabel;
     }
 
-    // Calculate time ago from postedDate
     final dateToUse = job.postedDate;
     final now = DateTime.now();
     final difference = now.difference(dateToUse);
@@ -1054,12 +937,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         } else {
           timeAgoText = AppLocalizations.of(
             context,
-          )!.minutesAgo(difference.inMinutes);
+          )!
+              .minutesAgo(difference.inMinutes);
         }
       } else {
         timeAgoText = AppLocalizations.of(
           context,
-        )!.hoursAgo(difference.inHours);
+        )!
+            .hoursAgo(difference.inHours);
       }
     } else if (difference.inDays == 1) {
       timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1073,8 +958,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       return InkWell(
         onTap: () {
           try {
-            // For assigned or completed jobs, use JobDetailsScreen
-            // For pending jobs, use JobDetailsBidPage
             if (showAssignedStatus || showDoneStatus) {
               Navigator.push(
                 context,
@@ -1117,23 +1000,20 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cover image
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
                 child:
                     job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                    ? _buildJobImage(job.coverImageUrl!, height: 180)
-                    : _buildPlaceholderImage(height: 180),
+                        ? _buildJobImage(job.coverImageUrl!, height: 180)
+                        : _buildPlaceholderImage(height: 180),
               ),
-              // Content
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and status row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1172,7 +1052,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Description
                     Text(
                       job.description,
                       maxLines: 2,
@@ -1183,19 +1062,19 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Budget (Min - Max) with blue icon and bid
                     FutureBuilder<double?>(
                       future: _getWorkerBidPriceForJob(job.id),
                       builder: (context, snapshot) {
                         final bidPrice = snapshot.data;
-                        final budgetText =
-                            job.budgetMin != null && job.budgetMax != null
+                        final budgetText = job.budgetMin != null &&
+                                job.budgetMax != null
                             ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                             : job.budgetMin != null
-                            ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                            : job.budgetMax != null
-                            ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                            : AppLocalizations.of(context)!.budgetNegotiable;
+                                ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                                : job.budgetMax != null
+                                    ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                    : AppLocalizations.of(context)!
+                                        .budgetNegotiable;
                         final displayText = bidPrice != null
                             ? '$budgetText (${AppLocalizations.of(context)!.bid}: DA ${bidPrice.toStringAsFixed(0)})'
                             : budgetText;
@@ -1224,7 +1103,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         );
                       },
                     ),
-                    // Location with blue icon
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
@@ -1248,7 +1126,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         ],
                       ),
                     ),
-                    // Date with blue icon and time ago
                     Row(
                       children: [
                         const Icon(
@@ -1321,65 +1198,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     }
   }
 
-  Widget _buildCleanerTeamTab() {
-    if (_agencyId == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
-      );
-    }
-
-    return BlocBuilder<CleanerTeamCubit, CleanerTeamState>(
-      builder: (context, state) {
-        if (state is CleanerTeamLoading) {
-          return const Center(
-            child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
-          );
-        } else if (state is CleanerTeamError) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(state.message),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    context.read<CleanerTeamCubit>().refresh(_agencyId!);
-                  },
-                  child: Text(AppLocalizations.of(context)!.retry),
-                ),
-              ],
-            ),
-          );
-        } else if (state is CleanerTeamLoaded) {
-          if (state.cleaners.isEmpty) {
-            return Center(
-              child: Text(
-                AppLocalizations.of(context)!.noCleanersInTeamYet,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () async {
-              await context.read<CleanerTeamCubit>().refresh(_agencyId!);
-            },
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.cleaners.length,
-              itemBuilder: (context, index) {
-                return _buildCleanerCard(state.cleaners[index]);
-              },
-            ),
-          );
-        }
-        return const SizedBox.shrink();
-      },
-    );
-  }
-
   Widget _buildJobCard(Job job, {bool highlight = false}) {
-    // Get status color
     Color statusColor;
     switch (job.status) {
       case JobStatus.open:
@@ -1407,7 +1226,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         statusColor = Colors.grey;
     }
 
-    // Calculate time ago from postedDate
     final dateToUse = job.postedDate;
     final now = DateTime.now();
     final difference = now.difference(dateToUse);
@@ -1419,12 +1237,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         } else {
           timeAgoText = AppLocalizations.of(
             context,
-          )!.minutesAgo(difference.inMinutes);
+          )!
+              .minutesAgo(difference.inMinutes);
         }
       } else {
         timeAgoText = AppLocalizations.of(
           context,
-        )!.hoursAgo(difference.inHours);
+        )!
+            .hoursAgo(difference.inHours);
       }
     } else if (difference.inDays == 1) {
       timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1459,7 +1279,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover image
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(12),
@@ -1468,13 +1287,11 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                   ? _buildJobImage(job.coverImageUrl!, height: 180)
                   : _buildPlaceholderImage(height: 180),
             ),
-            // Content
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title and status row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1513,7 +1330,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  // Description
                   Text(
                     job.description,
                     maxLines: 2,
@@ -1524,19 +1340,19 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Budget (Min - Max) with blue icon and bid
                   FutureBuilder<double?>(
                     future: _getWorkerBidPriceForJob(job.id),
                     builder: (context, snapshot) {
                       final bidPrice = snapshot.data;
-                      final budgetText =
-                          job.budgetMin != null && job.budgetMax != null
+                      final budgetText = job.budgetMin != null &&
+                              job.budgetMax != null
                           ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                           : job.budgetMin != null
-                          ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                          : job.budgetMax != null
-                          ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                          : AppLocalizations.of(context)!.budgetNegotiable;
+                              ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                              : job.budgetMax != null
+                                  ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                  : AppLocalizations.of(context)!
+                                      .budgetNegotiable;
                       final displayText = bidPrice != null
                           ? '$budgetText (Bid: DA ${bidPrice.toStringAsFixed(0)})'
                           : budgetText;
@@ -1565,7 +1381,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       );
                     },
                   ),
-                  // Location with blue icon
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Row(
@@ -1589,7 +1404,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       ],
                     ),
                   ),
-                  // Date with blue icon and time ago
                   Row(
                     children: [
                       const Icon(
@@ -1620,7 +1434,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   }
 
   Widget _buildPastBookingCard(Job job, {bool highlight = false}) {
-    // Get status color
     Color statusColor;
     switch (job.status) {
       case JobStatus.completed:
@@ -1645,10 +1458,8 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         statusColor = Colors.grey;
     }
 
-    // Use updatedAt (when job was done) or postedDate as fallback
     final dateToUse = job.updatedAt ?? job.postedDate;
 
-    // Calculate time ago
     final now = DateTime.now();
     final difference = now.difference(dateToUse);
     String timeAgoText;
@@ -1659,12 +1470,14 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         } else {
           timeAgoText = AppLocalizations.of(
             context,
-          )!.minutesAgo(difference.inMinutes);
+          )!
+              .minutesAgo(difference.inMinutes);
         }
       } else {
         timeAgoText = AppLocalizations.of(
           context,
-        )!.hoursAgo(difference.inHours);
+        )!
+            .hoursAgo(difference.inHours);
       }
     } else if (difference.inDays == 1) {
       timeAgoText = AppLocalizations.of(context)!.yesterday;
@@ -1674,7 +1487,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
       timeAgoText = '${dateToUse.day}/${dateToUse.month}/${dateToUse.year}';
     }
 
-    // Status label - use "Done" for completed jobs
     String statusLabel = job.statusLabel;
     if (job.status == JobStatus.completed ||
         (job.clientDone && job.workerDone)) {
@@ -1688,9 +1500,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
         final bidPrice = acceptedBid?.bidPrice;
 
         return InkWell(
-          onTap: () {
-            // Navigate to job details if needed
-          },
+          onTap: () {},
           borderRadius: BorderRadius.circular(12),
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
@@ -1709,23 +1519,20 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Cover image
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(12),
                   ),
                   child:
                       job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                      ? _buildJobImage(job.coverImageUrl!, height: 180)
-                      : _buildPlaceholderImage(height: 180),
+                          ? _buildJobImage(job.coverImageUrl!, height: 180)
+                          : _buildPlaceholderImage(height: 180),
                 ),
-                // Content
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Title and status row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1764,7 +1571,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      // Description
                       Text(
                         job.description,
                         maxLines: 2,
@@ -1775,7 +1581,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Budget with bid in parentheses
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
@@ -1799,7 +1604,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                           ],
                         ),
                       ),
-                      // Location with blue icon
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
@@ -1823,7 +1627,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                           ],
                         ),
                       ),
-                      // Date with blue icon and time ago (using updatedAt)
                       Row(
                         children: [
                           const Icon(
@@ -1860,7 +1663,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     try {
       final bookingsRepo = AbstractBookingsRepo.getInstance();
       final applications = await bookingsRepo.getApplicationsForJob(jobId);
-      // Find the accepted booking (status is inProgress or completed)
+
       for (final booking in applications) {
         if (booking.status == BookingStatus.inProgress ||
             booking.status == BookingStatus.completed) {
@@ -1887,278 +1690,15 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
     final budgetText = job.budgetMin != null && job.budgetMax != null
         ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
         : job.budgetMin != null
-        ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-        : job.budgetMax != null
-        ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-        : 'Budget negotiable';
+            ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+            : job.budgetMax != null
+                ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                : 'Budget negotiable';
 
     if (bidPrice != null) {
       return '$budgetText (${AppLocalizations.of(context)!.bid}: DA ${bidPrice.toStringAsFixed(0)})';
     }
     return budgetText;
-  }
-
-  List<Widget> _buildActionButtons(Job job) {
-    List<Widget> buttons = [];
-
-    buttons.add(
-      Expanded(
-        child: OutlinedButton(
-          onPressed: () {},
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey[300]!),
-          ),
-          child: Text(AppLocalizations.of(context)!.edit),
-        ),
-      ),
-    );
-
-    const SizedBox(width: 8);
-
-    if (job.status == JobStatus.active) {
-      buttons.add(const SizedBox(width: 8));
-      buttons.add(
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () {
-              if (_agencyId != null && job.id != null) {
-                context.read<PastBookingsCubit>().changeJobStatus(
-                  job.id!,
-                  JobStatus.paused,
-                  _agencyId!,
-                );
-              }
-            },
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.grey[300]!),
-            ),
-            child: Text(AppLocalizations.of(context)!.pause),
-          ),
-        ),
-      );
-    } else if (job.status == JobStatus.paused) {
-      buttons.add(const SizedBox(width: 8));
-      buttons.add(
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              if (_agencyId != null && job.id != null) {
-                context.read<PastBookingsCubit>().changeJobStatus(
-                  job.id!,
-                  JobStatus.active,
-                  _agencyId!,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-            ),
-            child: Text(AppLocalizations.of(context)!.activate),
-          ),
-        ),
-      );
-    }
-
-    buttons.add(const SizedBox(width: 8));
-
-    buttons.add(
-      Expanded(
-        child: OutlinedButton(
-          onPressed: () {
-            _showDeleteConfirmation(job);
-          },
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Colors.red),
-          ),
-          child: const Text('Delete', style: TextStyle(color: Colors.red)),
-        ),
-      ),
-    );
-
-    return buttons;
-  }
-
-  void _showDeleteConfirmation(Job job) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.deleteJob),
-        content: Text(
-          AppLocalizations.of(context)!.areYouSureDeleteJob(job.title),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              if (job.id != null && job.agencyId != null) {
-                context.read<PastBookingsCubit>().deleteJob(
-                  job.id!,
-                  job.agencyId!,
-                );
-              }
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCleanerCard(Cleaner cleaner) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () async {
-          if (cleaner.id != null) {
-            final profileRepo = AbstractProfileRepo.getInstance();
-            try {
-              final profile = await profileRepo.getProfileById(cleaner.id!);
-              if (profile != null && mounted) {
-                final cleanerProfile = {
-                  'id': profile['id'],
-                  'name': profile['full_name'] as String? ?? cleaner.name,
-                  'image': profile['picture'] as String? ?? cleaner.avatarUrl,
-                  'rating': cleaner.rating,
-                  'reviews': profile['reviews_count'] as int? ?? 0,
-                  'isVerified': profile['is_verified'] as bool? ?? false,
-                  'aboutMe':
-                      profile['bio'] as String? ??
-                      'Professional cleaning service provider.',
-                  'experience': profile['experience_years'] != null
-                      ? '${profile['experience_years']}+ Years'
-                      : '5+ Years',
-                  'age': AgeHelper.formatAge(profile['birthdate'] as String?),
-                  'languages':
-                      profile['languages'] as String? ?? 'Arabic, French',
-                  'location': _extractLocation(profile['address'] as String?),
-                  'agency': profile['agency_name'] as String?,
-                  'type': 'Individual',
-                  'userType': profile['user_type'],
-                  'profileData': profile,
-                };
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        CleanerProfilePage(cleaner: cleanerProfile),
-                  ),
-                );
-              }
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error loading cleaner profile: $e'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
-          }
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.grey[200],
-                child:
-                    cleaner.avatarUrl != null && cleaner.avatarUrl!.isNotEmpty
-                    ? ClipOval(
-                        child: AppImage(
-                          imageUrl: cleaner.avatarUrl!,
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                          errorWidget: Container(
-                            width: 60,
-                            height: 60,
-                            color: Colors.grey[300],
-                            child: Text(
-                              cleaner.name[0].toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        ),
-                      )
-                    : Text(
-                        cleaner.name[0].toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-              ),
-              const SizedBox(width: 16),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      cleaner.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        ...List.generate(5, (index) {
-                          if (index < cleaner.rating.floor()) {
-                            return const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                              size: 16,
-                            );
-                          } else if (index < cleaner.rating) {
-                            return const Icon(
-                              Icons.star_half,
-                              color: Colors.amber,
-                              size: 16,
-                            );
-                          } else {
-                            return Icon(
-                              Icons.star_border,
-                              color: Colors.grey[400],
-                              size: 16,
-                            );
-                          }
-                        }),
-                        const SizedBox(width: 8),
-                        Text(
-                          '(${cleaner.rating.toStringAsFixed(1)})',
-                          style: TextStyle(color: Colors.grey[600]),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${cleaner.jobsCompleted} Jobs Completed',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildJobImage(String imageUrl, {double? height, double? width}) {
@@ -2189,38 +1729,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   }
 
   Widget _buildFloatingActionButton() {
-    final userType = _getUserType();
-    final currentTabIndex = _currentIndex;
-
-    if (userType == 'Client') {
-      return const SizedBox.shrink();
-    }
-
-    // Floating action button removed from profile tab - now accessible via person icon in AppBar
-
     return const SizedBox.shrink();
-  }
-
-  String _formatDate(DateTime date) {
-    try {
-      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-    } catch (e) {
-      print('Error formatting date: $e');
-      return 'Date unavailable';
-    }
-  }
-
-  void _scrollToJob(List<Job> jobs, int jobId, ScrollController controller) {
-    final index = jobs.indexWhere((job) => job.id == jobId);
-    if (index != -1 && controller.hasClients) {
-      final itemHeight = 150.0; // Approximate height of a job card
-      final offset = index * itemHeight;
-      controller.animateTo(
-        offset,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
   }
 
   Future<bool> _hasPendingBookingForJob(int jobId, int providerId) async {
@@ -2320,7 +1829,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                             _selectedWilayas = allWilayas.toSet();
                           }
                         });
-                        setModalState(() {}); // Update modal UI
+                        setModalState(() {});
                         _reloadAvailableJobs();
                       },
                       child: Text(
@@ -2352,7 +1861,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                               _selectedWilayas.remove(wilaya);
                             }
                           });
-                          setModalState(() {}); // Update modal UI immediately
+                          setModalState(() {});
                           _reloadAvailableJobs();
                         },
                       );
@@ -2475,7 +1984,7 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                       setState(() {
                         _minPrice = double.tryParse(minController.text);
                         _maxPrice = double.tryParse(maxController.text);
-                        // Validate range
+
                         if (_minPrice != null && _minPrice! < 0) {
                           _minPrice = null;
                         }
@@ -2485,7 +1994,6 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
                         if (_minPrice != null &&
                             _maxPrice != null &&
                             _minPrice! > _maxPrice!) {
-                          // Swap if min > max
                           final temp = _minPrice;
                           _minPrice = _maxPrice;
                           _maxPrice = temp;
@@ -2516,11 +2024,12 @@ class _AgencyDashboardPageState extends State<AgencyDashboardPage> {
   void _reloadAvailableJobs() {
     if (_agencyId != null) {
       context.read<AvailableJobsCubit>().loadAvailableJobs(
-        _agencyId!,
-        wilayas: _selectedWilayas.isEmpty ? null : _selectedWilayas.toList(),
-        minPrice: _minPrice,
-        maxPrice: _maxPrice,
-      );
+            _agencyId!,
+            wilayas:
+                _selectedWilayas.isEmpty ? null : _selectedWilayas.toList(),
+            minPrice: _minPrice,
+            maxPrice: _maxPrice,
+          );
     }
   }
 }

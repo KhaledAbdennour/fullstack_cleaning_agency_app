@@ -52,7 +52,6 @@ class ActivePostsPage extends StatelessWidget {
             );
           }
 
-          // Load client jobs when Active Posts page is first built
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               context.read<ClientJobsCubit>().loadClientJobs(userId);
@@ -82,7 +81,6 @@ class ActivePostsPage extends StatelessWidget {
                   ),
                 );
               } else if (state is ClientJobsLoaded) {
-                // Filter out completed jobs and deleted jobs - ONLY show active posts
                 final activeJobs = state.jobs
                     .where(
                       (job) =>
@@ -111,7 +109,6 @@ class ActivePostsPage extends StatelessWidget {
                   );
                 }
 
-                // Sort jobs by most recent first (postedDate descending)
                 final sortedJobs = List<Job>.from(activeJobs);
                 sortedJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
 
@@ -149,7 +146,6 @@ class ActivePostsPage extends StatelessWidget {
         return const SizedBox.shrink();
       }
 
-      // Calculate time ago with better precision
       final now = DateTime.now();
       final difference = now.difference(job.postedDate);
       String timeAgoText;
@@ -172,7 +168,6 @@ class ActivePostsPage extends StatelessWidget {
             '${job.postedDate.day}/${job.postedDate.month}/${job.postedDate.year}';
       }
 
-      // Get status color
       Color statusColor;
       switch (job.status) {
         case JobStatus.open:
@@ -225,47 +220,44 @@ class ActivePostsPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cover image
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
                 child:
                     job.coverImageUrl != null && job.coverImageUrl!.isNotEmpty
-                    ? AppImage(
-                        imageUrl: job.coverImageUrl!,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorWidget: Container(
-                          height: 180,
-                          width: double.infinity,
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.image,
-                            size: 48,
-                            color: Colors.grey,
+                        ? AppImage(
+                            imageUrl: job.coverImageUrl!,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorWidget: Container(
+                              height: 180,
+                              width: double.infinity,
+                              color: Colors.grey[200],
+                              child: const Icon(
+                                Icons.image,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : Container(
+                            height: 180,
+                            width: double.infinity,
+                            color: Colors.grey[200],
+                            child: const Icon(
+                              Icons.image,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                      )
-                    : Container(
-                        height: 180,
-                        width: double.infinity,
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.image,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                      ),
               ),
-              // Content
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title and status row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,7 +296,6 @@ class ActivePostsPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Description
                     Text(
                       job.description,
                       maxLines: 2,
@@ -315,7 +306,6 @@ class ActivePostsPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Budget (Min - Max) with blue icon - under description, above location
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
@@ -331,10 +321,10 @@ class ActivePostsPage extends StatelessWidget {
                               job.budgetMin != null && job.budgetMax != null
                                   ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                                   : job.budgetMin != null
-                                  ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                                  : job.budgetMax != null
-                                  ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                                  : 'Budget negotiable',
+                                      ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                                      : job.budgetMax != null
+                                          ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                          : 'Budget negotiable',
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Color(0xFF6B7280),
@@ -345,7 +335,6 @@ class ActivePostsPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Location with blue icon
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
@@ -369,7 +358,6 @@ class ActivePostsPage extends StatelessWidget {
                         ],
                       ),
                     ),
-                    // Date with blue icon and time ago in parentheses - under location
                     Row(
                       children: [
                         const Icon(

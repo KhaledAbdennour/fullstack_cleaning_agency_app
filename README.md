@@ -1,167 +1,83 @@
-# CleanSpace - Mobile Development Project
+# CleanSpace
 
-A Flutter-based mobile application for connecting clients with cleaning service providers (individual cleaners and agencies).
+CleanSpace is a Flutter mobile app for connecting clients with cleaners and agencies. The repo includes the app, Firebase rules and indexes, Cloud Functions for notification support, local cache code, and automated tests.
 
-## Features
+## Repo Contents
 
-- **Multi-Role System**: Supports Clients, Individual Cleaners, and Agencies
-- **Job Management**: Post jobs, apply, accept, and track job lifecycle
-- **Real-time Notifications**: Firebase Cloud Messaging (FCM) for job updates
-- **Review System**: Rate and review cleaners after job completion
-- **History Tracking**: Complete job history for all participants
-- **Role-based UI**: Customized experience for each user type
+- `lib/`: Flutter application code
+- `test/`: unit tests
+- `integration_test/`: integration tests
+- `functions/`: Firebase Cloud Functions
+- `docs/ux/`: usability testing artifacts
+- `firestore.indexes.json`, `firestore.rules`, `storage.rules`: Firebase configuration
 
-## Architecture
+## Quick Start
 
-### Notification System
+### Prerequisites
 
-The app uses a role-based notification system:
+- Flutter 3.35.x or newer
+- Dart 3.9.x or newer
+- Node.js 18.x if you want to run or deploy Firebase Functions
+- Firebase CLI if you want to deploy indexes, rules, or functions
+- Android Studio or a connected Android device/emulator
 
-- **Notifications Collection**: Stores all notifications in Firestore
-- **Role-based Filtering**: Each role (Worker, Agency, Client) receives only relevant notifications
-- **Notification Types**:
-  - `job_published` - New job posted (Agencies receive)
-  - `job_accepted` - Application accepted (Worker, Client, Agency)
-  - `job_rejected` - Application rejected (Worker)
-  - `job_completed` - Job fully completed (All parties)
-  - `review_added` - New review added (Cleaner, Client, Agency)
+### Clone And Run
 
-**Notification Flow:**
-1. Event occurs (job created, application accepted, etc.)
-2. `NotificationServiceEnhanced.createNotification()` creates notification document
-3. FCM push notification sent to user's device
-4. Notification stored in Firestore `notifications` collection
-5. UI queries notifications using role-based selectors
-
-**Badge Count:** Uses the same role-based query as inbox to ensure consistency.
-
-### Job Lifecycle State Machine
-
-```
-open → assigned → inProgress → completedPendingConfirmation → completed
-  ↓                                                              ↑
-pending                                                          |
-  ↓                                                              |
-cancelled ←──────────────────────────────────────────────────────┘
-```
-
-**State Transitions:**
-1. **open** → **assigned**: Client accepts a worker application
-2. **assigned** → **inProgress**: Worker starts the job (optional)
-3. **inProgress** → **completedPendingConfirmation**: One party marks job as done
-4. **completedPendingConfirmation** → **completed**: Both parties confirm completion
-5. **completed**: Job is fully done, history entries created, reviews enabled
-
-**Key Methods:**
-- `acceptApplication()` - Transitions job from `open`/`pending` to `assigned`
-- `markJobStarted()` - Transitions from `assigned` to `inProgress`
-- `markClientDone()` / `markWorkerDone()` - Transitions to `completedPendingConfirmation` or `completed`
-- `_addJobToHistory()` - Creates history entries in `job_history` collection for all participants
-
-### Data Models
-
-**Job History:**
-- Collection: `job_history`
-- Tracks completed jobs for workers, clients, and agencies
-- Fields: `job_id`, `participant_user_id`, `role`, `completed_at`, `title`, `other_party_id`
-
-**Reviews:**
-- Collection: `cleaner_reviews`
-- Reviews can only be added when `job.status == completed`
-- Auto-updates cleaner's average rating in `cleaners`/`profiles` collection
-
-## Setup
-
-See [SETUP.md](SETUP.md) for complete setup instructions.
-
-### Quick Start
-
-1. **Deploy Firestore Indexes** (REQUIRED):
-   ```bash
-   firebase deploy --only firestore:indexes
-   ```
-
-2. **Install Dependencies**:
-   ```bash
-   flutter pub get
-   ```
-
-3. **Run the App**:
-   ```bash
-   flutter run
-   ```
-
-## Firestore Indexes
-
-The app requires the following composite indexes (defined in `firestore.indexes.json`):
-
-1. **Notifications by User and Type**
-   - Collection: `notifications`
-   - Fields: `user_id` (Ascending), `type` (Ascending), `created_at` (Descending)
-
-2. **Notifications by User and Read Status**
-   - Collection: `notifications`
-   - Fields: `user_id` (Ascending), `read` (Ascending), `created_at` (Descending)
-
-3. **Active Jobs for Worker**
-   - Collection: `jobs`
-   - Fields: `assigned_worker_id` (Ascending), `status` (Ascending), `is_deleted` (Ascending), `posted_date` (Descending)
-
-4. **Active Jobs for Client**
-   - Collection: `jobs`
-   - Fields: `client_id` (Ascending), `status` (Ascending), `is_deleted` (Ascending), `posted_date` (Descending)
-
-5. **Jobs for Agency**
-   - Collection: `jobs`
-   - Fields: `agency_id` (Ascending), `status` (Ascending), `is_deleted` (Ascending), `assigned_worker_id` (Ascending)
-
-6. **Job History**
-   - Collection: `job_history`
-   - Fields: `participant_user_id` (Ascending), `role` (Ascending), `completed_at` (Descending)
-
-**Deploy indexes:**
 ```bash
+git clone https://github.com/WailOuaret/clean-space.git
+cd clean-space
+flutter pub get
 firebase deploy --only firestore:indexes
+flutter run
 ```
 
-## Project Structure
+If you want to work with Cloud Functions too:
 
-```
-lib/
-├── core/
-│   ├── config/          # Firebase configuration
-│   ├── debug/           # Debug flags and logging
-│   └── services/        # Notification services, routing
-├── data/
-│   ├── models/          # Data models (Job, Notification, Review, etc.)
-│   └── repositories/    # Data access layer (Firestore implementations)
-├── logic/
-│   └── cubits/          # State management (BLoC pattern)
-└── screens/             # UI screens
+```bash
+cd functions
+npm install
+cd ..
 ```
 
-## Debug Mode
+## Firebase Notes
 
-Debug logging can be controlled via `lib/core/debug/debug_flags.dart`:
+- The repo is configured for the Firebase project `cleanspace-8214c` in `.firebaserc`.
+- Android already includes `android/app/google-services.json`.
+- iOS does not currently include `ios/Runner/GoogleService-Info.plist`. Add that file before running on iOS.
+- Firestore indexes are required for notifications and some job queries. Deploy them before testing the full app flow.
 
-```dart
-static const bool enableDebugLogs = false;  // Set to true for debugging
-static const bool enableUIDiagnostics = false;  // Set to true for UI diagnostics
+## Verified Commands
+
+The following commands were run successfully in this repo:
+
+```bash
+flutter pub get
+flutter test
 ```
 
-## Testing Checklist
+## Tests
 
-Before submission, verify:
+```bash
+flutter test
+flutter test integration_test
+```
 
-- [ ] Notifications appear in inbox after creation (not just badge)
-- [ ] Accepted job appears immediately in worker's active jobs (no restart)
-- [ ] Job completion creates history entries for worker, client, and agency
-- [ ] Reviews are blocked before completion and enabled after
-- [ ] Rating updates correctly on cleaner profile
-- [ ] All Firestore indexes are deployed and enabled
-- [ ] No hardcoded dummy data in production UI
-- [ ] Debug logs are disabled in production
+## Backend
 
-## License
+Cloud Functions live in `functions/` and use Node 18:
 
-This project is for educational purposes.
+```bash
+cd functions
+npm install
+npm run serve
+```
+
+To deploy:
+
+```bash
+firebase deploy --only functions
+```
+
+## Additional Setup
+
+See `SETUP.md` for a fuller project setup checklist.

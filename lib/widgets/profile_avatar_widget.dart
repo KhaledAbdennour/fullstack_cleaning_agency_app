@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-/// Widget to display profile avatar with caching and placeholder initials
 class ProfileAvatarWidget extends StatelessWidget {
   final String? avatarUrl;
   final String? fullName;
@@ -29,7 +28,6 @@ class ProfileAvatarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (avatarUrl == null || avatarUrl!.isEmpty) {
-      // Show placeholder with initials
       return CircleAvatar(
         radius: radius,
         backgroundColor: Theme.of(context).primaryColor.withOpacity(0.7),
@@ -44,7 +42,6 @@ class ProfileAvatarWidget extends StatelessWidget {
       );
     }
 
-    // Show cached network image with fallback
     return CircleAvatar(
       radius: radius,
       backgroundColor: Colors.grey[300],

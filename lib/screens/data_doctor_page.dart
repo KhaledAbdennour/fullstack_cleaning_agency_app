@@ -29,12 +29,10 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
     setState(() => _isLoading = true);
 
     try {
-      // Get currentUserId from SharedPreferences (source of truth)
       final prefs = await SharedPreferences.getInstance();
       final prefsUserId = prefs.getInt('current_user_id');
       final prefsKeyName = 'current_user_id';
 
-      // Also get from ProfilesCubit
       final cubit = context.read<ProfilesCubit>();
       await cubit.loadCurrentUser();
       final state = cubit.state;
@@ -49,7 +47,6 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
             'ProfilesCubit (from SharedPreferences key: $prefsKeyName)';
       }
 
-      // Use SharedPreferences value as primary source
       final currentUserId = prefsUserId ?? cubitUserId;
       if (currentUserId == null) {
         userIdSource = 'Not found in SharedPreferences or Cubit';
@@ -57,25 +54,18 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
         userIdSource = 'SharedPreferences (key: $prefsKeyName)';
       }
 
-      // Count jobs (use count() for accurate count, but limit for performance)
-      final jobsSnapshot = await FirebaseConfig.firestore
-          .collection('jobs')
-          .get();
+      final jobsSnapshot =
+          await FirebaseConfig.firestore.collection('jobs').get();
       final jobsCount = jobsSnapshot.docs.length;
 
-      // Count bookings
-      final bookingsSnapshot = await FirebaseConfig.firestore
-          .collection('bookings')
-          .get();
+      final bookingsSnapshot =
+          await FirebaseConfig.firestore.collection('bookings').get();
       final bookingsCount = bookingsSnapshot.docs.length;
 
-      // Count profiles
-      final profilesSnapshot = await FirebaseConfig.firestore
-          .collection('profiles')
-          .get();
+      final profilesSnapshot =
+          await FirebaseConfig.firestore.collection('profiles').get();
       final profilesCount = profilesSnapshot.docs.length;
 
-      // Get last 5 jobs with all required fields
       final lastJobsSnapshot = await FirebaseConfig.firestore
           .collection('jobs')
           .orderBy('created_at', descending: true)
@@ -109,7 +99,6 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
         };
       }).toList();
 
-      // Get last 5 bookings with all required fields
       final lastBookingsSnapshot = await FirebaseConfig.firestore
           .collection('bookings')
           .orderBy('created_at', descending: true)
@@ -198,20 +187,20 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              '✅ Success! Updated $updatedCount jobs with job_images field',
+              'Success! Updated $updatedCount jobs with job_images field',
             ),
             duration: const Duration(seconds: 5),
             backgroundColor: Colors.green,
           ),
         );
-        _loadDiagnostics(); // Refresh diagnostics
+        _loadDiagnostics();
       }
     } catch (e, stack) {
       DebugLogger.error('DataDoctor', 'JOB_IMAGES_MIGRATION_ERROR', e, stack);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('❌ Migration failed: $e'),
+            content: Text('Migration failed: $e'),
             duration: const Duration(seconds: 5),
             backgroundColor: Colors.red,
           ),
@@ -254,10 +243,8 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
       int jobsRepaired = 0;
       int bookingsRepaired = 0;
 
-      // Repair jobs
-      final jobsSnapshot = await FirebaseConfig.firestore
-          .collection('jobs')
-          .get();
+      final jobsSnapshot =
+          await FirebaseConfig.firestore.collection('jobs').get();
       var batch = FirebaseConfig.firestore.batch();
       int batchCount = 0;
 
@@ -270,12 +257,10 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
         bool needsRepair = false;
         final updates = <String, dynamic>{};
 
-        // Log sample before repair (first doc that needs repair)
         if (!sampleLogged && jobsRepaired == 0) {
           sampleBefore = Map<String, dynamic>.from(data);
         }
 
-        // Fix client_id: if String and parseable -> convert to int
         if (data['client_id'] is String) {
           final parsed = int.tryParse(data['client_id'] as String);
           if (parsed != null) {
@@ -284,7 +269,6 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           }
         }
 
-        // Fix is_deleted: if missing or int 0/1 -> set bool
         if (!data.containsKey('is_deleted')) {
           updates['is_deleted'] = false;
           needsRepair = true;
@@ -294,31 +278,26 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           needsRepair = true;
         }
 
-        // Fix assigned_worker_id: if missing -> set null
         if (!data.containsKey('assigned_worker_id')) {
           updates['assigned_worker_id'] = null;
           needsRepair = true;
         }
 
-        // Fix agency_id: if missing -> set null
         if (!data.containsKey('agency_id')) {
           updates['agency_id'] = null;
           needsRepair = true;
         }
 
-        // Fix posted_date: if missing -> set serverTimestamp
         if (!data.containsKey('posted_date')) {
           updates['posted_date'] = FieldValue.serverTimestamp();
           needsRepair = true;
         }
 
-        // Fix status: if missing -> set 'open'
         if (!data.containsKey('status') || data['status'] == null) {
           updates['status'] = 'open';
           needsRepair = true;
         }
 
-        // Fix created_at/updated_at: if missing -> set serverTimestamp
         if (!data.containsKey('created_at')) {
           updates['created_at'] = FieldValue.serverTimestamp();
           needsRepair = true;
@@ -328,16 +307,12 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           needsRepair = true;
         }
 
-        // Add job_images field: ALWAYS ensure it exists (set empty array if missing or null)
-        // This ensures the field appears in Firestore console for all documents
         if (!data.containsKey('job_images') || data['job_images'] == null) {
-          updates['job_images'] =
-              <String>[]; // Empty array so field appears in Firestore console
+          updates['job_images'] = <String>[];
           needsRepair = true;
         }
 
         if (needsRepair) {
-          // Log sample after repair (first doc that was repaired)
           if (!sampleLogged && sampleBefore != null) {
             sampleAfter = Map<String, dynamic>.from(data);
             sampleAfter.addAll(updates);
@@ -369,10 +344,8 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
         await batch.commit();
       }
 
-      // Repair bookings
-      final bookingsSnapshot = await FirebaseConfig.firestore
-          .collection('bookings')
-          .get();
+      final bookingsSnapshot =
+          await FirebaseConfig.firestore.collection('bookings').get();
       var bookingsBatch = FirebaseConfig.firestore.batch();
       int bookingsBatchCount = 0;
 
@@ -381,7 +354,6 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
         bool needsRepair = false;
         final updates = <String, dynamic>{};
 
-        // Fix job_id: if String and parseable -> convert to int
         if (data['job_id'] is String) {
           final parsed = int.tryParse(data['job_id'] as String);
           if (parsed != null) {
@@ -390,7 +362,6 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           }
         }
 
-        // Fix client_id: if String and parseable -> convert to int
         if (data['client_id'] is String) {
           final parsed = int.tryParse(data['client_id'] as String);
           if (parsed != null) {
@@ -399,7 +370,6 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           }
         }
 
-        // Fix provider_id: if String and parseable -> convert to int
         if (data['provider_id'] is String) {
           final parsed = int.tryParse(data['provider_id'] as String);
           if (parsed != null) {
@@ -408,13 +378,11 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
           }
         }
 
-        // Fix created_at: if missing -> set serverTimestamp
         if (!data.containsKey('created_at')) {
           updates['created_at'] = FieldValue.serverTimestamp();
           needsRepair = true;
         }
 
-        // Fix updated_at: if missing -> set serverTimestamp
         if (!data.containsKey('updated_at')) {
           updates['updated_at'] = FieldValue.serverTimestamp();
           needsRepair = true;
@@ -455,7 +423,7 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
             duration: const Duration(seconds: 3),
           ),
         );
-        _loadDiagnostics(); // Refresh diagnostics
+        _loadDiagnostics();
       }
     } catch (e, stack) {
       DebugLogger.error('DataDoctor', 'REPAIR_ERROR', e, stack);
@@ -523,53 +491,56 @@ class _DataDoctorPageState extends State<DataDoctorPage> {
               child: CircularProgressIndicator(color: Color(0xFF3B82F6)),
             )
           : _diagnostics == null
-          ? const Center(child: Text('Failed to load diagnostics'))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSection('Current User', [
-                    _buildRow(
-                      'User ID',
-                      '${_diagnostics!['currentUserId'] ?? 'null'}',
-                    ),
-                    _buildRow(
-                      'User ID (from SharedPreferences)',
-                      '${_diagnostics!['currentUserIdFromPrefs'] ?? 'null'}',
-                    ),
-                    _buildRow(
-                      'User ID (from Cubit)',
-                      '${_diagnostics!['currentUserIdFromCubit'] ?? 'null'}',
-                    ),
-                    _buildRow(
-                      'User ID Source',
-                      '${_diagnostics!['userIdSource']}',
-                    ),
-                    _buildRow(
-                      'User Type',
-                      '${_diagnostics!['userType'] ?? 'null'}',
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
-                  _buildSection('Counts', [
-                    _buildRow('Jobs', '${_diagnostics!['jobsCount']}'),
-                    _buildRow('Bookings', '${_diagnostics!['bookingsCount']}'),
-                    _buildRow('Profiles', '${_diagnostics!['profilesCount']}'),
-                  ]),
-                  const SizedBox(height: 16),
-                  _buildSection('Last 5 Jobs', [
-                    for (final job in _diagnostics!['lastJobs'] as List)
-                      _buildJobCard(job),
-                  ]),
-                  const SizedBox(height: 16),
-                  _buildSection('Last 5 Bookings', [
-                    for (final booking in _diagnostics!['lastBookings'] as List)
-                      _buildBookingCard(booking),
-                  ]),
-                ],
-              ),
-            ),
+              ? const Center(child: Text('Failed to load diagnostics'))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSection('Current User', [
+                        _buildRow(
+                          'User ID',
+                          '${_diagnostics!['currentUserId'] ?? 'null'}',
+                        ),
+                        _buildRow(
+                          'User ID (from SharedPreferences)',
+                          '${_diagnostics!['currentUserIdFromPrefs'] ?? 'null'}',
+                        ),
+                        _buildRow(
+                          'User ID (from Cubit)',
+                          '${_diagnostics!['currentUserIdFromCubit'] ?? 'null'}',
+                        ),
+                        _buildRow(
+                          'User ID Source',
+                          '${_diagnostics!['userIdSource']}',
+                        ),
+                        _buildRow(
+                          'User Type',
+                          '${_diagnostics!['userType'] ?? 'null'}',
+                        ),
+                      ]),
+                      const SizedBox(height: 16),
+                      _buildSection('Counts', [
+                        _buildRow('Jobs', '${_diagnostics!['jobsCount']}'),
+                        _buildRow(
+                            'Bookings', '${_diagnostics!['bookingsCount']}'),
+                        _buildRow(
+                            'Profiles', '${_diagnostics!['profilesCount']}'),
+                      ]),
+                      const SizedBox(height: 16),
+                      _buildSection('Last 5 Jobs', [
+                        for (final job in _diagnostics!['lastJobs'] as List)
+                          _buildJobCard(job),
+                      ]),
+                      const SizedBox(height: 16),
+                      _buildSection('Last 5 Bookings', [
+                        for (final booking
+                            in _diagnostics!['lastBookings'] as List)
+                          _buildBookingCard(booking),
+                      ]),
+                    ],
+                  ),
+                ),
     );
   }
 

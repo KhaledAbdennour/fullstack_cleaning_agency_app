@@ -15,20 +15,18 @@ abstract class AbstractJobsRepo {
   Future<void> changeJobStatus(int jobId, JobStatus status);
   Future<int> getTotalJobsCompletedForAgency(int agencyId);
 
-  // Completion confirmation methods
   Future<Job> markClientDone(int jobId);
   Future<Job> markWorkerDone(int jobId);
-  Future<void> markJobStarted(int jobId); // Mark job as in progress
-  Future<void> cancelJob(int jobId); // Client cancels job
+  Future<void> markJobStarted(int jobId);
+  Future<void> cancelJob(int jobId);
 
-  // Active and completed jobs for workers and clients
   Future<List<Job>> getActiveJobsForWorker(int workerId);
   Future<List<Job>> getCompletedJobsForWorker(int workerId);
   Future<List<Job>> getActiveJobsForClient(int clientId);
   Future<List<Job>> getCompletedJobsForClient(int clientId);
   Future<void> markAllClientJobsAsDeleted(
     int clientId,
-  ); // Mark all client's jobs as deleted
+  );
 
   static AbstractJobsRepo? _instance;
   static AbstractJobsRepo getInstance() {

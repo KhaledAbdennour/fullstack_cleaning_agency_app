@@ -29,7 +29,6 @@ class Cleaner {
       'rating': rating,
       'jobs_completed': jobsCompleted,
       'agency_id': agencyId,
-      // store as bool; legacy readers still handle int
       'is_active': isActive,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),

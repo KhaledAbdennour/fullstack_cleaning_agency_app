@@ -71,8 +71,7 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
   }) {
     var filtered = List<CleanerReview>.from(reviews);
 
-    final rating =
-        ratingFilter ??
+    final rating = ratingFilter ??
         (state is CleanerReviewsLoaded
             ? (state as CleanerReviewsLoaded).ratingFilter
             : null);
@@ -80,8 +79,7 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
       filtered = filtered.where((r) => r.rating.floor() == rating).toList();
     }
 
-    final photosOnly =
-        withPhotosOnly ??
+    final photosOnly = withPhotosOnly ??
         (state is CleanerReviewsLoaded
             ? (state as CleanerReviewsLoaded).withPhotosOnly
             : false);
@@ -89,8 +87,7 @@ class CleanerReviewsCubit extends Cubit<CleanerReviewsState> {
       filtered = filtered.where((r) => r.hasPhotos).toList();
     }
 
-    final sort =
-        sortBy ??
+    final sort = sortBy ??
         (state is CleanerReviewsLoaded
             ? (state as CleanerReviewsLoaded).sortBy
             : 'recency');

@@ -3,7 +3,7 @@ import '../../core/utils/firestore_type.dart';
 class CleanerReview {
   final int? id;
   final int cleanerId;
-  final int? jobId; // Optional: link review to specific job
+  final int? jobId;
   final String reviewerName;
   final double rating;
   final DateTime date;
@@ -41,7 +41,6 @@ class CleanerReview {
   }
 
   factory CleanerReview.fromMap(Map<String, dynamic> map) {
-    // Use safe type helpers
     final cleanerIdValue = readInt(map['cleaner_id']);
     if (cleanerIdValue == null) {
       throw Exception(
@@ -49,7 +48,6 @@ class CleanerReview {
       );
     }
 
-    // Support both 'date' (string ISO) and 'created_at' (Timestamp) for backward compatibility
     DateTime? dateValue;
     if (map.containsKey('date') && map['date'] != null) {
       dateValue = readDate(map['date']);
@@ -72,9 +70,9 @@ class CleanerReview {
       hasPhotos: readBool(map['has_photos']),
       photoUrls: map['photo_urls'] != null
           ? (readString(map['photo_urls']) ?? '')
-                .split(',')
-                .where((s) => s.isNotEmpty)
-                .toList()
+              .split(',')
+              .where((s) => s.isNotEmpty)
+              .toList()
           : null,
       reviewerId: readInt(map['reviewer_id']),
     );

@@ -44,7 +44,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
         });
       }
     } else if (widget.job.id != null) {
-      // Fallback: refresh from widget.job if _currentJob is null
       final updatedJob = await AbstractJobsRepo.getInstance().getJobById(
         widget.job.id!,
       );
@@ -56,14 +55,12 @@ class _ManageJobPageState extends State<ManageJobPage> {
     }
   }
 
-  /// Fetches ratings for all applications to enable sorting
   Future<Map<int, double>> _fetchRatingsForApplications(
     List<Booking> applications,
   ) async {
     final ratingsMap = <int, double>{};
     final profileRepo = AbstractProfileRepo.getInstance();
 
-    // Fetch all profiles in parallel
     final futures = applications.map((booking) async {
       if (booking.providerId == null) return;
       try {
@@ -73,7 +70,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
           ratingsMap[booking.providerId!] = rating;
         }
       } catch (e) {
-        // If profile fetch fails, default to 0.0
         ratingsMap[booking.providerId!] = 0.0;
       }
     }).toList();
@@ -195,7 +191,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     );
                   }
 
-                  // Sort applications by rating (highest to lowest)
                   return FutureBuilder<Map<int, double>>(
                     future: _fetchRatingsForApplications(validApplications),
                     builder: (context, ratingsSnapshot) {
@@ -218,7 +213,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
                       sortedApplications.sort((a, b) {
                         final ratingA = ratingsMap[a.providerId] ?? 0.0;
                         final ratingB = ratingsMap[b.providerId] ?? 0.0;
-                        // Sort descending (highest rating first)
+
                         return ratingB.compareTo(ratingA);
                       });
 
@@ -242,7 +237,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
   Widget _buildJobDetailsCard() {
     final job = _currentJob ?? widget.job;
 
-    // Calculate time ago
     final now = DateTime.now();
     final difference = now.difference(job.postedDate);
     String timeAgoText;
@@ -312,7 +306,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 12),
-                // Budget (Min - Max) with blue icon - under description, above location
                 if (job.budgetMin != null || job.budgetMax != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -329,10 +322,10 @@ class _ManageJobPageState extends State<ManageJobPage> {
                             job.budgetMin != null && job.budgetMax != null
                                 ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                                 : job.budgetMin != null
-                                ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
-                                : job.budgetMax != null
-                                ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
-                                : 'Budget negotiable',
+                                    ? 'DA ${job.budgetMin!.toStringAsFixed(0)}'
+                                    : job.budgetMax != null
+                                        ? 'DA ${job.budgetMax!.toStringAsFixed(0)}'
+                                        : 'Budget negotiable',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF6B7280),
@@ -343,7 +336,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                       ],
                     ),
                   ),
-                // Location with blue icon
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Row(
@@ -367,7 +359,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     ],
                   ),
                 ),
-                // Date with blue icon and time ago in parentheses - under location
                 Row(
                   children: [
                     const Icon(
@@ -416,15 +407,13 @@ class _ManageJobPageState extends State<ManageJobPage> {
         }
 
         final cleanerProfile = snapshot.data;
-        final cleanerName =
-            cleanerProfile?['full_name'] as String? ??
+        final cleanerName = cleanerProfile?['full_name'] as String? ??
             cleanerProfile?['agency_name'] as String? ??
             'Unknown';
-        // Try multiple fields for profile picture: picture, image, avatar_url, or profileData.picture
+
         final profileData =
             cleanerProfile?['profileData'] as Map<String, dynamic>?;
-        final cleanerAvatar =
-            cleanerProfile?['picture'] as String? ??
+        final cleanerAvatar = cleanerProfile?['picture'] as String? ??
             cleanerProfile?['image'] as String? ??
             cleanerProfile?['avatar_url'] as String? ??
             profileData?['picture'] as String? ??
@@ -432,8 +421,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
             profileData?['avatar_url'] as String?;
         final cleanerRating =
             (cleanerProfile?['rating'] as num?)?.toDouble() ?? 0.0;
-        final cleanerReviewsCount =
-            cleanerProfile?['reviews_count'] as int? ?? 0;
         final priceText = booking.bidPrice != null
             ? 'DA ${booking.bidPrice!.toStringAsFixed(0)}'
             : 'Price negotiable';
@@ -454,18 +441,17 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: const Color(0xFF3B82F6),
-                    backgroundImage:
-                        cleanerAvatar != null &&
+                    backgroundImage: cleanerAvatar != null &&
                             (cleanerAvatar.startsWith('http') ||
                                 cleanerAvatar.startsWith('data:image'))
                         ? (cleanerAvatar.startsWith('data:image')
-                              ? MemoryImage(
-                                  base64Decode(cleanerAvatar.split(',').last),
-                                )
-                              : NetworkImage(cleanerAvatar))
+                            ? MemoryImage(
+                                base64Decode(cleanerAvatar.split(',').last),
+                              ) as ImageProvider<Object>
+                            : NetworkImage(cleanerAvatar)
+                                as ImageProvider<Object>)
                         : null,
-                    child:
-                        cleanerAvatar == null ||
+                    child: cleanerAvatar == null ||
                             (!cleanerAvatar.startsWith('http') &&
                                 !cleanerAvatar.startsWith('data:image'))
                         ? const Icon(Icons.person, color: Colors.white)
@@ -488,7 +474,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                                 ),
                               ),
                             ),
-                            // Rating display next to name
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -534,7 +519,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   ),
                 ),
               const SizedBox(height: 16),
-
               if (isAccepted)
                 Container(
                   width: double.infinity,
@@ -601,8 +585,8 @@ class _ManageJobPageState extends State<ManageJobPage> {
                               final clientId = state.currentUser!['id'] as int?;
                               if (clientId != null && mounted) {
                                 context.read<ClientJobsCubit>().refresh(
-                                  clientId,
-                                );
+                                      clientId,
+                                    );
                               }
                             }
                           }
@@ -655,9 +639,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     ),
                   ],
                 ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
                 height: 42,
@@ -696,22 +678,16 @@ class _ManageJobPageState extends State<ManageJobPage> {
   }
 
   Widget _buildJobActionsCard() {
-    // Always use the most up-to-date job
     final job = _currentJob ?? widget.job;
     final canActivate =
         job.status == JobStatus.paused || job.status == JobStatus.cancelled;
     final canDelete = job.status != JobStatus.completed;
-    final canConfirmCompletion =
-        job.workerDone &&
+    final canConfirmCompletion = job.workerDone &&
         !job.clientDone &&
         (job.status == JobStatus.completedPendingConfirmation ||
             job.status == JobStatus.inProgress);
 
-    // Only allow review when job is FULLY completed:
-    // 1. Status must be 'completed' (not 'completedPendingConfirmation')
-    // 2. Both clientDone AND workerDone must be true
-    final isFullyCompleted =
-        job.status == JobStatus.completed &&
+    final isFullyCompleted = job.status == JobStatus.completed &&
         job.clientDone == true &&
         job.workerDone == true;
 
@@ -756,18 +732,14 @@ class _ManageJobPageState extends State<ManageJobPage> {
                         ),
                       );
 
-                      // Wait a moment for Firestore to update
                       await Future.delayed(const Duration(milliseconds: 500));
 
-                      // Refresh job to get updated status
                       await _refreshJob();
 
-                      // Force rebuild to show review button
                       if (mounted) {
                         setState(() {});
                       }
 
-                      // Refresh client jobs
                       final profilesCubit = context.read<ProfilesCubit>();
                       await profilesCubit.loadCurrentUser();
                       if (mounted) {
@@ -783,7 +755,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     }
                   } catch (e) {
                     if (mounted) {
-                      // Safely format error message (avoid encoding FieldValue or showing type cast errors)
                       String errorMsg = 'Error confirming completion';
                       try {
                         final errorStr = e.toString();
@@ -829,11 +800,10 @@ class _ManageJobPageState extends State<ManageJobPage> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                  // Always fetch fresh job data from database before opening review
                   if (job.id == null) return;
 
-                  final freshJob = await AbstractJobsRepo.getInstance()
-                      .getJobById(job.id!);
+                  final freshJob =
+                      await AbstractJobsRepo.getInstance().getJobById(job.id!);
                   if (freshJob == null) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -846,7 +816,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     return;
                   }
 
-                  // Triple-check: job must be fully completed
                   if (freshJob.status != JobStatus.completed ||
                       freshJob.clientDone != true ||
                       freshJob.workerDone != true) {
@@ -860,7 +829,7 @@ class _ManageJobPageState extends State<ManageJobPage> {
                           duration: const Duration(seconds: 4),
                         ),
                       );
-                      // Refresh UI to update button visibility
+
                       await _refreshJob();
                     }
                     return;
@@ -877,10 +846,8 @@ class _ManageJobPageState extends State<ManageJobPage> {
                     ),
                   );
 
-                  // Refresh job after review submission
                   await _refreshJob();
 
-                  // If review was submitted successfully, refresh client jobs
                   if (result == true && mounted) {
                     final profilesCubit = context.read<ProfilesCubit>();
                     await profilesCubit.loadCurrentUser();
@@ -973,7 +940,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   );
                   if (confirm == true) {
                     try {
-                      // Show loading indicator
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -983,10 +949,8 @@ class _ManageJobPageState extends State<ManageJobPage> {
                         );
                       }
 
-                      // Delete the job and wait for it to complete
                       await AbstractJobsRepo.getInstance().deleteJob(job.id!);
 
-                      // Wait a bit more to ensure Firestore has committed the change
                       await Future.delayed(const Duration(milliseconds: 500));
 
                       if (mounted) {
@@ -998,10 +962,8 @@ class _ManageJobPageState extends State<ManageJobPage> {
                           ),
                         );
 
-                        // Wait before refreshing to ensure deletion is committed
                         await Future.delayed(const Duration(milliseconds: 300));
 
-                        // Refresh client jobs after deletion (only after deletion is confirmed)
                         final profilesCubit = context.read<ProfilesCubit>();
                         final profileState = profilesCubit.state;
                         if (profileState is ProfilesLoaded &&
@@ -1068,14 +1030,12 @@ class _ManageJobPageState extends State<ManageJobPage> {
         final worker = snapshot.data;
         if (worker == null) return const SizedBox.shrink();
 
-        final workerName =
-            worker['full_name'] as String? ??
+        final workerName = worker['full_name'] as String? ??
             worker['agency_name'] as String? ??
             'Unknown';
-        // Try multiple fields for profile picture: picture, image, avatar_url, or profileData.picture
+
         final profileData = worker['profileData'] as Map<String, dynamic>?;
-        final workerAvatar =
-            worker['picture'] as String? ??
+        final workerAvatar = worker['picture'] as String? ??
             worker['image'] as String? ??
             worker['avatar_url'] as String? ??
             profileData?['picture'] as String? ??
@@ -1106,18 +1066,17 @@ class _ManageJobPageState extends State<ManageJobPage> {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: const Color(0xFF3B82F6),
-                    backgroundImage:
-                        workerAvatar != null &&
+                    backgroundImage: workerAvatar != null &&
                             (workerAvatar.startsWith('http') ||
                                 workerAvatar.startsWith('data:image'))
                         ? (workerAvatar.startsWith('data:image')
-                              ? MemoryImage(
-                                  base64Decode(workerAvatar.split(',').last),
-                                )
-                              : NetworkImage(workerAvatar))
+                            ? MemoryImage(
+                                base64Decode(workerAvatar.split(',').last),
+                              ) as ImageProvider<Object>
+                            : NetworkImage(workerAvatar)
+                                as ImageProvider<Object>)
                         : null,
-                    child:
-                        workerAvatar == null ||
+                    child: workerAvatar == null ||
                             (!workerAvatar.startsWith('http') &&
                                 !workerAvatar.startsWith('data:image'))
                         ? const Icon(Icons.person, color: Colors.white)
@@ -1169,7 +1128,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
   Widget _buildImageCarousel() {
     final job = _currentJob ?? widget.job;
 
-    // Get all images from job_images field, or fallback to cover_image_url
     List<String> images = [];
     if (job.jobImages != null && job.jobImages!.isNotEmpty) {
       images = job.jobImages!;
@@ -1222,10 +1180,6 @@ class _ManageJobPageState extends State<ManageJobPage> {
         ),
       ],
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   @override

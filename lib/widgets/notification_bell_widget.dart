@@ -4,8 +4,6 @@ import '../logic/cubits/notifications/notifications_cubit.dart';
 import '../logic/cubits/notifications/notifications_state.dart';
 import '../screens/notifications_inbox_page.dart';
 
-/// Reusable notification bell icon with unread badge
-/// Shows unread count badge and navigates to notifications inbox when tapped
 class NotificationBellWidget extends StatelessWidget {
   const NotificationBellWidget({super.key});
 

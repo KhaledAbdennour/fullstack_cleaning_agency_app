@@ -94,7 +94,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                           .then(
                             (clientId) => clientId != null
                                 ? AbstractProfileRepo.getInstance()
-                                      .getProfileById(clientId)
+                                    .getProfileById(clientId)
                                 : null,
                           ),
                       builder: (context, snapshot) {
@@ -108,8 +108,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                               CircleAvatar(
                                 radius: 35,
                                 backgroundColor: const Color(0xFF3B82F6),
-                                child:
-                                    clientPhoto != null &&
+                                child: clientPhoto != null &&
                                         clientPhoto.isNotEmpty
                                     ? ClipOval(
                                         child: AppImage(
@@ -172,7 +171,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                     job != null
                         ? '${_formatDate(job.postedDate)} ${_formatTime(job.postedDate)} (Est. ${job.estimatedHours ?? 4} hours)'
                         : widget.jobMap?['date'] ??
-                              '15 Nov 2023, 10:00 AM (Est. 4 hours)',
+                            '15 Nov 2023, 10:00 AM (Est. 4 hours)',
                   ),
                   const SizedBox(height: 12),
                   if (job?.id != null)
@@ -180,8 +179,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                       future: _getWorkerBidForJob(job!.id!),
                       builder: (context, snapshot) {
                         final bidPrice = snapshot.data;
-                        final budgetText =
-                            job.budgetMin != null && job.budgetMax != null
+                        final budgetText = job.budgetMin != null &&
+                                job.budgetMax != null
                             ? 'DA ${job.budgetMin!.toStringAsFixed(0)} - DA ${job.budgetMax!.toStringAsFixed(0)}'
                             : 'Negotiable';
                         final displayText = bidPrice != null
@@ -219,12 +218,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children:
-                        job?.requiredServices != null &&
+                    children: job?.requiredServices != null &&
                             job!.requiredServices!.isNotEmpty
                         ? job.requiredServices!
-                              .map((service) => _buildChip(service))
-                              .toList()
+                            .map((service) => _buildChip(service))
+                            .toList()
                         : [
                             const Text(
                               'No specific services listed',
@@ -306,9 +304,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
         final isCleaner =
             userType == 'Individual Cleaner' || userType == 'Worker';
         final isAssignedWorker = job.assignedWorkerId == userId;
-        // Allow marking as done if: assigned, inProgress, or completedPendingConfirmation (if worker hasn't confirmed yet)
-        final canMarkDone =
-            isCleaner &&
+
+        final canMarkDone = isCleaner &&
             isAssignedWorker &&
             (job.status == JobStatus.assigned ||
                 job.status == JobStatus.inProgress ||
@@ -368,7 +365,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                                       ),
                                     );
                                     await _refreshJob();
-                                    // Refresh active listings
+
                                     if (userId != null) {
                                       context
                                           .read<ActiveListingsCubit>()
@@ -383,8 +380,8 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
                                       errorMessage =
                                           'Job not found. Please refresh and try again.';
                                     } else if (e.toString().contains(
-                                      'already marked',
-                                    )) {
+                                          'already marked',
+                                        )) {
                                       errorMessage =
                                           'This job has already been marked as done.';
                                     } else {
@@ -438,7 +435,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
           );
         }
 
-        // For non-assigned workers or clients, show job info only
         return const SizedBox.shrink();
       },
     );
@@ -447,7 +443,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
   Widget _buildImageCarousel() {
     final job = _currentJob ?? widget.job;
 
-    // Get all images from job_images field, or fallback to cover_image_url
     List<String> images = [];
     if (job?.jobImages != null && job!.jobImages!.isNotEmpty) {
       images = job.jobImages!;
@@ -502,7 +497,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen> {
     try {
       final bookingsRepo = AbstractBookingsRepo.getInstance();
       final applications = await bookingsRepo.getApplicationsForJob(jobId);
-      // Find the accepted booking (status is inProgress or completed)
+
       for (final booking in applications) {
         if (booking.status == BookingStatus.inProgress ||
             booking.status == BookingStatus.completed) {

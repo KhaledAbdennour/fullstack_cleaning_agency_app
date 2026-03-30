@@ -1,22 +1,21 @@
 import '../../core/utils/firestore_type.dart';
 
-/// Review model for the new "reviews" collection
 class Review {
-  final String? id; // Document ID
+  final String? id;
   final int jobId;
-  final int? bookingId; // Optional
-  final String reviewerId; // Firebase auth uid or profile doc id as string
-  final String reviewerRole; // "Client" / "Agency" / "Individual Cleaner"
-  final String revieweeId; // The cleaner/agency being reviewed
-  final String revieweeRole; // "Agency" / "Individual Cleaner"
-  final int rating; // 1..5
+  final int? bookingId;
+  final String reviewerId;
+  final String reviewerRole;
+  final String revieweeId;
+  final String revieweeRole;
+  final int rating;
   final String comment;
-  final List<String> photos; // Optional, can be empty
+  final List<String> photos;
   final DateTime? createdAt;
-  final int? createdAtMs; // Milliseconds for stable sorting
-  final String status; // "active" for future moderation
-  final int? reviewerUserIdInt; // Optional: numeric user ID if using int IDs
-  final int? revieweeUserIdInt; // Optional: numeric user ID if using int IDs
+  final int? createdAtMs;
+  final String status;
+  final int? reviewerUserIdInt;
+  final int? revieweeUserIdInt;
 
   Review({
     this.id,
@@ -50,7 +49,6 @@ class Review {
       'status': status,
       if (reviewerUserIdInt != null) 'reviewer_user_id_int': reviewerUserIdInt,
       if (revieweeUserIdInt != null) 'reviewee_user_id_int': revieweeUserIdInt,
-      // Note: createdAt and createdAtMs are set by repository using FieldValue.serverTimestamp()
     };
   }
 
@@ -67,9 +65,9 @@ class Review {
       comment: readString(map['comment']) ?? '',
       photos: map['photos'] is List
           ? (map['photos'] as List)
-                .map((e) => readString(e) ?? '')
-                .where((s) => s.isNotEmpty)
-                .toList()
+              .map((e) => readString(e) ?? '')
+              .where((s) => s.isNotEmpty)
+              .toList()
           : [],
       createdAt: readDate(map['created_at']),
       createdAtMs: readInt(map['created_at_ms']),

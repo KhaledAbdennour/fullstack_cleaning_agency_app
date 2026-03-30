@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/repositories/profiles/profile_repo.dart';
 import '../../data/repositories/jobs/jobs_repo.dart';
 import '../../core/debug/debug_logger.dart';
+import '../../core/services/crashlytics_service.dart';
 
 abstract class ProfilesState {}
 
@@ -35,18 +36,13 @@ class ProfilesCubit extends Cubit<ProfilesState> {
   final AbstractProfileRepo _repo = AbstractProfileRepo.getInstance();
   bool _isLoading = false;
 
-  ProfilesCubit() : super(ProfilesInitial()) {
-    // Don't auto-load - let the CheckAuthScreen handle it
-    // loadCurrentUser();
-  }
+  ProfilesCubit() : super(ProfilesInitial()) {}
 
   Future<void> loadCurrentUser() async {
-    // Prevent multiple simultaneous loads
     if (_isLoading) {
       return;
     }
 
-    // If already loaded with the same user, don't reload
     if (state is ProfilesLoaded) {
       return;
     }
@@ -69,6 +65,8 @@ class ProfilesCubit extends Cubit<ProfilesState> {
       emit(ProfilesLoaded(user));
     } catch (e, stack) {
       DebugLogger.error('ProfilesCubit', 'loadCurrentUser failed', e, stack);
+      CrashlyticsService.recordError(e, stack,
+          reason: 'Failed to load current user');
       emit(ProfilesError('Failed to load user: $e'));
     } finally {
       _isLoading = false;
@@ -191,21 +189,18 @@ class ProfilesCubit extends Cubit<ProfilesState> {
   Future<void> updateProfile(int id, Map<String, dynamic> profileData) async {
     emit(ProfilesLoading());
     try {
-      // Get current user to compare email/phone
       final currentUser = await _repo.getCurrentUser();
       if (currentUser == null) {
         emit(ProfilesError('User not found'));
         return;
       }
 
-      // Validate email uniqueness if email is being changed
       if (profileData['email'] != null &&
           profileData['email'] is String &&
           (profileData['email'] as String).isNotEmpty) {
         final newEmail = profileData['email'] as String;
         final currentEmail = currentUser['email'] as String?;
 
-        // Only check if email is different from current email
         if (newEmail != currentEmail) {
           final existingEmail = await _repo.getProfileByEmail(newEmail);
           if (existingEmail != null && existingEmail['id'] != id) {
@@ -215,14 +210,12 @@ class ProfilesCubit extends Cubit<ProfilesState> {
         }
       }
 
-      // Validate phone uniqueness if phone is being changed
       if (profileData['phone'] != null &&
           profileData['phone'] is String &&
           (profileData['phone'] as String).isNotEmpty) {
         final newPhone = profileData['phone'] as String;
         final currentPhone = currentUser['phone'] as String?;
 
-        // Only check if phone is different from current phone
         if (newPhone != currentPhone) {
           final existingPhone = await _repo.getProfileByPhone(newPhone);
           if (existingPhone != null && existingPhone['id'] != id) {
@@ -232,7 +225,6 @@ class ProfilesCubit extends Cubit<ProfilesState> {
         }
       }
 
-      // Filter out null values - Firestore doesn't accept null in update operations
       final filteredData = <String, dynamic>{};
       profileData.forEach((key, value) {
         if (value != null) {
@@ -242,7 +234,6 @@ class ProfilesCubit extends Cubit<ProfilesState> {
 
       final success = await _repo.updateProfile(id, filteredData);
       if (success) {
-        // Reload current user to get updated data
         final user = await _repo.getCurrentUser();
         emit(ProfilesLoaded(user));
       } else {
@@ -267,18 +258,15 @@ class ProfilesCubit extends Cubit<ProfilesState> {
   Future<void> deleteAccount(int userId) async {
     emit(ProfilesLoading());
     try {
-      // Mark all user's jobs as deleted
       final jobsRepo = AbstractJobsRepo.getInstance();
       await jobsRepo.markAllClientJobsAsDeleted(userId);
 
-      // Delete the profile
       final success = await _repo.deleteProfile(userId);
       if (!success) {
         emit(ProfilesError('Failed to delete account'));
         return;
       }
 
-      // Clear current user session
       await _repo.clearCurrentUser();
       emit(LogoutSuccess());
       emit(ProfilesLoaded(null));

@@ -15,12 +15,12 @@ class FindCleanerPage extends StatefulWidget {
 
 class _FindCleanerPageState extends State<FindCleanerPage> {
   final TextEditingController _searchController = TextEditingController();
-  Set<String> selectedWilayas = {}; // Multiple selection support
+  Set<String> selectedWilayas = {};
   double? minRating;
   double? maxRating;
   double? minPrice;
   double? maxPrice;
-  String? selectedUserType; // 'Agency', 'Individual Cleaner', or null for all
+  String? selectedUserType;
 
   @override
   void initState() {
@@ -47,14 +47,14 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
 
   void _reloadSearch() {
     context.read<SearchCubit>().loadSearchResults(
-      query: _searchController.text.isEmpty ? null : _searchController.text,
-      wilayas: selectedWilayas.isEmpty ? null : selectedWilayas.toList(),
-      minRating: minRating,
-      maxRating: maxRating,
-      minPrice: minPrice,
-      maxPrice: maxPrice,
-      userType: selectedUserType,
-    );
+          query: _searchController.text.isEmpty ? null : _searchController.text,
+          wilayas: selectedWilayas.isEmpty ? null : selectedWilayas.toList(),
+          minRating: minRating,
+          maxRating: maxRating,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          userType: selectedUserType,
+        );
   }
 
   @override
@@ -82,7 +82,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
             ),
           ),
         ),
-
         Container(
           padding: const EdgeInsets.all(16),
           color: Colors.white,
@@ -96,8 +95,8 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                   value: selectedWilayas.isEmpty
                       ? AppLocalizations.of(context)!.all
                       : selectedWilayas.length == 1
-                      ? selectedWilayas.first
-                      : '${selectedWilayas.length} selected',
+                          ? selectedWilayas.first
+                          : '${selectedWilayas.length} selected',
                   onTap: () {
                     _showLocationFilter();
                   },
@@ -131,8 +130,8 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                   value: selectedUserType == null
                       ? AppLocalizations.of(context)!.all
                       : selectedUserType == 'Agency'
-                      ? 'Agency'
-                      : 'Individual',
+                          ? 'Agency'
+                          : 'Individual',
                   onTap: () {
                     _showUserTypeFilter();
                   },
@@ -141,7 +140,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
             ),
           ),
         ),
-
         Expanded(
           child: BlocBuilder<SearchCubit, SearchState>(
             builder: (context, state) {
@@ -159,18 +157,18 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       ElevatedButton(
                         onPressed: () {
                           context.read<SearchCubit>().refresh(
-                            query: _searchController.text.isEmpty
-                                ? null
-                                : _searchController.text,
-                            wilayas: selectedWilayas.isEmpty
-                                ? null
-                                : selectedWilayas.toList(),
-                            minRating: minRating,
-                            maxRating: maxRating,
-                            minPrice: minPrice,
-                            maxPrice: maxPrice,
-                            userType: selectedUserType,
-                          );
+                                query: _searchController.text.isEmpty
+                                    ? null
+                                    : _searchController.text,
+                                wilayas: selectedWilayas.isEmpty
+                                    ? null
+                                    : selectedWilayas.toList(),
+                                minRating: minRating,
+                                maxRating: maxRating,
+                                minPrice: minPrice,
+                                maxPrice: maxPrice,
+                                userType: selectedUserType,
+                              );
                         },
                         child: const Text('Retry'),
                       ),
@@ -309,7 +307,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                 ),
               ),
               const SizedBox(width: 12),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,11 +323,9 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                             ),
                           ),
                         ),
-                        // Icons to indicate type: Individual icon always shown for Individual Cleaners, Agency icon if part of agency
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // Always show individual icon for Individual Cleaners
                             if (cleaner['type'] == 'Individual')
                               Padding(
                                 padding: const EdgeInsets.only(right: 4),
@@ -340,7 +335,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                                   color: const Color(0xFF3B82F6),
                                 ),
                               ),
-                            // Show agency icon if cleaner is part of an agency
                             if (cleaner['type'] == 'Individual' &&
                                 cleaner['agency'] != null &&
                                 (cleaner['agency'] as String).isNotEmpty)
@@ -349,7 +343,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                                 size: 18,
                                 color: const Color(0xFF3B82F6),
                               ),
-                            // For Agency profiles, show only business icon
                             if (cleaner['type'] == 'Agency')
                               Icon(
                                 Icons.business,
@@ -369,7 +362,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-
                     Row(
                       children: [
                         const Icon(
@@ -388,7 +380,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -407,7 +398,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       ],
                     ),
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -431,7 +421,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
             ],
           ),
           const SizedBox(height: 12),
-
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -497,7 +486,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                             selectedWilayas = allWilayas.toSet();
                           }
                         });
-                        setModalState(() {}); // Update modal UI
+                        setModalState(() {});
                         _reloadSearch();
                       },
                       child: Text(
@@ -529,7 +518,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                               selectedWilayas.remove(wilaya);
                             }
                           });
-                          setModalState(() {}); // Update modal UI immediately
+                          setModalState(() {});
                           _reloadSearch();
                         },
                       );
@@ -648,7 +637,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       setState(() {
                         minRating = double.tryParse(minController.text);
                         maxRating = double.tryParse(maxController.text);
-                        // Validate range
+
                         if (minRating != null &&
                             (minRating! < 0 || minRating! > 5)) {
                           minRating = null;
@@ -660,7 +649,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                         if (minRating != null &&
                             maxRating != null &&
                             minRating! > maxRating!) {
-                          // Swap if min > max
                           final temp = minRating;
                           minRating = maxRating;
                           maxRating = temp;
@@ -781,7 +769,7 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                       setState(() {
                         minPrice = double.tryParse(minController.text);
                         maxPrice = double.tryParse(maxController.text);
-                        // Validate range
+
                         if (minPrice != null && minPrice! < 0) {
                           minPrice = null;
                         }
@@ -791,7 +779,6 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
                         if (minPrice != null &&
                             maxPrice != null &&
                             minPrice! > maxPrice!) {
-                          // Swap if min > max
                           final temp = minPrice;
                           minPrice = maxPrice;
                           maxPrice = temp;
@@ -876,9 +863,8 @@ class _FindCleanerPageState extends State<FindCleanerPage> {
   Widget _buildFilterOption(String label, bool isSelected, VoidCallback onTap) {
     return ListTile(
       title: Text(label),
-      trailing: isSelected
-          ? const Icon(Icons.check, color: Color(0xFF3B82F6))
-          : null,
+      trailing:
+          isSelected ? const Icon(Icons.check, color: Color(0xFF3B82F6)) : null,
       onTap: onTap,
     );
   }

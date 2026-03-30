@@ -38,7 +38,6 @@ class Booking {
   }
 
   factory Booking.fromMap(Map<String, dynamic> map) {
-    // Use unified type helpers for safe parsing
     final jobId = readInt(map['job_id']);
     if (jobId == null) {
       throw Exception(
@@ -55,7 +54,6 @@ class Booking {
 
     final providerId = readInt(map['provider_id']);
 
-    // Parse dates using unified helper
     final createdAt = readDate(map['created_at']) ?? DateTime.now();
     final updatedAt = readDate(map['updated_at']) ?? DateTime.now();
 

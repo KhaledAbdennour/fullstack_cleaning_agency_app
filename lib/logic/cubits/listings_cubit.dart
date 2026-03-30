@@ -39,15 +39,12 @@ class ListingsCubit extends Cubit<ListingsState> {
     if (value is Timestamp) return value.toDate();
     if (value is String) return DateTime.tryParse(value);
     if (value is int) {
-      // best-effort: treat as epoch milliseconds
       return DateTime.fromMillisecondsSinceEpoch(value);
     }
     return null;
   }
 
   DateTime _profileRecency(Map<String, dynamic> profile) {
-    // Prefer updated_at when present, otherwise created_at.
-    // Falls back to epoch start so "unknown" is always least recent.
     final updated = _parseDate(profile['updated_at']);
     final created = _parseDate(profile['created_at']);
     return updated ?? created ?? DateTime.fromMillisecondsSinceEpoch(0);
@@ -56,12 +53,8 @@ class ListingsCubit extends Cubit<ListingsState> {
   Future<void> loadListings() async {
     emit(ListingsLoading());
     try {
-      // Load ALL recent client jobs (not just limit 10, we'll sort and take most recent)
-      // Get recent jobs from database, sorted by posted_date descending
       final recentClientJobs = await _jobsRepo.getRecentClientJobs(limit: 100);
 
-      // Filter out deleted jobs AND non-open jobs (only "Open" should appear on homepage)
-      // Note: getRecentClientJobs already filters for open status, but double-check here
       final validJobs = recentClientJobs
           .where(
             (job) =>
@@ -70,11 +63,10 @@ class ListingsCubit extends Cubit<ListingsState> {
                 job.assignedWorkerId == null,
           )
           .toList();
-      // Sort by posted_date descending (most recent at the left)
-      validJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
-      final recent = validJobs.take(50).toList(); // Show top 50 most recent
 
-      // Get ALL agencies from database; sort by rating desc, then recency desc (tie-breaker)
+      validJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
+      final recent = validJobs.take(50).toList();
+
       final profiles = await AbstractProfileRepo.getInstance().getAllProfiles();
 
       final allAgencies = profiles
@@ -96,19 +88,17 @@ class ListingsCubit extends Cubit<ListingsState> {
           )
           .toList();
 
-      // Sort by rating descending, then by recency descending (most recent/highest rated at left)
       allAgencies.sort((a, b) {
         final ratingA = (a['rating'] as double? ?? 0.0);
         final ratingB = (b['rating'] as double? ?? 0.0);
-        final ratingCmp = ratingB.compareTo(ratingA); // Higher rating first
+        final ratingCmp = ratingB.compareTo(ratingA);
         if (ratingCmp != 0) return ratingCmp;
-        // Tie-breaker: most recent first (higher timestamp = more recent)
+
         final recencyA = _profileRecency(a);
         final recencyB = _profileRecency(b);
-        return recencyB.compareTo(recencyA); // More recent first
+        return recencyB.compareTo(recencyA);
       });
 
-      // Debug log: top 5 agencies
       if (allAgencies.isNotEmpty) {
         final topFive = allAgencies
             .take(5)
@@ -129,7 +119,6 @@ class ListingsCubit extends Cubit<ListingsState> {
         );
       }
 
-      // Get ALL individuals/cleaners from database; sort by rating desc, then recency desc (tie-breaker)
       final allCleaners = profiles
           .where((p) => p['user_type'] == 'Individual Cleaner')
           .map(
@@ -149,19 +138,17 @@ class ListingsCubit extends Cubit<ListingsState> {
           )
           .toList();
 
-      // Sort by rating descending, then by recency descending (most recent/highest rated at left)
       allCleaners.sort((a, b) {
         final ratingA = (a['rating'] as double? ?? 0.0);
         final ratingB = (b['rating'] as double? ?? 0.0);
-        final ratingCmp = ratingB.compareTo(ratingA); // Higher rating first
+        final ratingCmp = ratingB.compareTo(ratingA);
         if (ratingCmp != 0) return ratingCmp;
-        // Tie-breaker: most recent first (higher timestamp = more recent)
+
         final recencyA = _profileRecency(a);
         final recencyB = _profileRecency(b);
-        return recencyB.compareTo(recencyA); // More recent first
+        return recencyB.compareTo(recencyA);
       });
 
-      // Debug log: top 5 cleaners
       if (allCleaners.isNotEmpty) {
         final topFive = allCleaners
             .take(5)
@@ -185,8 +172,8 @@ class ListingsCubit extends Cubit<ListingsState> {
       emit(
         ListingsLoaded(
           recentListings: recent,
-          topAgencies: allAgencies, // ALL agencies, not just top 5
-          topCleaners: allCleaners, // ALL individuals, not just top 5
+          topAgencies: allAgencies,
+          topCleaners: allCleaners,
         ),
       );
     } catch (e) {

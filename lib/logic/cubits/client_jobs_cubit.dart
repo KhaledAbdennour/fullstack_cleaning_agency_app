@@ -28,7 +28,6 @@ class ClientJobsCubit extends Cubit<ClientJobsState> {
   Future<void> loadClientJobs(int? clientId) async {
     emit(ClientJobsLoading());
 
-    // Diagnostics for H5: Validate clientId resolution
     DebugLogger.log(
       'ClientJobsCubit',
       'loadClientJobs_START',
@@ -53,10 +52,8 @@ class ClientJobsCubit extends Cubit<ClientJobsState> {
     try {
       final jobs = await _jobsRepo.getJobsForClient(clientId);
 
-      // Filter out deleted jobs
       final validJobs = jobs.where((job) => !job.isDeleted).toList();
 
-      // Sort by most recent first (postedDate descending) - same as homepage
       validJobs.sort((a, b) => b.postedDate.compareTo(a.postedDate));
 
       DebugLogger.log(
@@ -70,7 +67,6 @@ class ClientJobsCubit extends Cubit<ClientJobsState> {
       );
       emit(ClientJobsLoaded(validJobs));
     } catch (e, stack) {
-      // Log error before emitting error state
       DebugLogger.error(
         'ClientJobsCubit',
         'loadClientJobs_FAILED',

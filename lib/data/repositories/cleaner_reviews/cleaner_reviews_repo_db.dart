@@ -11,9 +11,7 @@ import 'cleaner_reviews_repo.dart';
 class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   static const String collectionName = 'cleaner_reviews';
 
-  // Keep SQL code for reference
-  static const String sqlCode =
-      '''
+  static const String sqlCode = '''
     CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       cleaner_id INTEGER NOT NULL,
@@ -32,7 +30,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<List<CleanerReview>> getReviewsForCleaner(int cleanerId) async {
     try {
-      // #region agent log
       DebugLogger.log(
         'CleanerReviewsDB',
         'getReviewsForCleaner_START',
@@ -44,20 +41,17 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
           'dateField': 'date',
         },
       );
-      // #endregion
 
       QuerySnapshot snapshot;
       bool usedFallback = false;
 
       try {
-        // Primary query with orderBy
         snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .where('cleaner_id', isEqualTo: cleanerId)
             .orderBy('date', descending: true)
             .get();
 
-        // #region agent log
         DebugLogger.log(
           'CleanerReviewsDB',
           'getReviewsForCleaner_QUERY_SUCCESS',
@@ -67,14 +61,11 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
             'usedFallback': false,
           },
         );
-        // #endregion
       } catch (e) {
-        // If index error, try without orderBy
         final errorStr = e.toString();
         if (errorStr.contains('FAILED_PRECONDITION') ||
             errorStr.contains('requires an index') ||
             errorStr.contains('index')) {
-          // #region agent log
           DebugLogger.log(
             'CleanerReviewsDB',
             'getReviewsForCleaner_INDEX_ERROR',
@@ -84,9 +75,7 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
               'willTryFallback': true,
             },
           );
-          // #endregion
 
-          // Fallback: query without orderBy
           snapshot = await FirebaseConfig.firestore
               .collection(collectionName)
               .where('cleaner_id', isEqualTo: cleanerId)
@@ -94,7 +83,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
 
           usedFallback = true;
 
-          // #region agent log
           DebugLogger.log(
             'CleanerReviewsDB',
             'getReviewsForCleaner_FALLBACK_SUCCESS',
@@ -104,9 +92,7 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
               'usedFallback': true,
             },
           );
-          // #endregion
         } else {
-          // Re-throw if it's not an index error
           rethrow;
         }
       }
@@ -117,13 +103,11 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
           final raw = doc.data();
           final data = Map<String, dynamic>.from(raw as Map);
 
-          // Try to parse doc.id as int for backwards compatibility
           final id = int.tryParse(doc.id);
           if (id != null) {
             data['id'] = id;
           }
 
-          // Log first doc field types for debugging
           if (reviews.isEmpty && snapshot.docs.isNotEmpty) {
             final cleanerIdValue = data['cleaner_id'];
             final dateValue = data['date'];
@@ -135,16 +119,16 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
               data: {
                 'cleanerId': cleanerId,
                 'firstDoc_cleaner_id_value': cleanerIdValue,
-                'firstDoc_cleaner_id_type': cleanerIdValue?.runtimeType
-                    .toString(),
+                'firstDoc_cleaner_id_type':
+                    cleanerIdValue?.runtimeType.toString(),
                 'firstDoc_date_value': dateValue is String
                     ? (dateValue.length > 20
-                          ? dateValue.substring(0, 20)
-                          : dateValue)
+                        ? dateValue.substring(0, 20)
+                        : dateValue)
                     : dateValue,
                 'firstDoc_date_type': dateValue?.runtimeType.toString(),
-                'firstDoc_created_at_type': createdAtValue?.runtimeType
-                    .toString(),
+                'firstDoc_created_at_type':
+                    createdAtValue?.runtimeType.toString(),
               },
             );
           }
@@ -163,16 +147,13 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
               'docData': doc.data(),
             },
           );
-          // Skip invalid docs but continue processing
         }
       }
 
-      // If fallback was used, sort client-side by date
       if (usedFallback) {
         reviews.sort((a, b) => b.date.compareTo(a.date));
       }
 
-      // #region agent log
       if (reviews.isNotEmpty) {
         final firstThree = reviews
             .take(3)
@@ -207,11 +188,9 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
           },
         );
       }
-      // #endregion
 
       return reviews;
     } catch (e, stacktrace) {
-      // #region agent log
       DebugLogger.error(
         'CleanerReviewsDB',
         'getReviewsForCleaner_ERROR',
@@ -219,7 +198,7 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
         stacktrace,
         data: {'cleanerId': cleanerId},
       );
-      // #endregion
+
       return [];
     }
   }
@@ -227,7 +206,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
   @override
   Future<CleanerReview> addReview(CleanerReview review) async {
     try {
-      // Enforce: Reviews can only be added when job.status == completed
       if (review.jobId != null) {
         final jobsRepo = AbstractJobsRepo.getInstance();
         final job = await jobsRepo.getJobById(review.jobId!);
@@ -244,12 +222,9 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
       String? docId;
       bool isUpdate = false;
 
-      // Determine document ID based on job_id + reviewer_id (duplicate prevention)
       if (review.jobId != null && review.reviewerId != null) {
-        // Use deterministic ID for duplicate prevention
         docId = 'job_${review.jobId}_reviewer_${review.reviewerId}';
 
-        // Check if review already exists
         final existingDoc = await FirebaseConfig.firestore
             .collection(collectionName)
             .doc(docId)
@@ -257,7 +232,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
 
         isUpdate = existingDoc.exists;
       } else {
-        // Fallback: query for existing review if jobId or reviewerId is null
         if (review.reviewerId != null) {
           final querySnapshot = await FirebaseConfig.firestore
               .collection(collectionName)
@@ -273,7 +247,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
           }
         }
 
-        // If still no docId, generate one (fallback to old behavior)
         if (docId == null) {
           final snapshot = await FirebaseConfig.firestore
               .collection(collectionName)
@@ -290,57 +263,35 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
         }
       }
 
-      // Get old rating if updating (needed for accurate calculation)
-      double? oldRating;
-      if (isUpdate) {
-        final existingDoc = await FirebaseConfig.firestore
-            .collection(collectionName)
-            .doc(docId)
-            .get();
-        if (existingDoc.exists) {
-          oldRating = (existingDoc.data()!['rating'] as num?)?.toDouble();
-        }
-      }
-
-      // Use transaction to ensure consistency
       await FirebaseConfig.firestore.runTransaction((transaction) async {
-        final reviewRef = FirebaseConfig.firestore
-            .collection(collectionName)
-            .doc(docId!);
+        final reviewRef =
+            FirebaseConfig.firestore.collection(collectionName).doc(docId!);
 
-        // Prepare review data (don't include 'id' field when using string doc IDs)
         final reviewMap = review.toMap();
-        reviewMap.remove('id'); // Remove id from document data
-        reviewMap['date'] = review.date
-            .toIso8601String(); // Ensure date is string
+        reviewMap.remove('id');
+        reviewMap['date'] = review.date.toIso8601String();
         reviewMap['updated_at'] = FieldValue.serverTimestamp();
 
         if (isUpdate) {
-          // Update existing review
           transaction.update(reviewRef, reviewMap);
         } else {
-          // Create new review
           reviewMap['created_at'] = FieldValue.serverTimestamp();
           transaction.set(reviewRef, reviewMap);
         }
 
-        // Auto-update cleaner's aggregated rating
-        // Get ALL reviews for this cleaner (reflects state BEFORE transaction)
         final allReviewsSnapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .where('cleaner_id', isEqualTo: review.cleanerId)
             .get();
 
-        // Calculate ratings list, excluding the document we're updating
         final ratings = allReviewsSnapshot.docs
             .where(
               (doc) => doc.id != docId,
-            ) // Exclude the review we're updating
+            )
             .map((doc) => (doc.data()['rating'] as num?)?.toDouble() ?? 0.0)
             .where((r) => r > 0)
             .toList();
 
-        // Add the new/updated rating
         ratings.add(review.rating);
 
         final ratingAvg = ratings.isEmpty
@@ -348,7 +299,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
             : ratings.fold<double>(0.0, (a, b) => a + b) / ratings.length;
         final ratingCount = ratings.length;
 
-        // Update cleaner's rating in cleaners collection
         final cleanerRef = FirebaseConfig.firestore
             .collection('cleaners')
             .doc(review.cleanerId.toString());
@@ -357,12 +307,11 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
         if (cleanerDoc.exists) {
           transaction.update(cleanerRef, {
             'rating': ratingAvg,
-            'rating_avg': ratingAvg, // Store both for compatibility
+            'rating_avg': ratingAvg,
             'rating_count': ratingCount,
             'updated_at': FieldValue.serverTimestamp(),
           });
         } else {
-          // Cleaner doesn't exist in cleaners collection, try profiles
           final profileRef = FirebaseConfig.firestore
               .collection('profiles')
               .doc(review.cleanerId.toString());
@@ -379,7 +328,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
         }
       });
 
-      // Fetch the saved review to return
       final savedDoc = await FirebaseConfig.firestore
           .collection(collectionName)
           .doc(docId)
@@ -387,14 +335,13 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
 
       if (savedDoc.exists) {
         final data = savedDoc.data()!;
-        // Try to parse doc.id as int for backwards compatibility, otherwise leave id as null
+
         final id = int.tryParse(savedDoc.id);
         if (id != null) {
           data['id'] = id;
         }
         final savedReview = CleanerReview.fromMap(data);
 
-        // Send notification to cleaner about new review
         Future.microtask(() async {
           try {
             await NotificationServiceEnhanced.createNotification(
@@ -407,21 +354,17 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
               jobId: review.jobId,
             );
 
-            // If review is for a job, notify the other party (client or worker) and agency
             if (review.jobId != null) {
               try {
                 final jobsRepo = AbstractJobsRepo.getInstance();
                 final job = await jobsRepo.getJobById(review.jobId!);
                 if (job != null) {
-                  // Determine who to notify (the other party)
                   String? notifyUserId;
                   if (job.clientId == review.reviewerId &&
                       job.assignedWorkerId != null) {
-                    // Client reviewed worker, notify worker
                     notifyUserId = job.assignedWorkerId.toString();
                   } else if (job.assignedWorkerId == review.reviewerId &&
                       job.clientId != null) {
-                    // Worker reviewed client, notify client
                     notifyUserId = job.clientId.toString();
                   }
 
@@ -439,7 +382,6 @@ class CleanerReviewsDB extends AbstractCleanerReviewsRepo {
                     );
                   }
 
-                  // Notify agency if worker belongs to one
                   if (job.agencyId != null &&
                       job.agencyId != review.cleanerId) {
                     await NotificationServiceEnhanced.createNotification(

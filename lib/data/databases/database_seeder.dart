@@ -21,30 +21,30 @@ class DatabaseSeeder {
         return;
       }
 
-      print('Starting database seeding...');
+      print('[DatabaseSeeder] Starting database seeding...');
 
       await _seedProfiles();
-      print('Profiles seeded');
+      print('[DatabaseSeeder] Profiles seeded');
 
       await _seedJobs();
-      print('Jobs seeded');
+      print('[DatabaseSeeder] Jobs seeded');
 
       await _seedCleaners();
-      print('Cleaners seeded');
+      print('[DatabaseSeeder] Cleaners seeded');
 
       await _seedCleaningHistory();
-      print('Cleaning history seeded');
+      print('[DatabaseSeeder] Cleaning history seeded');
 
       await _seedCleanerReviews();
-      print('Cleaner reviews seeded');
+      print('[DatabaseSeeder] Cleaner reviews seeded');
 
       _seeded = true;
-      print('Database seeding completed successfully');
+      print('[DatabaseSeeder] Database seeding completed successfully');
     } catch (e, stackTrace) {
-      print('Database seeding failed: $e');
-      print('Stack trace: $stackTrace');
-      // Don't set _seeded = true so it can retry
-      rethrow; // Re-throw so caller knows seeding failed
+      print('[DatabaseSeeder] Database seeding failed: $e');
+      print('[DatabaseSeeder] Stack trace: $stackTrace');
+
+      rethrow;
     }
   }
 
@@ -126,7 +126,7 @@ class DatabaseSeeder {
         postedDate: now.subtract(const Duration(days: 2)),
         jobDate: now.add(const Duration(days: 5)),
         agencyId: agencyId,
-        clientId: null, // Explicitly set to null for agency jobs
+        clientId: null,
         coverImageUrl:
             'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop',
       ),
@@ -142,7 +142,7 @@ class DatabaseSeeder {
         postedDate: now.subtract(const Duration(days: 5)),
         jobDate: now.add(const Duration(days: 3)),
         agencyId: agencyId,
-        clientId: null, // Explicitly set to null for agency jobs
+        clientId: null,
         coverImageUrl:
             'https://images.unsplash.com/photo-1581579184808-b72b4f5f8a03?w=800&h=400&fit=crop',
       ),
@@ -158,7 +158,7 @@ class DatabaseSeeder {
         postedDate: now.subtract(const Duration(days: 10)),
         jobDate: now.add(const Duration(days: 7)),
         agencyId: agencyId,
-        clientId: null, // Explicitly set to null for agency jobs
+        clientId: null,
         coverImageUrl:
             'https://images.unsplash.com/photo-1581578017423-3b243dbb3a34?w=800&h=400&fit=crop',
       ),

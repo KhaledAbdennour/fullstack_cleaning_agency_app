@@ -13,9 +13,7 @@ import 'bookings_repo.dart';
 class BookingsDB extends AbstractBookingsRepo {
   static const String collectionName = 'bookings';
 
-  // Keep SQL code for reference
-  static const String sqlCode =
-      '''
+  static const String sqlCode = '''
     CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       job_id INTEGER NOT NULL,
@@ -35,15 +33,12 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<List<Booking>> getBookingsForAgency(int agencyId) async {
     try {
-      // Get bookings for jobs owned by this agency
-      // First get all jobs for this agency
       final jobsRepo = AbstractJobsRepo.getInstance();
       final agencyJobs = await jobsRepo.getAllJobsForAgency(agencyId);
       final jobIds = agencyJobs.map((j) => j.id).whereType<int>().toList();
 
       if (jobIds.isEmpty) return [];
 
-      // Get bookings for these jobs
       final snapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('job_id', whereIn: jobIds)
@@ -116,12 +111,11 @@ class BookingsDB extends AbstractBookingsRepo {
       final bookingMap = booking.toMap();
       final id = bookingMap.remove('id');
 
-      // Ensure all required fields are explicitly set with correct types
-      bookingMap['job_id'] = booking.jobId; // INT
-      bookingMap['client_id'] = booking.clientId; // INT
-      bookingMap['provider_id'] = booking.providerId; // INT
-      bookingMap['status'] = 'pending'; // Ensure status is 'pending'
-      bookingMap['created_at'] = FieldValue.serverTimestamp(); // Timestamp
+      bookingMap['job_id'] = booking.jobId;
+      bookingMap['client_id'] = booking.clientId;
+      bookingMap['provider_id'] = booking.providerId;
+      bookingMap['status'] = 'pending';
+      bookingMap['created_at'] = FieldValue.serverTimestamp();
       bookingMap['updated_at'] = FieldValue.serverTimestamp();
 
       String docId;
@@ -143,7 +137,6 @@ class BookingsDB extends AbstractBookingsRepo {
         bookingMap['id'] = newId;
       }
 
-      // Sanitize bookingMap for logging (remove FieldValue which can't be encoded)
       final sanitizedMap = Map<String, dynamic>.from(bookingMap);
       sanitizedMap.removeWhere((key, value) => value is FieldValue);
       DebugLogger.log(
@@ -157,7 +150,6 @@ class BookingsDB extends AbstractBookingsRepo {
           .doc(docId)
           .set(bookingMap);
 
-      // Re-fetch to get server timestamps
       final doc = await FirebaseConfig.firestore
           .collection(collectionName)
           .doc(docId)
@@ -167,7 +159,6 @@ class BookingsDB extends AbstractBookingsRepo {
       data['id'] = int.parse(docId);
       final createdBooking = Booking.fromMap(data);
 
-      // Log the written doc with types after readback
       final readData = doc.data()!;
       DebugLogger.log(
         'createBooking',
@@ -186,7 +177,6 @@ class BookingsDB extends AbstractBookingsRepo {
         },
       );
 
-      // Update job's budget_min if this bid is lower than current min
       if (booking.bidPrice != null) {
         try {
           final jobsRepo = AbstractJobsRepo.getInstance();
@@ -195,17 +185,14 @@ class BookingsDB extends AbstractBookingsRepo {
             final currentMin = job.budgetMin;
             final bidPrice = booking.bidPrice!;
 
-            // Update budget_min if:
-            // - Current min is null, OR
-            // - This bid is lower than current min
             if (currentMin == null || bidPrice < currentMin) {
               await FirebaseConfig.firestore
                   .collection('jobs')
                   .doc(booking.jobId.toString())
                   .update({
-                    'budget_min': bidPrice,
-                    'updated_at': FieldValue.serverTimestamp(),
-                  });
+                'budget_min': bidPrice,
+                'updated_at': FieldValue.serverTimestamp(),
+              });
 
               DebugLogger.log(
                 'createBooking',
@@ -219,7 +206,6 @@ class BookingsDB extends AbstractBookingsRepo {
             }
           }
         } catch (e) {
-          // Don't fail the booking creation if budget update fails
           DebugLogger.log(
             'createBooking',
             'BUDGET_UPDATE_ERROR',
@@ -228,14 +214,12 @@ class BookingsDB extends AbstractBookingsRepo {
         }
       }
 
-      // Notify client (async)
       if (booking.providerId != null) {
         Future.microtask(() async {
           try {
             final jobsRepo = AbstractJobsRepo.getInstance();
             final job = await jobsRepo.getJobById(booking.jobId);
             if (job != null) {
-              // Get provider profile to get name
               final profileRepo = AbstractProfileRepo.getInstance();
               final providerProfile = await profileRepo.getProfileById(
                 booking.providerId!,
@@ -309,7 +293,6 @@ class BookingsDB extends AbstractBookingsRepo {
       QuerySnapshot snapshot;
       bool usedFallback = false;
       try {
-        // Primary query (requires composite index: job_id (Ascending), created_at (Descending))
         snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .where('job_id', isEqualTo: jobId)
@@ -327,8 +310,7 @@ class BookingsDB extends AbstractBookingsRepo {
         );
       } catch (e, stack) {
         final errorStr = e.toString();
-        final isIndexError =
-            errorStr.contains('FAILED_PRECONDITION') ||
+        final isIndexError = errorStr.contains('FAILED_PRECONDITION') ||
             errorStr.contains('requires an index') ||
             errorStr.contains('index');
 
@@ -342,7 +324,6 @@ class BookingsDB extends AbstractBookingsRepo {
             '[getApplicationsForJob] Index missing, using fallback query (no orderBy)',
           );
 
-          // Fallback query WITHOUT orderBy (doesn't require composite index)
           try {
             snapshot = await FirebaseConfig.firestore
                 .collection(collectionName)
@@ -363,10 +344,9 @@ class BookingsDB extends AbstractBookingsRepo {
               fallbackStack,
               data: {'jobId': jobId},
             );
-            rethrow; // If fallback also fails, rethrow
+            rethrow;
           }
         } else {
-          // Non-index error - rethrow immediately
           DebugLogger.error(
             'getApplicationsForJob',
             'QUERY_FAILED',
@@ -387,7 +367,6 @@ class BookingsDB extends AbstractBookingsRepo {
         try {
           final data = doc.data() as Map<String, dynamic>;
 
-          // Filter: only include bookings with provider_id (applications)
           if (data['provider_id'] == null) {
             DebugLogger.log(
               'getApplicationsForJob',
@@ -424,12 +403,10 @@ class BookingsDB extends AbstractBookingsRepo {
         }
       }
 
-      // If fallback was used, sort client-side by created_at descending
       if (usedFallback) {
         bookings.sort((a, b) {
-          // Compare by createdAt, descending (newest first)
-          final aTime = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final bTime = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final aTime = a.createdAt;
+          final bTime = b.createdAt;
           return bTime.compareTo(aTime);
         });
         DebugLogger.log(
@@ -457,7 +434,7 @@ class BookingsDB extends AbstractBookingsRepo {
         stacktrace,
         data: {'jobId': jobId},
       );
-      rethrow; // DO NOT return [] - let error propagate
+      rethrow;
     }
   }
 
@@ -485,9 +462,7 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<void> acceptApplication(int bookingId) async {
     try {
-      // Use Firestore transaction for atomic operation
       await FirebaseConfig.firestore.runTransaction((transaction) async {
-        // Get the booking
         final bookingRef = FirebaseConfig.firestore
             .collection(collectionName)
             .doc(bookingId.toString());
@@ -499,7 +474,6 @@ class BookingsDB extends AbstractBookingsRepo {
 
         final bookingData = bookingDoc.data()!;
 
-        // TRUTH LOG: Read booking doc
         final jobIdRaw = bookingData['job_id'];
         final clientIdRaw = bookingData['client_id'];
         final providerIdRaw = bookingData['provider_id'];
@@ -538,10 +512,8 @@ class BookingsDB extends AbstractBookingsRepo {
           );
         }
 
-        // Get the job
-        final jobRef = FirebaseConfig.firestore
-            .collection('jobs')
-            .doc(jobId.toString());
+        final jobRef =
+            FirebaseConfig.firestore.collection('jobs').doc(jobId.toString());
         final jobDoc = await transaction.get(jobRef);
 
         if (!jobDoc.exists) {
@@ -550,7 +522,6 @@ class BookingsDB extends AbstractBookingsRepo {
 
         final jobData = jobDoc.data()!;
 
-        // TRUTH LOG: Read job doc BEFORE update
         DebugLogger.log(
           'acceptApplication',
           'TX_READ_JOB_BEFORE',
@@ -575,27 +546,21 @@ class BookingsDB extends AbstractBookingsRepo {
           },
         );
 
-        // Check if job is already assigned
         if (jobData['assigned_worker_id'] != null) {
           throw Exception('Job is already assigned to another worker');
         }
 
-        // Update booking to accepted
         transaction.update(bookingRef, {
           'status': BookingStatus.inProgress.name,
           'updated_at': FieldValue.serverTimestamp(),
         });
 
-        // Update job: set status to assigned and assign worker
-        // Ensure assigned_worker_id is written as int (consistent type)
         final jobUpdates = {
           'status': JobStatus.assigned.name,
-          'assigned_worker_id':
-              providerId, // Ensure this is int (already validated above)
+          'assigned_worker_id': providerId,
           'updated_at': FieldValue.serverTimestamp(),
         };
 
-        // TRUTH LOG: Write job updates
         DebugLogger.log(
           'acceptApplication',
           'TX_WRITE_JOB',
@@ -611,7 +576,6 @@ class BookingsDB extends AbstractBookingsRepo {
 
         transaction.update(jobRef, jobUpdates);
 
-        // Reject all other pending applications for this job
         final otherApplicationsSnapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .where('job_id', isEqualTo: jobId)
@@ -628,13 +592,11 @@ class BookingsDB extends AbstractBookingsRepo {
         }
       });
 
-      // TRUTH LOG: Re-read job doc AFTER transaction
       final jobsRepo = AbstractJobsRepo.getInstance();
       final bookingAfter = await getBookingById(bookingId);
       if (bookingAfter != null) {
         final jobAfter = await jobsRepo.getJobById(bookingAfter.jobId);
         if (jobAfter != null) {
-          // Re-read raw doc to see actual Firestore values
           final jobDocAfter = await FirebaseConfig.firestore
               .collection('jobs')
               .doc(bookingAfter.jobId.toString())
@@ -650,7 +612,7 @@ class BookingsDB extends AbstractBookingsRepo {
               'assigned_worker_id': jobDataAfter?['assigned_worker_id'],
               'assigned_worker_id_type':
                   jobDataAfter?['assigned_worker_id']?.runtimeType.toString() ??
-                  'null',
+                      'null',
               'client_id': jobDataAfter?['client_id'],
               'client_id_type':
                   jobDataAfter?['client_id']?.runtimeType.toString() ?? 'null',
@@ -660,22 +622,20 @@ class BookingsDB extends AbstractBookingsRepo {
               'worker_done': jobDataAfter?['worker_done'],
               'worker_done_type':
                   jobDataAfter?['worker_done']?.runtimeType.toString() ??
-                  'null',
+                      'null',
               'client_done': jobDataAfter?['client_done'],
               'client_done_type':
                   jobDataAfter?['client_done']?.runtimeType.toString() ??
-                  'null',
+                      'null',
             },
           );
         }
       }
 
-      // Send notifications (after transaction succeeds)
       final booking = bookingAfter ?? await getBookingById(bookingId);
       if (booking != null && booking.providerId != null) {
         final job = await jobsRepo.getJobById(booking.jobId);
 
-        // Log type consistency for debugging
         if (job != null) {
           DebugLogger.log(
             'acceptApplication',
@@ -694,7 +654,6 @@ class BookingsDB extends AbstractBookingsRepo {
 
         if (job != null) {
           try {
-            // Get provider profile to get name
             final profileRepo = AbstractProfileRepo.getInstance();
             final providerProfile = await profileRepo.getProfileById(
               booking.providerId!,
@@ -702,7 +661,6 @@ class BookingsDB extends AbstractBookingsRepo {
             final providerName =
                 providerProfile?['full_name'] as String? ?? 'A worker';
 
-            // Notify accepted worker/agency (job_assigned)
             await NotificationServiceEnhanced.createNotification(
               userId: booking.providerId.toString(),
               title: 'Application Accepted!',
@@ -717,7 +675,6 @@ class BookingsDB extends AbstractBookingsRepo {
               routeId: booking.jobId.toString(),
             );
 
-            // Notify client (job_assigned - they assigned the job)
             await NotificationServiceEnhanced.createNotification(
               userId: booking.clientId.toString(),
               title: 'Worker Assigned',
@@ -749,11 +706,10 @@ class BookingsDB extends AbstractBookingsRepo {
           .collection(collectionName)
           .doc(bookingId.toString())
           .update({
-            'status': BookingStatus.cancelled.name,
-            'updated_at': FieldValue.serverTimestamp(),
-          });
+        'status': BookingStatus.cancelled.name,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
 
-      // Notify worker that application was rejected (optional, async)
       final booking = await getBookingById(bookingId);
       if (booking != null && booking.providerId != null) {
         Future.microtask(() async {
@@ -783,13 +739,11 @@ class BookingsDB extends AbstractBookingsRepo {
   @override
   Future<void> withdrawApplication(int bookingId) async {
     try {
-      // Get booking first to check status
       final booking = await getBookingById(bookingId);
       if (booking == null) {
         throw Exception('Booking not found');
       }
 
-      // Only allow withdrawal if status is pending
       if (booking.status != BookingStatus.pending) {
         throw Exception(
           'Cannot withdraw application - status is ${booking.status.name}',
@@ -800,11 +754,10 @@ class BookingsDB extends AbstractBookingsRepo {
           .collection(collectionName)
           .doc(bookingId.toString())
           .update({
-            'status': BookingStatus.cancelled.name,
-            'updated_at': FieldValue.serverTimestamp(),
-          });
+        'status': BookingStatus.cancelled.name,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
 
-      // Notify client that application was withdrawn (optional, async)
       Future.microtask(() async {
         try {
           final jobsRepo = AbstractJobsRepo.getInstance();

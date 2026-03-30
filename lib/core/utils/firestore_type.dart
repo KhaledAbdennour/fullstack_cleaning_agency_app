@@ -1,10 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Unified Firestore type conversion helpers
-/// Use these for ALL Firestore reads/writes to prevent type mismatches
-
-/// Safely read an int value from Firestore dynamic data
-/// Handles: int, String (parseable), double (converts to int)
 int? readInt(dynamic v) {
   if (v == null) return null;
   if (v is int) return v;
@@ -16,8 +11,6 @@ int? readInt(dynamic v) {
   return null;
 }
 
-/// Safely read a boolean value from Firestore dynamic data
-/// Handles: bool, int (0/1), String ("true"/"1"/"false"/"0")
 bool readBool(dynamic v, {bool defaultValue = false}) {
   if (v == null) return defaultValue;
   if (v is bool) return v;
@@ -30,17 +23,13 @@ bool readBool(dynamic v, {bool defaultValue = false}) {
   return defaultValue;
 }
 
-/// Safely read a DateTime from Firestore dynamic data
-/// Handles: Timestamp, int (milliseconds), String (ISO format)
 DateTime? readDate(dynamic v) {
   if (v == null) return null;
 
-  // Handle Firestore Timestamp
   if (v is Timestamp) {
     return v.toDate();
   }
 
-  // Handle int (milliseconds since epoch)
   if (v is int) {
     try {
       return DateTime.fromMillisecondsSinceEpoch(v);
@@ -49,7 +38,6 @@ DateTime? readDate(dynamic v) {
     }
   }
 
-  // Handle String (ISO format)
   if (v is String) {
     try {
       return DateTime.parse(v);
@@ -58,7 +46,6 @@ DateTime? readDate(dynamic v) {
     }
   }
 
-  // Handle DateTime (already parsed)
   if (v is DateTime) {
     return v;
   }
@@ -66,14 +53,12 @@ DateTime? readDate(dynamic v) {
   return null;
 }
 
-/// Safely read a String value from Firestore dynamic data
 String? readString(dynamic v) {
   if (v == null) return null;
   if (v is String) return v;
   return v.toString();
 }
 
-/// Safely read a double value from Firestore dynamic data
 double? readDouble(dynamic v) {
   if (v == null) return null;
   if (v is double) return v;

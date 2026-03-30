@@ -9,15 +9,13 @@ import '../../../core/debug/debug_flags.dart';
 import '../../../core/services/notification_service_enhanced.dart';
 import '../../models/notification_item.dart';
 import '../../repositories/profiles/profile_repo.dart';
+import '../../../local_db/dao/notifications_dao.dart';
 import 'notifications_repo.dart';
 
-/// Firestore implementation of notifications repository
-/// All Firebase Messaging APIs are called here (teacher's pattern)
 class NotificationsRepoDB extends AbstractNotificationsRepo {
   static const String collectionName = 'notifications';
   static const String devicesCollectionName = 'user_devices';
 
-  // FCM Server Key - should be stored securely in production
   static const String fcmServerKey =
       '6B6_LDeZoDxT14kvBMKuHuGkYhGDmNMbhFPUFmScS0';
 
@@ -32,7 +30,6 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
     if (_initialized) return;
 
     try {
-      // Initialize local notifications for foreground display
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
@@ -51,18 +48,13 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
-      // Configure foreground notification display
       FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
-      // Configure background message handler (must be top-level)
-      // Note: Background handler is defined at the bottom of this file
       FirebaseMessaging.onBackgroundMessage(
         _firebaseMessagingBackgroundHandler,
       );
 
-      // Handle token refresh
       _messaging.onTokenRefresh.listen((token) {
-        // Token refreshed - save to backend if user is logged in
         _saveTokenToBackendIfLoggedIn(token);
       });
 
@@ -84,7 +76,7 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
         );
         return settings.authorizationStatus == AuthorizationStatus.authorized;
       }
-      // Android permissions are granted by default
+
       return true;
     } catch (e) {
       print('Error requesting permission: $e');
@@ -109,20 +101,21 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
     String platform,
   ) async {
     try {
-      final deviceId =
-          '${platform}_$userId'; // Unique device ID per user+platform
+      final deviceId = '${platform}_$userId';
 
       await FirebaseConfig.firestore
           .collection(devicesCollectionName)
           .doc(deviceId)
           .set({
-            'user_id': userId,
-            'fcm_token': token,
-            'platform': platform,
-            'updated_at': FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        'user_id': userId,
+        'fcm_token': token,
+        'platform': platform,
+        'updated_at': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-      print('FCM token saved to Firestore for user $userId');
+      print(
+        '[NotificationsRepo] FCM token saved to Firestore for user $userId',
+      );
     } catch (e) {
       print('Error saving FCM token: $e');
       rethrow;
@@ -148,65 +141,37 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
 
   @override
   Future<List<NotificationItem>> getStoredNotifications(String userId) async {
-    // Use role-based selector via NotificationServiceEnhanced
     try {
-      DebugFlags.debugPrint('[getStoredNotifications] START - userId: $userId');
+      final cached = await NotificationsDao.getNotificationsForUser(userId);
 
-      final profiles = await AbstractProfileRepo.getInstance().getAllProfiles();
-      DebugFlags.debugPrint(
-        '[getStoredNotifications] Profiles loaded: ${profiles.length}',
-      );
+      try {
+        final profiles =
+            await AbstractProfileRepo.getInstance().getAllProfiles();
 
-      final userProfile = profiles.firstWhere(
-        (p) => p['id'].toString() == userId,
-        orElse: () => <String, dynamic>{},
-      );
+        final userProfile = profiles.firstWhere(
+          (p) => p['id'].toString() == userId,
+          orElse: () => <String, dynamic>{},
+        );
 
-      final userType = userProfile['user_type']?.toString() ?? '';
-      DebugFlags.debugPrint(
-        '[getStoredNotifications] User type: $userType, userId: $userId',
-      );
+        final userType = userProfile['user_type']?.toString() ?? '';
 
-      List<NotificationItem> result;
-      switch (userType) {
-        case 'Individual Cleaner':
-          result = await getNotificationsForWorker(userId);
-          break;
-        case 'Agency':
-          result = await getNotificationsForAgency(userId);
-          break;
-        case 'Client':
-          result = await getNotificationsForClient(userId);
-          break;
-        default:
-          DebugFlags.debugPrint(
-            '[getStoredNotifications] Unknown user type, using fallback query',
-          );
-          // Fallback: return all notifications for this user
-          try {
-            final snapshot = await FirebaseConfig.firestore
-                .collection(collectionName)
-                .where('user_id', isEqualTo: userId)
-                .orderBy('created_at', descending: true)
-                .limit(50)
-                .get();
-
-            DebugFlags.debugPrint(
-              '[getStoredNotifications] Fallback query returned ${snapshot.docs.length} docs',
-            );
-            result = snapshot.docs.map((doc) {
-              final data = Map<String, dynamic>.from(doc.data() as Map);
-              return NotificationItem.fromMap({...data, 'id': doc.id});
-            }).toList();
-          } catch (e2) {
-            DebugFlags.debugPrint(
-              '[getStoredNotifications] Fallback query failed: $e2',
-            );
-            // Last resort: query without orderBy
+        List<NotificationItem> result;
+        switch (userType) {
+          case 'Individual Cleaner':
+            result = await getNotificationsForWorker(userId);
+            break;
+          case 'Agency':
+            result = await getNotificationsForAgency(userId);
+            break;
+          case 'Client':
+            result = await getNotificationsForClient(userId);
+            break;
+          default:
             try {
               final snapshot = await FirebaseConfig.firestore
                   .collection(collectionName)
                   .where('user_id', isEqualTo: userId)
+                  .orderBy('created_at', descending: true)
                   .limit(50)
                   .get();
 
@@ -214,25 +179,34 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
                 final data = Map<String, dynamic>.from(doc.data() as Map);
                 return NotificationItem.fromMap({...data, 'id': doc.id});
               }).toList();
+            } catch (e2) {
+              try {
+                final snapshot = await FirebaseConfig.firestore
+                    .collection(collectionName)
+                    .where('user_id', isEqualTo: userId)
+                    .limit(50)
+                    .get();
 
-              // Sort client-side
-              result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-              DebugFlags.debugPrint(
-                '[getStoredNotifications] Last resort query returned ${result.length} notifications',
-              );
-            } catch (e3) {
-              DebugFlags.debugPrint(
-                '[getStoredNotifications] All queries failed: $e3',
-              );
-              result = [];
+                result = snapshot.docs.map((doc) {
+                  final data = Map<String, dynamic>.from(doc.data() as Map);
+                  return NotificationItem.fromMap({...data, 'id': doc.id});
+                }).toList();
+
+                result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+              } catch (e3) {
+                result = cached.isNotEmpty ? cached : [];
+              }
             }
-          }
-      }
+        }
 
-      DebugFlags.debugPrint(
-        '[getStoredNotifications] SUCCESS - Returning ${result.length} notifications',
-      );
-      return result;
+        if (result.isNotEmpty) {
+          await NotificationsDao.insertNotifications(result);
+        }
+
+        return result;
+      } catch (e) {
+        return cached.isNotEmpty ? cached : [];
+      }
     } catch (e, stackTrace) {
       DebugFlags.debugPrint('[getStoredNotifications] ERROR: $e');
       DebugFlags.debugPrint('[getStoredNotifications] Stack: $stackTrace');
@@ -244,7 +218,6 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
   Future<List<NotificationItem>> getNotificationsForWorker(
     String userId,
   ) async {
-    // Use enhanced service which filters by job interaction
     return await NotificationServiceEnhanced.getNotificationsForWorker(userId);
   }
 
@@ -252,7 +225,6 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
   Future<List<NotificationItem>> getNotificationsForAgency(
     String userId,
   ) async {
-    // Use enhanced service which filters by job interaction
     return await NotificationServiceEnhanced.getNotificationsForAgency(userId);
   }
 
@@ -260,7 +232,6 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
   Future<List<NotificationItem>> getNotificationsForClient(
     String userId,
   ) async {
-    // Use enhanced service which filters by job ownership
     return await NotificationServiceEnhanced.getNotificationsForClient(userId);
   }
 
@@ -299,7 +270,6 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
 
   @override
   Future<int> getUnreadCount(String userId) async {
-    // Use the same role-based selector as getStoredNotifications to ensure consistency
     try {
       final notifications = await getStoredNotifications(userId);
       return notifications.where((n) => !n.read).length;
@@ -309,14 +279,12 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
     }
   }
 
-  /// Get diagnostics info for debugging (dev mode only)
   @override
   Future<Map<String, dynamic>> getDiagnostics(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final currentUserId = prefs.getInt('current_user_id');
 
-      // Get user profile to determine role
       final profiles = await AbstractProfileRepo.getInstance().getAllProfiles();
       final userProfile = profiles.firstWhere(
         (p) => p['id'].toString() == userId,
@@ -324,23 +292,19 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
       );
       final userType = userProfile['user_type']?.toString() ?? 'Unknown';
 
-      // Get all notifications for this user (no type filter)
       final allNotificationsSnapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('user_id', isEqualTo: userId)
           .get();
 
-      // Get unread count (all notifications)
       final unreadSnapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('user_id', isEqualTo: userId)
           .where('read', isEqualTo: false)
           .get();
 
-      // Get filtered notifications (role-based)
       final filteredNotifications = await getStoredNotifications(userId);
 
-      // Sample notification doc to check structure
       Map<String, dynamic>? sampleDoc;
       if (allNotificationsSnapshot.docs.isNotEmpty) {
         final doc = allNotificationsSnapshot.docs.first;
@@ -362,9 +326,8 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
         'totalNotifications': allNotificationsSnapshot.docs.length,
         'unreadCount_all': unreadSnapshot.docs.length,
         'filteredNotifications': filteredNotifications.length,
-        'unreadCount_filtered': filteredNotifications
-            .where((n) => !n.read)
-            .length,
+        'unreadCount_filtered':
+            filteredNotifications.where((n) => !n.read).length,
         'sampleNotification': sampleDoc,
         'collectionName': collectionName,
       };
@@ -393,10 +356,8 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
     }
   }
 
-  /// Handle foreground messages - show local notification
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     try {
-      // Show local notification
       await _localNotifications.show(
         message.hashCode,
         message.notification?.title ?? 'CleanSpace',
@@ -413,25 +374,17 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
         ),
         payload: jsonEncode(message.data),
       );
-
-      // DO NOT store notification here - it's already saved server-side in NotificationServiceEnhanced.createNotification()
-      // Storing here would create duplicates
-      // The notification is already in Firestore, we just need to show the local notification
     } catch (e) {
       print('Error handling foreground message: $e');
     }
   }
 
-  /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    // Navigation will be handled by NotificationRouter
     print('Notification tapped: ${response.payload}');
   }
 
-  /// Save token to backend if user is logged in
   Future<void> _saveTokenToBackendIfLoggedIn(String token) async {
     try {
-      // Get current user ID from SharedPreferences (same pattern as profiles repo)
       final prefs = await SharedPreferences.getInstance();
       final userId = prefs.getInt('current_user_id');
 
@@ -445,13 +398,7 @@ class NotificationsRepoDB extends AbstractNotificationsRepo {
   }
 }
 
-/// Background message handler (must be top-level)
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Firebase should already be initialized in main()
   print('Background message: ${message.messageId}');
-
-  // DO NOT store notification here - it's already saved server-side in NotificationServiceEnhanced.createNotification()
-  // Storing here would create duplicates
-  // The notification is already in Firestore, we just need to handle the background message
 }

@@ -23,11 +23,10 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
   @override
   void initState() {
     super.initState();
-    // Refresh inbox when screen opens
+
     context.read<NotificationsCubit>().refreshInbox();
     _loadDiagnostics();
 
-    // Handle notification opened app (when app is in background)
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
       NotificationRouter.handleMessage(message);
     });
@@ -162,13 +161,12 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
                         ),
                       ),
                       const SizedBox(height: 32),
-                      // Diagnostics (dev mode only)
                       if (DebugFlags.enableUIDiagnostics)
                         Card(
                           color: Colors.blue[50],
                           child: ExpansionTile(
                             title: const Text(
-                              '🔍 Diagnostics (Dev Mode)',
+                              ' Diagnostics (Dev Mode)',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
@@ -249,25 +247,29 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
                                         ),
                                         _buildDiagnosticRow(
                                           '  user_id',
-                                          _diagnostics!['sampleNotification']['user_id']
+                                          _diagnostics!['sampleNotification']
+                                                      ['user_id']
                                                   ?.toString() ??
                                               'null',
                                         ),
                                         _buildDiagnosticRow(
                                           '  user_id type',
-                                          _diagnostics!['sampleNotification']['user_id_type']
+                                          _diagnostics!['sampleNotification']
+                                                      ['user_id_type']
                                                   ?.toString() ??
                                               'null',
                                         ),
                                         _buildDiagnosticRow(
                                           '  type',
-                                          _diagnostics!['sampleNotification']['type']
+                                          _diagnostics!['sampleNotification']
+                                                      ['type']
                                                   ?.toString() ??
                                               'null',
                                         ),
                                         _buildDiagnosticRow(
                                           '  read',
-                                          _diagnostics!['sampleNotification']['read']
+                                          _diagnostics!['sampleNotification']
+                                                      ['read']
                                                   ?.toString() ??
                                               'null',
                                         ),
@@ -300,7 +302,6 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
               );
             }
 
-            // Group notifications by type
             final groupedNotifications = _groupNotificationsByType(
               notifications,
             );
@@ -334,14 +335,12 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
                           return _NotificationTile(
                             notification: notification,
                             onTap: () async {
-                              // Mark as read BEFORE navigation
                               if (!notification.read) {
                                 await context
                                     .read<NotificationsCubit>()
                                     .markAsRead(notification.id);
                               }
 
-                              // Navigate using the enhanced router
                               await NotificationRouter.navigateFromNotification(
                                 context,
                                 notification,
@@ -363,7 +362,6 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
     );
   }
 
-  /// Group notifications by type
   List<Map<String, dynamic>> _groupNotificationsByType(
     List<NotificationItem> notifications,
   ) {
@@ -374,7 +372,6 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
       grouped.putIfAbsent(type, () => []).add(notification);
     }
 
-    // Sort groups by type priority and return as list
     final typeOrder = {
       'job_published': 1,
       'job_accepted': 2,
@@ -386,11 +383,12 @@ class _NotificationsInboxPageState extends State<NotificationsInboxPage> {
     return grouped.entries.map((entry) {
       final typeName = _getTypeDisplayName(entry.key);
       return {'type': typeName, 'notifications': entry.value};
-    }).toList()..sort((a, b) {
-      final aPriority = typeOrder[a['type']] ?? 99;
-      final bPriority = typeOrder[b['type']] ?? 99;
-      return aPriority.compareTo(bPriority);
-    });
+    }).toList()
+      ..sort((a, b) {
+        final aPriority = typeOrder[a['type']] ?? 99;
+        final bPriority = typeOrder[b['type']] ?? 99;
+        return aPriority.compareTo(bPriority);
+      });
   }
 
   String _getTypeDisplayName(String type) {
@@ -465,15 +463,15 @@ class _NotificationTile extends StatelessWidget {
   Color _getTypeColor(String? type) {
     switch (type) {
       case 'job_published':
-        return const Color(0xFF3B82F6); // Blue
+        return const Color(0xFF3B82F6);
       case 'job_accepted':
-        return const Color(0xFF10B981); // Green
+        return const Color(0xFF10B981);
       case 'job_rejected':
-        return const Color(0xFFEF4444); // Red
+        return const Color(0xFFEF4444);
       case 'job_completed':
-        return const Color(0xFF8B5CF6); // Purple
+        return const Color(0xFF8B5CF6);
       case 'review_added':
-        return const Color(0xFFF59E0B); // Orange
+        return const Color(0xFFF59E0B);
       default:
         return notification.read
             ? const Color(0xFF9CA3AF)

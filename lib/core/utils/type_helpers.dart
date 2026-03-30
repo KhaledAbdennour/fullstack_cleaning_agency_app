@@ -1,8 +1,5 @@
-/// Safe type conversion helpers for Firestore dynamic data
 library;
 
-/// Safely read a boolean value from Firestore dynamic data
-/// Handles: bool, int (0/1), String ("true"/"1"/"false"/"0")
 bool readBool(dynamic v) {
   if (v is bool) return v;
   if (v is int) return v == 1;
@@ -13,15 +10,12 @@ bool readBool(dynamic v) {
   return false;
 }
 
-/// Safely read an int value from Firestore dynamic data
-/// Handles: int, String (parseable)
 int? readInt(dynamic v) {
   if (v is int) return v;
   if (v is String) return int.tryParse(v);
   return null;
 }
 
-/// Safely read a double value from Firestore dynamic data
 double? readDouble(dynamic v) {
   if (v is double) return v;
   if (v is int) return v.toDouble();
@@ -29,7 +23,6 @@ double? readDouble(dynamic v) {
   return null;
 }
 
-/// Safely read a String value from Firestore dynamic data
 String? readString(dynamic v) {
   if (v is String) return v;
   if (v == null) return null;

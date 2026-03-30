@@ -39,7 +39,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isUploadingImage = false;
   bool _isRemovingImage = false;
 
-  // Cleaner-specific fields
   String? _userType;
   Set<String> _selectedServices = {};
   String _experienceLevel = 'Entry';
@@ -51,7 +50,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'Specialty',
   ];
 
-  // Agency-specific fields
   final TextEditingController _agencyNameController = TextEditingController();
   final TextEditingController _businessIdController = TextEditingController();
 
@@ -88,10 +86,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _selectedGender = user['gender'] as String? ?? 'Male';
           _currentAvatarUrl = user['picture'] as String?;
 
-          // Load cleaner-specific fields
           _userType = user['user_type'] as String?;
           if (_userType == 'Individual Cleaner' || _userType == 'Agency') {
-            // Load services
             final servicesStr = user['services'] as String? ?? '';
             if (servicesStr.isNotEmpty) {
               _selectedServices = servicesStr
@@ -101,15 +97,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   .toSet();
             }
 
-            // Load experience level
             _experienceLevel = user['experience_level'] as String? ?? 'Entry';
 
-            // Load hourly rate
             final hourlyRate = user['hourly_rate'] as String? ?? '';
             _hourlyRateController.text = hourlyRate;
           }
 
-          // Load agency-specific fields
           if (_userType == 'Agency') {
             final agencyName = user['agency_name'] as String? ?? '';
             _agencyNameController.text = agencyName;
@@ -184,7 +177,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               content: Text(
                                 AppLocalizations.of(
                                   context,
-                                )!.accountDeletedSuccessfully,
+                                )!
+                                    .accountDeletedSuccessfully,
                               ),
                               backgroundColor: Colors.green,
                             ),
@@ -272,7 +266,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF3B82F6), // Blue color
+              primary: Color(0xFF3B82F6),
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
@@ -355,7 +349,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       AppLocalizations.of(context)!.fullName,
                       style: TextStyle(
@@ -375,7 +368,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(
                           context,
-                        )!.enterYourFullName,
+                        )!
+                            .enterYourFullName,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -402,7 +396,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       validator: (value) => Validators.validateFullName(value),
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       AppLocalizations.of(context)!.emailAddress,
                       style: TextStyle(
@@ -442,7 +435,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       AppLocalizations.of(context)!.phoneNumber,
                       style: TextStyle(
@@ -463,7 +455,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(
                           context,
-                        )!.enterYourPhoneNumber,
+                        )!
+                            .enterYourPhoneNumber,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -490,10 +483,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       validator: (value) => Validators.validatePhone(value),
                     ),
                     const SizedBox(height: 16),
-
                     _buildProfilePictureSection(),
-
-                    // Cleaner-specific fields
                     if (_userType == 'Individual Cleaner' ||
                         _userType == 'Agency') ...[
                       const SizedBox(height: 24),
@@ -501,8 +491,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       const SizedBox(height: 24),
                       _buildExperienceAndRateSection(),
                     ],
-
-                    // Agency-specific fields
                     if (_userType == 'Agency') ...[
                       const SizedBox(height: 24),
                       _buildAgencyInfoSection(),
@@ -510,9 +498,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 8),
-
               Container(
                 color: Colors.white,
                 padding: const EdgeInsets.all(16),
@@ -528,7 +514,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       AppLocalizations.of(context)!.birthdate,
                       style: TextStyle(
@@ -574,7 +559,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       AppLocalizations.of(context)!.gender,
                       style: TextStyle(
@@ -598,7 +582,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
                     Text(
                       AppLocalizations.of(context)!.wilayaProvince,
                       style: TextStyle(
@@ -613,7 +596,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(
                           context,
-                        )!.selectYourWilaya,
+                        )!
+                            .selectYourWilaya,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -657,7 +641,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       },
                     ),
                     if (_selectedWilaya != null) const SizedBox(height: 16),
-
                     if (_selectedWilaya != null)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -676,7 +659,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             decoration: InputDecoration(
                               hintText: AppLocalizations.of(
                                 context,
-                              )!.selectYourBaladiya,
+                              )!
+                                  .selectYourBaladiya,
                               hintStyle: TextStyle(color: Colors.grey.shade400),
                               filled: true,
                               fillColor: Colors.grey.shade50,
@@ -707,14 +691,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             items: () {
                               final baladiyat =
                                   AlgerianAddresses.getBaladiyatForWilaya(
-                                    _selectedWilaya!,
-                                  );
-                              if (baladiyat == null)
+                                _selectedWilaya!,
+                              );
+                              if (baladiyat == null) {
                                 return <DropdownMenuItem<String>>[];
+                              }
 
-                              final uniqueBaladiyat = baladiyat
-                                  .toSet()
-                                  .toList();
+                              final uniqueBaladiyat =
+                                  baladiyat.toSet().toList();
                               if (_selectedBaladiya != null &&
                                   !uniqueBaladiyat.contains(
                                     _selectedBaladiya,
@@ -745,7 +729,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ],
                       ),
                     if (_selectedWilaya != null) const SizedBox(height: 16),
-
                     if (_selectedWilaya != null)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -765,7 +748,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             decoration: InputDecoration(
                               hintText: AppLocalizations.of(
                                 context,
-                              )!.enterStreetName,
+                              )!
+                                  .enterStreetName,
                               hintStyle: TextStyle(color: Colors.grey.shade400),
                               filled: true,
                               fillColor: Colors.grey.shade50,
@@ -800,7 +784,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ],
                       ),
                     const SizedBox(height: 16),
-
                     Text(
                       AppLocalizations.of(context)!.bio,
                       style: TextStyle(
@@ -816,7 +799,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(
                           context,
-                        )!.tellUsAboutYourself,
+                        )!
+                            .tellUsAboutYourself,
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         filled: true,
                         fillColor: Colors.grey.shade50,
@@ -844,13 +828,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           Validators.validateBio(value, required: true),
                     ),
                     const SizedBox(height: 24),
-                    // Delete Account Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _userId != null
-                            ? _showDeleteAccountDialog
-                            : null,
+                        onPressed:
+                            _userId != null ? _showDeleteAccountDialog : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           shape: RoundedRectangleBorder(
@@ -883,16 +865,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: BlocConsumer<ProfilesCubit, ProfilesState>(
                   listener: (context, state) {
-                    // Only handle states when we're in the updating process
                     if (!_isUpdating) return;
 
                     if (state is ProfilesLoaded) {
-                      // Check if this is a successful update (user data exists)
                       if (state.currentUser != null) {
                         setState(() {
                           _isUpdating = false;
@@ -909,14 +888,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                           );
 
-                          // Reload profile data to reflect changes
                           _loadProfile();
 
-                          // Navigate to profile page after a short delay to allow user to see success message
                           Future.delayed(const Duration(milliseconds: 500), () {
                             if (mounted) {
-                              // Pop back to profile page (ClientProfilePage)
-                              // Return true to indicate successful save
                               Navigator.of(context).pop(true);
                             }
                           });
@@ -937,7 +912,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         );
                       }
                     }
-                    // Note: ProfilesLoading state is handled by the builder
                   },
                   builder: (context, state) {
                     final isLoading = state is ProfilesLoading;
@@ -949,7 +923,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 return;
                               }
 
-                              // Prevent multiple simultaneous updates
                               if (_isUpdating) {
                                 return;
                               }
@@ -959,7 +932,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               });
 
                               try {
-                                // Validate cleaner-specific fields
                                 if (_userType == 'Individual Cleaner' ||
                                     _userType == 'Agency') {
                                   if (_selectedServices.isEmpty) {
@@ -978,11 +950,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   }
                                 }
 
-                                // Prepare profile data - only include non-empty fields
                                 final profileData = <String, dynamic>{};
 
-                                final fullName = _fullNameController.text
-                                    .trim();
+                                final fullName =
+                                    _fullNameController.text.trim();
                                 if (fullName.isNotEmpty) {
                                   profileData['full_name'] = fullName;
                                 }
@@ -997,8 +968,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   profileData['phone'] = phone;
                                 }
 
-                                final birthdate = _birthdateController.text
-                                    .trim();
+                                final birthdate =
+                                    _birthdateController.text.trim();
                                 if (birthdate.isNotEmpty) {
                                   profileData['birthdate'] = birthdate;
                                 }
@@ -1013,50 +984,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   profileData['bio'] = bio;
                                 }
 
-                                // Always include gender (required field)
                                 profileData['gender'] = _selectedGender;
 
-                                // Add cleaner-specific fields if user is a cleaner
                                 if (_userType == 'Individual Cleaner' ||
                                     _userType == 'Agency') {
-                                  // Services (required for cleaners)
-                                  profileData['services'] = _selectedServices
-                                      .join(', ');
+                                  profileData['services'] =
+                                      _selectedServices.join(', ');
 
-                                  // Experience level
                                   profileData['experience_level'] =
                                       _experienceLevel;
 
-                                  // Hourly rate
-                                  final hourlyRate = _hourlyRateController.text
-                                      .trim();
+                                  final hourlyRate =
+                                      _hourlyRateController.text.trim();
                                   if (hourlyRate.isNotEmpty) {
                                     profileData['hourly_rate'] = hourlyRate;
                                   }
                                 }
 
-                                // Add agency-specific fields if user is an agency
                                 if (_userType == 'Agency') {
-                                  final agencyName = _agencyNameController.text
-                                      .trim();
+                                  final agencyName =
+                                      _agencyNameController.text.trim();
                                   if (agencyName.isNotEmpty) {
                                     profileData['agency_name'] = agencyName;
                                   }
 
-                                  final businessId = _businessIdController.text
-                                      .trim();
+                                  final businessId =
+                                      _businessIdController.text.trim();
                                   if (businessId.isNotEmpty) {
                                     profileData['business_id'] = businessId;
                                   }
                                 }
 
-                                // Call updateProfile - the cubit will handle validation and backend update
                                 context.read<ProfilesCubit>().updateProfile(
-                                  _userId!,
-                                  profileData,
-                                );
+                                      _userId!,
+                                      profileData,
+                                    );
                               } catch (e) {
-                                // Handle any unexpected errors
                                 if (mounted) {
                                   setState(() {
                                     _isUpdating = false;
@@ -1123,7 +1086,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 12),
         Row(
           children: [
-            // Current avatar display - matching profile page style
             Stack(
               children: [
                 Container(
@@ -1137,8 +1099,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       width: 2,
                     ),
                   ),
-                  child:
-                      _currentAvatarUrl != null && _currentAvatarUrl!.isNotEmpty
+                  child: _currentAvatarUrl != null &&
+                          _currentAvatarUrl!.isNotEmpty
                       ? ClipOval(
                           child: AppImage(
                             imageUrl: _currentAvatarUrl!,
@@ -1171,7 +1133,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ],
             ),
             const SizedBox(width: 16),
-            // Buttons
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1179,8 +1140,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed:
-                          (_isUploadingImage ||
+                      onPressed: (_isUploadingImage ||
                               _isRemovingImage ||
                               _userId == null)
                           ? null
@@ -1212,8 +1172,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed:
-                            (_isUploadingImage ||
+                        onPressed: (_isUploadingImage ||
                                 _isRemovingImage ||
                                 _userId == null)
                             ? null
@@ -1252,7 +1211,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_userId == null || _isUploadingImage) return;
 
     try {
-      // Show options to pick from gallery or camera
       final ImageSource? source = await showModalBottomSheet<ImageSource>(
         context: context,
         builder: (context) => SafeArea(
@@ -1290,7 +1248,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       });
 
       try {
-        // Convert image to base64 data URL (same approach as post images)
         final imageFile = File(image.path);
         final imageBytes = await imageFile.readAsBytes();
         final base64Image = base64Encode(imageBytes);
@@ -1309,7 +1266,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         if (!mounted) return;
 
-        // Update profile with base64 data URL
         final profileRepo = AbstractProfileRepo.getInstance();
         print('Updating picture field for user $_userId with base64 data URL');
         print('Data URL length: ${imageDataUrl.length}');
@@ -1340,17 +1296,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
         if (!mounted) return;
 
-        // Immediately update the UI with the uploaded image
         setState(() {
           _currentAvatarUrl = imageDataUrl;
           _isUploadingImage = false;
         });
 
-        // Refresh profile state to sync with backend (in background)
         final cubit = context.read<ProfilesCubit>();
         await cubit.loadCurrentUser();
 
-        // Update with backend value if different (to ensure consistency)
         if (mounted) {
           final updatedState = cubit.state;
           if (updatedState is ProfilesLoaded &&
@@ -1390,7 +1343,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       }
     } catch (outerError) {
-      // Handle any errors from showing bottom sheet or picking image
       if (mounted) {
         setState(() {
           _isUploadingImage = false;
@@ -1411,7 +1363,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _isRemovingImage = true;
       });
 
-      // Update profile to remove avatar URL (base64 data URLs are stored in DB, no storage deletion needed)
       final profileRepo = AbstractProfileRepo.getInstance();
       final success = await profileRepo.removeAvatar(_userId!);
 
@@ -1423,7 +1374,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _isRemovingImage = false;
         });
 
-        // Refresh profile state
         final cubit = context.read<ProfilesCubit>();
         await cubit.loadCurrentUser();
 
@@ -1559,9 +1509,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       service,
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
                         color: isSelected
                             ? const Color(0xFF3B82F6)
                             : Colors.grey.shade700,
@@ -1581,7 +1530,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Experience Level - Full Width
         Text(
           AppLocalizations.of(context)!.experienceLevel,
           style: TextStyle(
@@ -1639,7 +1587,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           },
         ),
         const SizedBox(height: 16),
-        // Hourly Rate - Full Width
         Text(
           AppLocalizations.of(context)!.hourlyRateDzd,
           style: TextStyle(
@@ -1676,7 +1623,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ),
           validator: (value) {
-            // Optional in edit profile - if provided, must be valid
             if (value != null && value.trim().isNotEmpty) {
               return Validators.validateHourlyRate(value);
             }

@@ -6,9 +6,7 @@ import 'cleaners_repo.dart';
 class CleanersDB extends AbstractCleanersRepo {
   static const String collectionName = 'cleaners';
 
-  // Keep SQL code for reference
-  static const String sqlCode =
-      '''
+  static const String sqlCode = '''
     CREATE TABLE $collectionName (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -26,7 +24,6 @@ class CleanersDB extends AbstractCleanersRepo {
   @override
   Future<List<Cleaner>> getCleanersForAgency(int agencyId) async {
     try {
-      // Fetch without orderBy to avoid composite index; filter client-side
       final snapshot = await FirebaseConfig.firestore
           .collection(collectionName)
           .where('agency_id', isEqualTo: agencyId)
@@ -71,9 +68,8 @@ class CleanersDB extends AbstractCleanersRepo {
   Future<Cleaner> addCleaner(Cleaner cleaner) async {
     try {
       final now = DateTime.now();
-      final cleanerMap = cleaner
-          .copyWith(createdAt: now, updatedAt: now)
-          .toMap();
+      final cleanerMap =
+          cleaner.copyWith(createdAt: now, updatedAt: now).toMap();
       final id = cleanerMap.remove('id');
       cleanerMap['created_at'] = Timestamp.fromDate(now);
       cleanerMap['updated_at'] = Timestamp.fromDate(now);
@@ -82,7 +78,6 @@ class CleanersDB extends AbstractCleanersRepo {
       if (id != null && id is int) {
         docId = id.toString();
       } else {
-        // Generate new ID
         final snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .orderBy('id', descending: true)
@@ -139,9 +134,9 @@ class CleanersDB extends AbstractCleanersRepo {
           .collection(collectionName)
           .doc(cleanerId.toString())
           .update({
-            'is_active': false,
-            'updated_at': FieldValue.serverTimestamp(),
-          });
+        'is_active': false,
+        'updated_at': FieldValue.serverTimestamp(),
+      });
     } catch (e, stacktrace) {
       print('removeCleaner error: $e --> $stacktrace');
       rethrow;

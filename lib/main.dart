@@ -30,41 +30,40 @@ import 'core/navigation/app_navigator.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/debug/debug_logger.dart';
+import 'core/services/crashlytics_service.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase Core FIRST (only on Android/iOS - not supported on Windows/desktop)
   if (Platform.isAndroid || Platform.isIOS) {
     try {
-      // Check if Firebase is already initialized
-      FirebaseApp app;
       try {
-        app = Firebase.app();
-      } catch (e) {
-        // Initialize Firebase
-        app = await Firebase.initializeApp();
+        Firebase.app();
+      } catch (_) {
+        await Firebase.initializeApp();
       }
 
-      // Initialize Firestore AFTER Firebase Core is initialized
       await FirebaseConfig.initialize();
 
-      // Seed database with dummy data AFTER Firestore is ready (async, don't block)
-      DatabaseSeeder.seedDatabase().catchError((e) {
+      await CrashlyticsService.initialize();
+
+      DatabaseSeeder.seedDatabase().catchError((e, stackTrace) {
         debugPrint('Database seeding error: $e');
+        CrashlyticsService.recordError(e, stackTrace,
+            reason: 'Database seeding failed');
       });
     } catch (e, stackTrace) {
       debugPrint('Firebase/Firestore initialization failed: $e');
       debugPrint('Stack trace: $stackTrace');
-      // Don't throw - allow app to continue, but data operations will fail
+      if (FirebaseCrashlytics.instance.isCrashlyticsCollectionEnabled) {
+        CrashlyticsService.recordError(e, stackTrace,
+            reason: 'Firebase initialization failed', fatal: false);
+      }
     }
   }
 
-  // Setup GetIt service locator
   setupServiceLocator();
-
-  // Notifications are now initialized via NotificationsCubit in the app
-  // The cubit will call repo.initMessaging() when the app starts
 
   runApp(const MyApp());
 }
@@ -75,7 +74,6 @@ class MyApp extends StatefulWidget {
   @override
   State<MyApp> createState() => _MyAppState();
 
-  // Expose method for settings page
   static _MyAppState? of(BuildContext context) {
     return context.findAncestorStateOfType<_MyAppState>();
   }
@@ -105,17 +103,11 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  // Public method for settings page to change locale
   void changeLocale(Locale locale) async {
     setState(() {
       _locale = locale;
     });
     await LocaleService.saveLocale(locale);
-  }
-
-  // Expose method for settings page
-  static _MyAppState? of(BuildContext context) {
-    return context.findAncestorStateOfType<_MyAppState>();
   }
 
   @override
@@ -143,7 +135,6 @@ class _MyAppState extends State<MyApp> {
         BlocProvider(create: (context) => ClientJobsCubit()),
         BlocProvider(create: (context) => JobApplicationsCubit()),
         BlocProvider(create: (context) => WorkerActiveJobsCubit()),
-        // Notifications cubit using GetIt
         BlocProvider(
           create: (context) =>
               NotificationsCubit(getIt<AbstractNotificationsRepo>()),
@@ -165,16 +156,12 @@ class _MyAppState extends State<MyApp> {
           ],
           supportedLocales: LocaleService.supportedLocales,
           home: const _CheckAuthScreen(),
-          // Handle notification clicks
           builder: (context, child) {
-            // Mark app as ready after first frame
             WidgetsBinding.instance.addPostFrameCallback((_) {
               NotificationRouter.markAppReady();
-              // Handle initial message (app opened from terminated state)
               NotificationRouter.handleInitialMessage();
             });
 
-            // Handle notification opened app (when app is in background)
             FirebaseMessaging.onMessageOpenedApp.listen((message) {
               NotificationRouter.handleMessage(message);
             });
@@ -187,7 +174,6 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-/// Screen that checks if user is already logged in (persistent login)
 class _CheckAuthScreen extends StatefulWidget {
   const _CheckAuthScreen();
 
@@ -206,7 +192,6 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
   }
 
   Future<void> _checkAuth() async {
-    // #region agent log
     DebugLogger.log(
       '_CheckAuthScreen',
       '_checkAuth_START',
@@ -216,13 +201,10 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
-    // Check if user has seen onboarding
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
 
-    // #region agent log
     final currentUserId = prefs.getInt('current_user_id');
     DebugLogger.log(
       '_CheckAuthScreen',
@@ -235,9 +217,7 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
-    // Check if user is already logged in via SharedPreferences
     final profilesCubit = context.read<ProfilesCubit>();
     await profilesCubit.loadCurrentUser();
 
@@ -257,10 +237,7 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
 
     return BlocBuilder<ProfilesCubit, ProfilesState>(
       buildWhen: (previous, current) {
-        // Only rebuild if state actually changed to a different type
-        // This prevents unnecessary rebuilds when the same state is emitted
         if (previous.runtimeType == current.runtimeType) {
-          // If both are ProfilesLoaded, check if user changed
           if (previous is ProfilesLoaded && current is ProfilesLoaded) {
             final prevUser = previous.currentUser?['id'];
             final currUser = current.currentUser?['id'];
@@ -271,7 +248,6 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
         return true;
       },
       builder: (context, state) {
-        // #region agent log
         DebugLogger.log(
           '_CheckAuthScreen',
           'BUILD_DECISION_START',
@@ -286,14 +262,11 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
             'runId': 'run1',
           },
         );
-        // #endregion
 
-        // If user is loaded (logged in), show appropriate home screen
         if (state is ProfilesLoaded && state.currentUser != null) {
-          final userType = (state.currentUser!['user_type'] as String? ?? '')
-              .trim();
+          final userType =
+              (state.currentUser!['user_type'] as String? ?? '').trim();
 
-          // #region agent log
           DebugLogger.log(
             '_CheckAuthScreen',
             'USER_LOGGED_IN',
@@ -304,22 +277,16 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
               'runId': 'run1',
             },
           );
-          // #endregion
 
-          // For clients: go directly to HomeScreen (not WelcomeInside)
-          // Use a key to preserve state when widget is recreated
           if (userType == 'Client') {
             return const HomeScreen(key: ValueKey('client_home'));
           }
 
-          // For Agency/Individual Cleaner: go to AgencyDashboardPage
           if (userType == 'Agency' || userType == 'Individual Cleaner') {
             return const AgencyDashboardPage();
           }
         }
 
-        // Not logged in: check if user has seen onboarding
-        // #region agent log
         DebugLogger.log(
           '_CheckAuthScreen',
           'NOT_LOGGED_IN_DECISION',
@@ -333,13 +300,10 @@ class _CheckAuthScreenState extends State<_CheckAuthScreen> {
             'runId': 'run1',
           },
         );
-        // #endregion
 
         if (_hasSeenOnboarding == true) {
-          // User has seen onboarding before, show login page
           return const Login();
         } else {
-          // First time user, show onboarding
           return const OnboardingScreen();
         }
       },

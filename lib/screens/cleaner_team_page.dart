@@ -32,8 +32,8 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       if (mounted) {
         context.read<CleanerTeamCubit>().loadCleaners(widget.agencyId);
         context.read<SearchCubit>().loadSearchResults(
-          userType: 'Individual Cleaner',
-        );
+              userType: 'Individual Cleaner',
+            );
         _loadTeamCleanerIds();
       }
     });
@@ -55,9 +55,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
         });
         if (query.isNotEmpty) {
           context.read<SearchCubit>().loadSearchResults(
-            query: query,
-            userType: 'Individual Cleaner',
-          );
+                query: query,
+                userType: 'Individual Cleaner',
+              );
         }
       }
     });
@@ -69,10 +69,8 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       final cleaners = await cleanersRepo.getCleanersForAgency(widget.agencyId);
       if (mounted) {
         setState(() {
-          _teamCleanerIds = cleaners
-              .map((c) => c.id ?? 0)
-              .where((id) => id != 0)
-              .toList();
+          _teamCleanerIds =
+              cleaners.map((c) => c.id ?? 0).where((id) => id != 0).toList();
         });
       }
     } catch (e) {
@@ -82,7 +80,6 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
 
   Future<void> _removeCleanerFromTeam(int cleanerId) async {
     try {
-      // Show confirmation dialog
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -222,7 +219,6 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
       ),
       body: Column(
         children: [
-          // Search bar
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
@@ -231,7 +227,8 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
               decoration: InputDecoration(
                 hintText: AppLocalizations.of(
                   context,
-                )!.searchForCleaningServices,
+                )!
+                    .searchForCleaningServices,
                 prefixIcon: const Icon(Icons.search, color: Color(0xFF3B82F6)),
                 filled: true,
                 fillColor: const Color(0xFFF9FAFB),
@@ -246,8 +243,6 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
               ),
             ),
           ),
-
-          // Content: Team list or Search results
           Expanded(
             child: _isSearching ? _buildSearchResults() : _buildTeamList(),
           ),
@@ -325,9 +320,9 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                 ElevatedButton(
                   onPressed: () {
                     context.read<SearchCubit>().loadSearchResults(
-                      query: _searchController.text.trim(),
-                      userType: 'Individual Cleaner',
-                    );
+                          query: _searchController.text.trim(),
+                          userType: 'Individual Cleaner',
+                        );
                   },
                   child: Text(AppLocalizations.of(context)!.retry),
                 ),
@@ -335,7 +330,6 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
             ),
           );
         } else if (state is SearchLoaded) {
-          // Filter out cleaners already in team
           final availableCleaners = state.results.where((cleaner) {
             final cleanerId = cleaner['id'] as int?;
             return cleanerId != null && !_teamCleanerIds.contains(cleanerId);
@@ -539,34 +533,29 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                         if (profileData != null && mounted) {
                           final cleanerProfile = {
                             'id': profileData['id'],
-                            'name':
-                                profileData['full_name'] as String? ??
+                            'name': profileData['full_name'] as String? ??
                                 cleaner.name,
-                            'image':
-                                profileData['picture'] as String? ??
+                            'image': profileData['picture'] as String? ??
                                 cleaner.avatarUrl,
                             'rating': cleaner.rating,
                             'reviews':
                                 profileData['reviews_count'] as int? ?? 0,
                             'isVerified':
                                 profileData['is_verified'] as bool? ?? false,
-                            'aboutMe':
-                                profileData['bio'] as String? ??
+                            'aboutMe': profileData['bio'] as String? ??
                                 'Professional cleaning service provider.',
-                            'experience':
-                                profileData['experience_years'] != null
+                            'experience': profileData['experience_years'] !=
+                                    null
                                 ? '${profileData['experience_years']}+ Years'
                                 : '5+ Years',
                             'age': AgeHelper.formatAge(
                               profileData['birthdate'] as String?,
                             ),
-                            'languages':
-                                profileData['languages'] as String? ??
+                            'languages': profileData['languages'] as String? ??
                                 'Arabic, French',
                             'location': _extractLocation(
                               profileData['address'] as String?,
                             ),
-                            // Don't include agency field so "Part of agency" section doesn't show
                             'type': 'Individual',
                             'userType': profileData['user_type'],
                             'profileData': profileData,
@@ -651,8 +640,7 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
     final name = cleaner['name'] as String? ?? 'Unknown';
     final description = cleaner['description'] as String? ?? '';
     final location = cleaner['location'] as String? ?? 'Unknown';
-    final price =
-        cleaner['price'] as String? ??
+    final price = cleaner['price'] as String? ??
         AppLocalizations.of(context)!.contactForPricing;
     final rating = cleaner['rating'] as num? ?? 0.0;
     final reviews = cleaner['reviews'] as int? ?? 0;
@@ -826,13 +814,11 @@ class _CleanerTeamPageState extends State<CleanerTeamPage> {
                         'age': AgeHelper.formatAge(
                           profileData['birthdate'] as String?,
                         ),
-                        'languages':
-                            profileData['languages'] as String? ??
+                        'languages': profileData['languages'] as String? ??
                             'Arabic, French',
                         'location': _extractLocation(
                           profileData['address'] as String?,
                         ),
-                        // Don't include agency field so "Part of agency" section doesn't show
                         'type': 'Individual',
                         'userType': profileData['user_type'],
                         'profileData': profileData,

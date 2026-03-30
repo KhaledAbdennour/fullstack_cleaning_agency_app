@@ -54,7 +54,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     });
 
     try {
-      // Find user by username
       final snapshot = await FirebaseConfig.firestore
           .collection('profiles')
           .where('username', isEqualTo: username)
@@ -78,7 +77,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         return;
       }
 
-      // Update password
       final docId = snapshot.docs.first.id;
       await FirebaseConfig.firestore.collection('profiles').doc(docId).update({
         'password': newPassword,
@@ -97,11 +95,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
         );
 
-        // Clear the form
         _usernameController.clear();
         _newPasswordController.clear();
 
-        // Navigate back after a short delay
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted && Navigator.canPop(context)) {
             Navigator.pop(context);

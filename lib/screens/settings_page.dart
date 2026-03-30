@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'login.dart';
 import 'EditProfilePage.dart';
 import '../logic/cubits/profiles_cubit.dart';
 import '../core/services/locale_service.dart';
+import '../local_db/app_database.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 
@@ -52,8 +54,8 @@ class _SettingsPageState extends State<SettingsPage> {
             _buildLanguageTile(),
             _buildEditProfileTile(),
             _buildNotificationTile(),
+            if (kDebugMode) ..._buildDebugTiles(),
             const SizedBox(height: 16),
-
             Text(
               AppLocalizations.of(context)!.payment,
               style: const TextStyle(
@@ -69,7 +71,6 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {},
             ),
             const SizedBox(height: 16),
-
             Text(
               AppLocalizations.of(context)!.support,
               style: const TextStyle(
@@ -85,7 +86,6 @@ class _SettingsPageState extends State<SettingsPage> {
               onTap: () {},
             ),
             const Spacer(),
-
             SizedBox(
               height: 48,
               child: ElevatedButton.icon(
@@ -194,7 +194,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void _changeLanguage(Locale locale) async {
     await LocaleService.saveLocale(locale);
     if (!mounted) return;
-    // Find the MyApp widget and update its locale
+
     final appState = MyApp.of(context);
     if (appState != null) {
       appState.changeLocale(locale);
@@ -360,5 +360,72 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
+  }
+
+  List<Widget> _buildDebugTiles() {
+    return [
+      const SizedBox(height: 16),
+      const Text(
+        'Debug',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF6B7280),
+        ),
+      ),
+      const SizedBox(height: 8),
+      _buildTile(
+        icon: Icons.delete_outline,
+        title: 'Clear Local Cache',
+        onTap: _clearCache,
+      ),
+      _buildTile(
+        icon: Icons.bug_report,
+        title: 'Trigger Test Crash',
+        onTap: _triggerTestCrash,
+      ),
+    ];
+  }
+
+  Future<void> _clearCache() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Cache'),
+        content:
+            const Text('This will clear all locally cached data. Continue?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await AppDatabase.clearCache();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cache cleared successfully')),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to clear cache: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  void _triggerTestCrash() {
+    throw Exception('Test crash triggered from debug menu');
   }
 }

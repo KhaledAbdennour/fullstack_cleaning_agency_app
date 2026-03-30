@@ -13,7 +13,7 @@ abstract class AbstractBookingsRepo {
   Future<void> rejectApplication(int bookingId);
   Future<void> withdrawApplication(
     int bookingId,
-  ); // Worker withdraws their application
+  );
 
   static AbstractBookingsRepo? _instance;
   static AbstractBookingsRepo getInstance() {

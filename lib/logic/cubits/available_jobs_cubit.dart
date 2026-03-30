@@ -34,10 +34,8 @@ class AvailableJobsCubit extends Cubit<AvailableJobsState> {
     try {
       final allJobs = await _jobsRepo.getAvailableJobsForAgency(agencyId);
 
-      // Apply filters
       List<Job> filteredJobs = allJobs;
 
-      // Filter by wilayas (provinces)
       if (wilayas != null && wilayas.isNotEmpty) {
         filteredJobs = filteredJobs.where((job) {
           final jobCity = job.city.toLowerCase();
@@ -47,34 +45,27 @@ class AvailableJobsCubit extends Cubit<AvailableJobsState> {
         }).toList();
       }
 
-      // Filter by price range
       if (minPrice != null || maxPrice != null) {
         filteredJobs = filteredJobs.where((job) {
           final budgetMin = job.budgetMin;
           final budgetMax = job.budgetMax;
 
-          // If job has budget range
           if (budgetMin != null || budgetMax != null) {
-            // Check if job's budget range overlaps with filter range
             final jobMin = budgetMin ?? 0.0;
             final jobMax = budgetMax ?? double.infinity;
 
             final filterMin = minPrice ?? 0.0;
             final filterMax = maxPrice ?? double.infinity;
 
-            // Overlap check: job range overlaps with filter range
             return jobMin <= filterMax && jobMax >= filterMin;
           }
 
-          // If job has no budget, include it (or exclude based on requirement)
-          // For now, we'll include jobs without budget
           return true;
         }).toList();
       }
 
       emit(AvailableJobsLoaded(filteredJobs));
     } catch (e, stack) {
-      // Log error before emitting error state
       print('[AvailableJobsCubit] loadAvailableJobs failed: $e');
       print('[AvailableJobsCubit] Stack: $stack');
       emit(AvailableJobsError('Failed to load available jobs: $e'));

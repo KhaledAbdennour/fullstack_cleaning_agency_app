@@ -1,6 +1,5 @@
 import '../../../data/models/notification_item.dart';
 
-/// States for NotificationsCubit
 abstract class NotificationsState {}
 
 class NotificationsInitial extends NotificationsState {}

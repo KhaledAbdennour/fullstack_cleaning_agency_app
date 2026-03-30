@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocaleService {
   static const String _localeKey = 'app_locale';
 
-  /// Get saved locale from SharedPreferences
   static Future<Locale?> getSavedLocale() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -18,7 +17,6 @@ class LocaleService {
     return null;
   }
 
-  /// Save locale to SharedPreferences
   static Future<void> saveLocale(Locale locale) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -28,14 +26,12 @@ class LocaleService {
     }
   }
 
-  /// Get supported locales
   static List<Locale> get supportedLocales => const [
-    Locale('en', ''),
-    Locale('fr', ''),
-    Locale('ar', ''),
-  ];
+        Locale('en', ''),
+        Locale('fr', ''),
+        Locale('ar', ''),
+      ];
 
-  /// Check if locale is RTL
   static bool isRTL(Locale locale) {
     return locale.languageCode == 'ar';
   }

@@ -43,11 +43,10 @@ class _MyListingsPageState extends State<MyListingsPage> {
   List<Map<String, dynamic>> get filteredListings {
     return listings.where((listing) {
       final matchesSearch = listing['title'].toLowerCase().contains(
-        _searchController.text.toLowerCase(),
-      );
-      final matchesStatus = selectedStatus == 'All'
-          ? true
-          : listing['status'] == selectedStatus;
+            _searchController.text.toLowerCase(),
+          );
+      final matchesStatus =
+          selectedStatus == 'All' ? true : listing['status'] == selectedStatus;
       return matchesSearch && matchesStatus;
     }).toList();
   }
@@ -247,7 +246,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-
                 Text(
                   listing['title'],
                   style: const TextStyle(
@@ -265,7 +263,6 @@ class _MyListingsPageState extends State<MyListingsPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

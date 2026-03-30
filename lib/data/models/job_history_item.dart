@@ -1,15 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Job history item for tracking completed jobs across all roles
 class JobHistoryItem {
   final String? id;
   final int jobId;
-  final int participantUserId; // Worker, Client, or Agency ID
-  final String role; // 'worker', 'client', or 'agency'
+  final int participantUserId;
+  final String role;
   final DateTime completedAt;
   final String title;
-  final int?
-  otherPartyId; // The other party involved (e.g., client ID if participant is worker)
+  final int? otherPartyId;
   final String? description;
   final double? price;
 

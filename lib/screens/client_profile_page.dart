@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
-import 'dart:convert';
 import '../widgets/notification_bell_widget.dart';
 import 'data_doctor_page.dart';
 import 'EditProfilePage.dart';
@@ -12,7 +9,6 @@ import '../logic/cubits/profiles_cubit.dart';
 import '../core/services/locale_service.dart';
 import '../utils/image_helper.dart';
 import '../core/debug/debug_logger.dart';
-import '../data/repositories/profiles/profile_repo.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 
@@ -27,13 +23,12 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   int? _clientId;
   String? _avatarUrl;
   bool _isUploadingImage = false;
-  final ImagePicker _picker = ImagePicker();
   bool _notificationsEnabled = true;
 
   @override
   void initState() {
     super.initState();
-    // #region agent log
+
     DebugLogger.log(
       'ClientProfilePage',
       'initState',
@@ -43,12 +38,11 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         'runId': 'run1',
       },
     );
-    // #endregion
+
     _loadClientId();
   }
 
   Future<void> _loadClientId() async {
-    // #region agent log
     DebugLogger.log(
       'ClientProfilePage',
       '_loadClientId_START',
@@ -58,18 +52,14 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
     final cubit = context.read<ProfilesCubit>();
 
-    // Check current state first - avoid reloading if already loaded
     final currentState = cubit.state;
     if (currentState is ProfilesLoaded && currentState.currentUser != null) {
-      // User already loaded, use existing state
       final userId = currentState.currentUser!['id'] as int?;
       final userType = currentState.currentUser!['user_type'] as String?;
 
-      // #region agent log
       DebugLogger.log(
         'ClientProfilePage',
         '_loadClientId_USE_EXISTING',
@@ -82,7 +72,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           'runId': 'run1',
         },
       );
-      // #endregion
 
       if (userId != null && userType == 'Client') {
         setState(() {
@@ -90,7 +79,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           _avatarUrl = currentState.currentUser!['picture'] as String?;
         });
 
-        // #region agent log
         DebugLogger.log(
           'ClientProfilePage',
           '_loadClientId_SET_CLIENT_ID',
@@ -101,9 +89,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
             'runId': 'run1',
           },
         );
-        // #endregion
       } else {
-        // #region agent log
         DebugLogger.log(
           'ClientProfilePage',
           '_loadClientId_NOT_CLIENT',
@@ -115,12 +101,10 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
             'runId': 'run1',
           },
         );
-        // #endregion
       }
       return;
     }
 
-    // Only load if not already loaded
     await cubit.loadCurrentUser();
     if (!mounted) return;
     final state = cubit.state;
@@ -128,7 +112,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
       final userId = state.currentUser!['id'] as int?;
       final userType = state.currentUser!['user_type'] as String?;
 
-      // #region agent log
       DebugLogger.log(
         'ClientProfilePage',
         '_loadClientId_USER_DATA',
@@ -141,7 +124,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           'runId': 'run1',
         },
       );
-      // #endregion
 
       if (userId != null && userType == 'Client') {
         setState(() {
@@ -149,7 +131,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           _avatarUrl = state.currentUser!['picture'] as String?;
         });
 
-        // #region agent log
         DebugLogger.log(
           'ClientProfilePage',
           '_loadClientId_SET_CLIENT_ID',
@@ -160,9 +141,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
             'runId': 'run1',
           },
         );
-        // #endregion
       } else {
-        // #region agent log
         DebugLogger.log(
           'ClientProfilePage',
           '_loadClientId_NOT_CLIENT',
@@ -174,10 +153,8 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
             'runId': 'run1',
           },
         );
-        // #endregion
       }
     } else {
-      // #region agent log
       DebugLogger.log(
         'ClientProfilePage',
         '_loadClientId_NO_USER',
@@ -188,7 +165,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           'runId': 'run1',
         },
       );
-      // #endregion
     }
   }
 
@@ -239,170 +215,10 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     },
   ];
 
-  Future<void> _changePhoto() async {
-    if (_clientId == null || _isUploadingImage) return;
-
-    try {
-      // Show options to pick from gallery or camera
-      final ImageSource? source = await showModalBottomSheet<ImageSource>(
-        context: context,
-        builder: (context) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                onTap: () => Navigator.pop(context, ImageSource.gallery),
-              ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a Photo'),
-                onTap: () => Navigator.pop(context, ImageSource.camera),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      if (source == null || !mounted) return;
-
-      final XFile? image = await _picker.pickImage(
-        source: source,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
-      );
-
-      if (image == null || !mounted) return;
-
-      setState(() {
-        _isUploadingImage = true;
-      });
-
-      try {
-        // Convert image to base64 data URL (same approach as post images)
-        final imageFile = File(image.path);
-        final imageBytes = await imageFile.readAsBytes();
-        final base64Image = base64Encode(imageBytes);
-
-        final extension = image.path.split('.').last.toLowerCase();
-        String mimeType = 'image/jpeg';
-        if (extension == 'png') {
-          mimeType = 'image/png';
-        } else if (extension == 'gif') {
-          mimeType = 'image/gif';
-        } else if (extension == 'webp') {
-          mimeType = 'image/webp';
-        }
-
-        final imageDataUrl = 'data:$mimeType;base64,$base64Image';
-
-        if (!mounted) return;
-
-        // Update profile with base64 data URL
-        final profileRepo = AbstractProfileRepo.getInstance();
-        print(
-          'Updating picture field for user $_clientId with base64 data URL',
-        );
-        print('Data URL length: ${imageDataUrl.length}');
-
-        final success = await profileRepo.updateAvatarUrl(
-          _clientId!,
-          imageDataUrl,
-        );
-        print('Update picture field result: $success');
-
-        if (!success) {
-          setState(() {
-            _isUploadingImage = false;
-          });
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  'Failed to save picture to database. Please try again.',
-                ),
-                backgroundColor: Colors.red,
-                duration: Duration(seconds: 3),
-              ),
-            );
-          }
-          return;
-        }
-
-        if (!mounted) return;
-
-        // Refresh profile state to get updated picture from database
-        final cubit = context.read<ProfilesCubit>();
-        await cubit.loadCurrentUser();
-
-        // Wait a bit to ensure state is updated
-        await Future.delayed(const Duration(milliseconds: 300));
-
-        if (mounted) {
-          // Get updated user data from cubit state
-          final updatedState = cubit.state;
-          if (updatedState is ProfilesLoaded &&
-              updatedState.currentUser != null) {
-            final updatedPicture =
-                updatedState.currentUser!['picture'] as String?;
-            setState(() {
-              _avatarUrl = updatedPicture;
-              _isUploadingImage = false;
-            });
-          } else {
-            // Fallback: use the imageDataUrl if state doesn't have it
-            setState(() {
-              _avatarUrl = imageDataUrl;
-              _isUploadingImage = false;
-            });
-          }
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile picture updated successfully!'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-      } catch (error) {
-        print('Error processing image: $error');
-        if (mounted) {
-          setState(() {
-            _isUploadingImage = false;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to process image: ${error.toString()}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } catch (outerError) {
-      // Handle any errors from showing bottom sheet or picking image
-      if (mounted) {
-        setState(() {
-          _isUploadingImage = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${outerError.toString()}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // #region agent log
+
     DebugLogger.log(
       'ClientProfilePage',
       'didChangeDependencies',
@@ -413,13 +229,12 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         'runId': 'run1',
       },
     );
-    // #endregion
   }
 
   @override
   void didUpdateWidget(ClientProfilePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // #region agent log
+
     DebugLogger.log(
       'ClientProfilePage',
       'didUpdateWidget',
@@ -430,12 +245,10 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         'runId': 'run1',
       },
     );
-    // #endregion
   }
 
   @override
   void dispose() {
-    // #region agent log
     DebugLogger.log(
       'ClientProfilePage',
       'dispose',
@@ -446,13 +259,12 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         'runId': 'run1',
       },
     );
-    // #endregion
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // #region agent log
     DebugLogger.log(
       'ClientProfilePage',
       'build_CALLED',
@@ -463,9 +275,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         'runId': 'run1',
       },
     );
-    // #endregion
 
-    // Return full Scaffold so profile page can be used standalone or in HomeScreen
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -510,13 +320,11 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         String? avatarUrl;
 
         if (state is ProfilesLoaded && state.currentUser != null) {
-          displayName =
-              state.currentUser!['full_name'] as String? ??
+          displayName = state.currentUser!['full_name'] as String? ??
               state.currentUser!['username'] as String? ??
               'New User';
           avatarUrl = state.currentUser!['picture'] as String?;
 
-          // Update local avatar URL if different
           if (avatarUrl != _avatarUrl) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
@@ -595,7 +403,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Account Section
         Text(
           AppLocalizations.of(context)!.account,
           style: const TextStyle(
@@ -609,7 +416,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
         _buildEditProfileTile(),
         _buildNotificationTile(),
         const SizedBox(height: 16),
-        // Payment Section
         Text(
           AppLocalizations.of(context)!.payment,
           style: const TextStyle(
@@ -633,7 +439,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           },
         ),
         const SizedBox(height: 16),
-        // Support Section
         Text(
           AppLocalizations.of(context)!.support,
           style: const TextStyle(
@@ -654,7 +459,6 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           },
         ),
         const SizedBox(height: 16),
-        // Logout Button
         SizedBox(
           height: 44,
           child: ElevatedButton.icon(
@@ -761,7 +565,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
   void _changeLanguage(Locale locale) async {
     await LocaleService.saveLocale(locale);
     if (!mounted) return;
-    // Find the MyApp widget and update its locale
+
     final appState = MyApp.of(context);
     if (appState != null) {
       appState.changeLocale(locale);
@@ -784,7 +588,7 @@ class _ClientProfilePageState extends State<ClientProfilePage> {
           context,
           MaterialPageRoute(builder: (context) => const EditProfileScreen()),
         );
-        // Refresh profile after editing
+
         if (mounted) {
           context.read<ProfilesCubit>().loadCurrentUser();
         }

@@ -9,10 +9,8 @@ class ComplaintsDB extends AbstractComplaintsRepo {
   @override
   Future<Complaint> createComplaint(Complaint complaint) async {
     try {
-      // Generate ID if not provided
       int complaintId = complaint.id ?? 0;
       if (complaintId == 0) {
-        // Get the highest ID and increment
         final snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
             .orderBy('id', descending: true)
@@ -28,7 +26,7 @@ class ComplaintsDB extends AbstractComplaintsRepo {
       }
 
       final data = complaint.copyWith(id: complaintId).toMap();
-      data.remove('id'); // Remove id from data, use as document ID
+      data.remove('id');
 
       await FirebaseConfig.firestore
           .collection(collectionName)

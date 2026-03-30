@@ -35,7 +35,6 @@ class ReviewsDB extends AbstractReviewsRepo {
         },
       );
 
-      // Step 1: Read job doc from Firestore and verify it exists
       final jobsRepo = AbstractJobsRepo.getInstance();
       final job = await jobsRepo.getJobById(jobId);
 
@@ -54,7 +53,6 @@ class ReviewsDB extends AbstractReviewsRepo {
         },
       );
 
-      // Step 2: Verify job is completed (status == "completed" AND both flags true)
       if (job.status != JobStatus.completed) {
         throw Exception(
           'Reviews can only be added for completed jobs. Current job status: ${job.status.name}',
@@ -70,8 +68,6 @@ class ReviewsDB extends AbstractReviewsRepo {
         );
       }
 
-      // Step 3: Determine reviewer_id from current logged-in user
-      // Get current user from SharedPreferences (same logic used elsewhere)
       final prefs = await SharedPreferences.getInstance();
       final currentUserIdInt = prefs.getInt('current_user_id');
 
@@ -79,7 +75,6 @@ class ReviewsDB extends AbstractReviewsRepo {
         throw Exception('User not logged in');
       }
 
-      // Get user profile to determine role
       final profilesRepo = AbstractProfileRepo.getInstance();
       final reviewerProfile = await profilesRepo.getProfileById(
         currentUserIdInt,
@@ -90,10 +85,8 @@ class ReviewsDB extends AbstractReviewsRepo {
       }
 
       final reviewerRole = readString(reviewerProfile['user_type']) ?? 'Client';
-      final reviewerId = currentUserIdInt
-          .toString(); // Use string ID for consistency
+      final reviewerId = currentUserIdInt.toString();
 
-      // Determine reviewee role from job context
       String revieweeRole = 'Individual Cleaner';
       if (job.assignedWorkerId != null) {
         final workerProfile = await profilesRepo.getProfileById(
@@ -116,20 +109,15 @@ class ReviewsDB extends AbstractReviewsRepo {
         },
       );
 
-      // Step 4: Create review document in "reviews" collection
-      // Use deterministic ID: jobId_reviewerId to prevent duplicates
       final reviewDocId = 'job_${jobId}_reviewer_$reviewerId';
-      final reviewRef = FirebaseConfig.firestore
-          .collection(collectionName)
-          .doc(reviewDocId);
+      final reviewRef =
+          FirebaseConfig.firestore.collection(collectionName).doc(reviewDocId);
 
-      // Check if review already exists
       final existingDoc = await reviewRef.get();
       if (existingDoc.exists) {
         throw Exception('Review already exists for this job');
       }
 
-      // Ensure revieweeId is the correct format (int as string for profile doc ID)
       final revieweeIdInt = int.tryParse(revieweeId);
       if (revieweeIdInt == null) {
         throw Exception('Invalid reviewee ID format: $revieweeId');
@@ -148,7 +136,6 @@ class ReviewsDB extends AbstractReviewsRepo {
         },
       );
 
-      // Prepare review data (NO FieldValue in this map - we'll set timestamps separately)
       final reviewData = {
         'job_id': jobId,
         if (bookingId != null) 'booking_id': bookingId,
@@ -158,16 +145,14 @@ class ReviewsDB extends AbstractReviewsRepo {
         'reviewee_role': revieweeRole,
         'rating': rating,
         'comment': comment,
-        'photos': <String>[], // Empty for now
+        'photos': <String>[],
         'status': 'active',
         'reviewer_user_id_int': currentUserIdInt,
         'reviewee_user_id_int': revieweeIdInt,
-        'created_at': FieldValue.serverTimestamp(), // Set directly in Firestore
-        'created_at_ms':
-            DateTime.now().millisecondsSinceEpoch, // For stable sorting
+        'created_at': FieldValue.serverTimestamp(),
+        'created_at_ms': DateTime.now().millisecondsSinceEpoch,
       };
 
-      // Write review document to NEW "reviews" collection (NO transaction for simple write)
       await reviewRef.set(reviewData);
 
       DebugLogger.log(
@@ -180,34 +165,28 @@ class ReviewsDB extends AbstractReviewsRepo {
         },
       );
 
-      // ALSO write to OLD "cleaner_reviews" collection for backward compatibility
-      // This ensures profile pages that use CleanerReviewsCubit can see the reviews
       try {
         final oldReviewDocId = 'job_${jobId}_reviewer_$reviewerId';
         final oldReviewRef = FirebaseConfig.firestore
             .collection('cleaner_reviews')
             .doc(oldReviewDocId);
 
-        // Get reviewer name from profile
         final reviewerName =
             readString(reviewerProfile['full_name']) ?? 'Anonymous';
 
         final now = DateTime.now();
         final oldReviewData = {
-          'cleaner_id': revieweeIdInt, // INT - must match query type
+          'cleaner_id': revieweeIdInt,
           'job_id': jobId,
           'reviewer_id': currentUserIdInt,
           'reviewer_name': reviewerName,
           'rating': rating.toDouble(),
           'comment': comment,
-          'date': now
-              .toIso8601String(), // String ISO - matches query orderBy('date')
+          'date': now.toIso8601String(),
           'has_photos': 0,
           'photo_urls': null,
-          'created_at':
-              FieldValue.serverTimestamp(), // Also store Timestamp for future use
-          'created_at_ms':
-              now.millisecondsSinceEpoch, // Int for stable sorting fallback
+          'created_at': FieldValue.serverTimestamp(),
+          'created_at_ms': now.millisecondsSinceEpoch,
         };
 
         await oldReviewRef.set(oldReviewData);
@@ -226,7 +205,6 @@ class ReviewsDB extends AbstractReviewsRepo {
           },
         );
       } catch (e, stack) {
-        // Log but don't fail - old collection write is for backward compatibility only
         DebugLogger.error(
           'ReviewsDB',
           'addReview_OLD_COLLECTION_FAILED',
@@ -236,15 +214,11 @@ class ReviewsDB extends AbstractReviewsRepo {
         );
       }
 
-      // Step 5: Update reviewee profile aggregates (AFTER review is saved)
-      // Use profile document ID format (int as string)
       final profileDocId = revieweeIdInt.toString();
 
       try {
-        // Read current profile to get old aggregates
-        final profileRef = FirebaseConfig.firestore
-            .collection('profiles')
-            .doc(profileDocId);
+        final profileRef =
+            FirebaseConfig.firestore.collection('profiles').doc(profileDocId);
 
         final profileDoc = await profileRef.get();
         if (!profileDoc.exists) {
@@ -253,11 +227,9 @@ class ReviewsDB extends AbstractReviewsRepo {
             'addReview_PROFILE_NOT_FOUND',
             data: {'revieweeId': revieweeId, 'profileDocId': profileDocId},
           );
-          // Profile doesn't exist, skip aggregate update but continue to return review
         } else {
           final profileData = profileDoc.data()!;
-          final oldRatingAvg =
-              readDouble(profileData['rating']) ??
+          final oldRatingAvg = readDouble(profileData['rating']) ??
               readDouble(profileData['rating_avg']) ??
               0.0;
           final oldRatingCount = readInt(profileData['rating_count']) ?? 0;
@@ -275,8 +247,6 @@ class ReviewsDB extends AbstractReviewsRepo {
             },
           );
 
-          // Get ALL reviews for this reviewee (including the one we just added)
-          // Use BOTH collections to calculate aggregates
           final newReviewsSnapshot = await FirebaseConfig.firestore
               .collection(collectionName)
               .where('reviewee_id', isEqualTo: revieweeId)
@@ -287,9 +257,7 @@ class ReviewsDB extends AbstractReviewsRepo {
               .where('cleaner_id', isEqualTo: revieweeIdInt)
               .get();
 
-          // Combine ratings from both collections (deduplicate by job_id + reviewer_id)
-          final ratingsMap =
-              <String, int>{}; // key: jobId_reviewerId, value: rating
+          final ratingsMap = <String, int>{};
 
           for (final doc in newReviewsSnapshot.docs) {
             final data = doc.data();
@@ -332,7 +300,6 @@ class ReviewsDB extends AbstractReviewsRepo {
             },
           );
 
-          // Update profile with new aggregates using transaction for atomicity
           await FirebaseConfig.firestore.runTransaction((transaction) async {
             final profileDocInTx = await transaction.get(profileRef);
             if (!profileDocInTx.exists) {
@@ -341,14 +308,13 @@ class ReviewsDB extends AbstractReviewsRepo {
                 'addReview_PROFILE_NOT_FOUND_IN_TX',
                 data: {'profileDocId': profileDocId},
               );
-              return; // Profile doesn't exist, skip update
+              return;
             }
 
-            // Update profile with new aggregates (ensure types are correct)
             transaction.update(profileRef, {
-              'rating': ratingAvg, // double
-              'rating_avg': ratingAvg, // Store both for compatibility
-              'rating_count': ratingCount, // int
+              'rating': ratingAvg,
+              'rating_avg': ratingAvg,
+              'rating_count': ratingCount,
               'updated_at': FieldValue.serverTimestamp(),
             });
 
@@ -367,9 +333,8 @@ class ReviewsDB extends AbstractReviewsRepo {
               },
             );
           });
-        } // Close else block
+        }
       } catch (e, stack) {
-        // If transaction fails, log but don't fail the review creation
         DebugLogger.error(
           'ReviewsDB',
           'addReview_AGGREGATE_UPDATE_FAILED',
@@ -377,10 +342,8 @@ class ReviewsDB extends AbstractReviewsRepo {
           stack,
           data: {'revieweeId': revieweeId, 'profileDocId': profileDocId},
         );
-        // Review is already saved, so we continue
       }
 
-      // Step 6: Send notification to reviewee (cleaner/agency receives review)
       try {
         await NotificationServiceEnhanced.createNotification(
           userId: revieweeId,
@@ -398,10 +361,8 @@ class ReviewsDB extends AbstractReviewsRepo {
           StackTrace.current,
           data: {'revieweeId': revieweeId},
         );
-        // Don't fail review creation if notification fails
       }
 
-      // Fetch and return the saved review
       final savedDoc = await reviewRef.get();
       if (savedDoc.exists) {
         final savedReview = Review.fromMap(savedDoc.data()!, savedDoc.id);
@@ -447,7 +408,7 @@ class ReviewsDB extends AbstractReviewsRepo {
         stack,
         data: {'revieweeId': revieweeId},
       );
-      // Fallback: try without orderBy if index is missing
+
       try {
         final snapshot = await FirebaseConfig.firestore
             .collection(collectionName)
@@ -459,13 +420,12 @@ class ReviewsDB extends AbstractReviewsRepo {
           return Review.fromMap(data, doc.id);
         }).toList();
 
-        // Sort client-side by created_at_ms or created_at
         reviews.sort((a, b) {
           final aMs =
               a.createdAtMs ?? (a.createdAt?.millisecondsSinceEpoch ?? 0);
           final bMs =
               b.createdAtMs ?? (b.createdAt?.millisecondsSinceEpoch ?? 0);
-          return bMs.compareTo(aMs); // Descending
+          return bMs.compareTo(aMs);
         });
 
         return reviews;

@@ -30,15 +30,12 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
     }
 
     try {
-      // Get completed jobs where both client_done and worker_done are true
       final completedJobs = await _jobsRepo.getCompletedJobsForWorker(
         cleanerId,
       );
 
-      // Convert jobs to CleaningHistoryItem
       final items = completedJobs.map((job) {
-        // Determine cleaning type from required_services
-        CleaningHistoryType type = CleaningHistoryType.apartment; // default
+        CleaningHistoryType type = CleaningHistoryType.apartment;
         if (job.requiredServices != null && job.requiredServices!.isNotEmpty) {
           final services = job.requiredServices!.join(',').toLowerCase();
           if (services.contains('office') || services.contains('commercial')) {
@@ -56,8 +53,6 @@ class CleanerHistoryCubit extends Cubit<CleanerHistoryState> {
           }
         }
 
-        // Use updated_at as completion date (set when job is completed)
-        // This represents when both parties confirmed completion
         final completionDate = job.updatedAt ?? job.postedDate;
 
         return CleaningHistoryItem(

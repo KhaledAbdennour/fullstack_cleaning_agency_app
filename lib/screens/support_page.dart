@@ -37,7 +37,6 @@ class _SupportPageState extends State<SupportPage> {
     });
 
     try {
-      // Get current user
       final profilesCubit = context.read<ProfilesCubit>();
       final profileState = profilesCubit.state;
 
@@ -80,7 +79,6 @@ class _SupportPageState extends State<SupportPage> {
         return;
       }
 
-      // Create message/complaint
       final complaint = Complaint(
         userId: userId,
         subject: _subjectController.text.trim(),
@@ -94,7 +92,6 @@ class _SupportPageState extends State<SupportPage> {
 
       if (!mounted) return;
 
-      // Clear form
       _subjectController.clear();
       _messageController.clear();
 
@@ -108,10 +105,8 @@ class _SupportPageState extends State<SupportPage> {
         ),
       );
 
-      // Navigate to profile page after a short delay
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
-        // Pop back to profile page (SupportPage is pushed from ClientProfilePage)
         Navigator.of(context).pop();
       }
     } catch (e) {
@@ -158,7 +153,6 @@ class _SupportPageState extends State<SupportPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 16),
-              // Header
               const Text(
                 'Submit a Message',
                 style: TextStyle(
@@ -173,7 +167,6 @@ class _SupportPageState extends State<SupportPage> {
                 style: TextStyle(fontSize: 14, color: Colors.grey[600]),
               ),
               const SizedBox(height: 32),
-              // Subject field
               const Text(
                 'Subject',
                 style: TextStyle(
@@ -217,7 +210,6 @@ class _SupportPageState extends State<SupportPage> {
                 },
               ),
               const SizedBox(height: 24),
-              // Message field
               const Text(
                 'Message',
                 style: TextStyle(
@@ -262,7 +254,6 @@ class _SupportPageState extends State<SupportPage> {
                 },
               ),
               const SizedBox(height: 32),
-              // Submit button
               SizedBox(
                 height: 50,
                 child: ElevatedButton(

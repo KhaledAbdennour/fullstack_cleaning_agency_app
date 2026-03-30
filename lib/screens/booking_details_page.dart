@@ -52,7 +52,6 @@ class BookingDetailsPage extends StatelessWidget {
                 style: const TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 8),
-
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
@@ -72,7 +71,6 @@ class BookingDetailsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-
               const Text(
                 'Details',
                 style: TextStyle(
@@ -82,7 +80,6 @@ class BookingDetailsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
               _buildDetailTile(
                 icon: Icons.calendar_today_outlined,
                 title: 'Date & Time',
@@ -98,8 +95,7 @@ class BookingDetailsPage extends StatelessWidget {
               _buildDetailTile(
                 icon: Icons.location_on_outlined,
                 title: 'Location',
-                value:
-                    job['location'] ??
+                value: job['location'] ??
                     '123 Rue Didouche Mourad, Algiers, Algeria',
               ),
               const SizedBox(height: 16),
@@ -110,7 +106,6 @@ class BookingDetailsPage extends StatelessWidget {
                     job['notes'] ?? 'Please focus on the kitchen and bathroom.',
               ),
               const SizedBox(height: 40),
-
               _buildActionButton(
                 text: 'Mark as Complete',
                 color: const Color(0xFF16A34A),

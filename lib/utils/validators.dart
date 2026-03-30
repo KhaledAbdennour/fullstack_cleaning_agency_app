@@ -117,7 +117,6 @@ class Validators {
 
     final digitsOnly = trimmed.replaceAll(RegExp(r'[^\d]'), '');
 
-    // Must be between 9 and 10 digits
     if (digitsOnly.length < 9) {
       return 'Phone Number must be at least 9 digits';
     }

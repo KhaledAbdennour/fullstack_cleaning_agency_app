@@ -38,9 +38,7 @@ class WelcomeInside extends StatelessWidget {
                     color: Color(0xFF6BA89A),
                   ),
                 ),
-
                 const SizedBox(height: 30),
-
                 const Text(
                   'Welcome!',
                   style: TextStyle(
@@ -49,9 +47,7 @@ class WelcomeInside extends StatelessWidget {
                     color: Color(0xFF2D3748),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 Text(
                   'Hello $name',
                   style: const TextStyle(
@@ -60,9 +56,7 @@ class WelcomeInside extends StatelessWidget {
                     color: Color(0xFF4A5568),
                   ),
                 ),
-
                 const SizedBox(height: 50),
-
                 SizedBox(
                   width: double.infinity,
                   height: 52,
@@ -93,9 +87,7 @@ class WelcomeInside extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 SizedBox(
                   width: double.infinity,
                   height: 52,

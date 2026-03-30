@@ -4,6 +4,7 @@ import '../../utils/algerian_addresses.dart';
 import '../../data/repositories/cleaner_reviews/cleaner_reviews_repo.dart';
 import '../../core/utils/firestore_type.dart';
 import '../../core/config/firebase_config.dart';
+import '../../core/services/crashlytics_service.dart';
 
 abstract class SearchState {}
 
@@ -51,15 +52,13 @@ class SearchCubit extends Cubit<SearchState> {
     emit(SearchLoading());
     try {
       final allProfiles = await _profileRepo.getAllProfiles();
-      // Filter out clients - show all non-client profiles (cleaners, agencies, etc.)
-      // Also filter by userType if specified
+
       final cleanersAndAgencies = allProfiles.where((profile) {
         final profileUserType = (profile['user_type'] as String?)?.trim();
-        // Show all profiles that are NOT clients (case-insensitive check)
+
         if (profileUserType == null || profileUserType.isEmpty) return false;
         if (profileUserType.toLowerCase() == 'client') return false;
 
-        // Filter by userType if specified
         if (userType != null && userType.isNotEmpty) {
           return profileUserType == userType;
         }
@@ -67,26 +66,20 @@ class SearchCubit extends Cubit<SearchState> {
         return true;
       }).toList();
 
-      print('📊 [SearchCubit] Total profiles: ${allProfiles.length}');
-      print(
-        '📊 [SearchCubit] Non-client profiles: ${cleanersAndAgencies.length}',
-      );
+      print('[SearchCubit] Total profiles: ${allProfiles.length}');
+      print('[SearchCubit] Non-client profiles: ${cleanersAndAgencies.length}');
 
-      // Get profile IDs to query reviews in batch
       final profileIds = cleanersAndAgencies
           .map((p) => readInt(p['id']))
           .where((id) => id != null)
           .cast<int>()
           .toList();
 
-      // Query reviews for all profiles at once (more efficient)
       final reviewsCountMap = <int, int>{};
       final ratingsMap = <int, double>{};
 
-      // Query cleaner_reviews collection for all cleaner IDs
       if (profileIds.isNotEmpty) {
         try {
-          // Query reviews for each profile (we'll optimize this if needed)
           for (final profileId in profileIds) {
             try {
               final reviewCount = await _reviewsRepo.getReviewCountForCleaner(
@@ -98,20 +91,16 @@ class SearchCubit extends Cubit<SearchState> {
               reviewsCountMap[profileId] = reviewCount;
               ratingsMap[profileId] = avgRating;
             } catch (e) {
-              // If query fails, use aggregate from profile
               reviewsCountMap[profileId] = 0;
               ratingsMap[profileId] = 0.0;
             }
           }
         } catch (e) {
-          // If batch query fails, fall back to aggregates
           print('Error querying reviews: $e');
         }
       }
 
-      // Check which Individual Cleaners belong to agencies (from cleaners collection)
-      final cleanerAgencyMap =
-          <int, int>{}; // Map cleaner profile ID to agency ID
+      final cleanerAgencyMap = <int, int>{};
       try {
         final cleanersSnapshot = await FirebaseConfig.firestore
             .collection('cleaners')
@@ -130,7 +119,6 @@ class SearchCubit extends Cubit<SearchState> {
         print('Error querying cleaners collection: $e');
       }
 
-      // Get agency names for cleaners that belong to agencies
       final agencyNamesMap = <int, String>{};
       if (cleanerAgencyMap.isNotEmpty) {
         final agencyIds = cleanerAgencyMap.values.toSet();
@@ -138,8 +126,7 @@ class SearchCubit extends Cubit<SearchState> {
           try {
             final agencyProfile = await _profileRepo.getProfileById(agencyId);
             if (agencyProfile != null) {
-              final agencyName =
-                  agencyProfile['agency_name'] as String? ??
+              final agencyName = agencyProfile['agency_name'] as String? ??
                   agencyProfile['full_name'] as String?;
               if (agencyName != null && agencyName.isNotEmpty) {
                 agencyNamesMap[agencyId] = agencyName;
@@ -161,7 +148,6 @@ class SearchCubit extends Cubit<SearchState> {
 
         final profileId = readInt(profile['id']);
 
-        // Check if this Individual Cleaner belongs to an agency (from cleaners collection)
         String? cleanerAgencyName;
         if (userType == 'Individual Cleaner' && profileId != null) {
           final agencyId = cleanerAgencyMap[profileId];
@@ -170,19 +156,18 @@ class SearchCubit extends Cubit<SearchState> {
           }
         }
 
-        // Use queried reviews count and rating if available, otherwise fall back to aggregates
         final rating = profileId != null && ratingsMap.containsKey(profileId)
             ? ratingsMap[profileId]!
             : ((profile['rating_avg'] as num?)?.toDouble() ??
-                  (profile['rating'] as num?)?.toDouble() ??
-                  0.0);
+                (profile['rating'] as num?)?.toDouble() ??
+                0.0);
 
         final reviewsCount =
             profileId != null && reviewsCountMap.containsKey(profileId)
-            ? reviewsCountMap[profileId]!
-            : (profile['rating_count'] as int? ??
-                  profile['reviews_count'] as int? ??
-                  0);
+                ? reviewsCountMap[profileId]!
+                : (profile['rating_count'] as int? ??
+                    profile['reviews_count'] as int? ??
+                    0);
 
         final bio = profile['bio'] as String?;
         final experienceYears = profile['experience_years'] as int?;
@@ -197,8 +182,7 @@ class SearchCubit extends Cubit<SearchState> {
           'name': name,
           'description': bio ?? '',
           'location': _extractLocation(profile['address'] as String?),
-          'price': hourlyRate
-              ?.toString(), // UI will handle "Contact for pricing" localization
+          'price': hourlyRate?.toString(),
           'rating': rating,
           'reviews': reviewsCount,
           'image': profile['picture'] as String?,
@@ -206,9 +190,8 @@ class SearchCubit extends Cubit<SearchState> {
           'type': userType == 'Agency' ? 'Agency' : 'Individual',
           'userType': userType,
           'aboutMe': bio ?? '',
-          'experience': experienceYears != null
-              ? '$experienceYears+ Years'
-              : null,
+          'experience':
+              experienceYears != null ? '$experienceYears+ Years' : null,
           'experience_level': experienceLevel,
           'services': services,
           'age': age?.toString(),
@@ -244,7 +227,9 @@ class SearchCubit extends Cubit<SearchState> {
               : null,
         ),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      CrashlyticsService.recordError(e, stackTrace,
+          reason: 'Failed to load search results');
       emit(SearchError('Failed to load search results: $e'));
     }
   }
@@ -261,29 +246,26 @@ class SearchCubit extends Cubit<SearchState> {
   }) {
     var filtered = results;
 
-    // Filter by search query
     if (query != null && query.isNotEmpty) {
       filtered = filtered.where((item) {
         final name = (item['name'] as String? ?? '').toLowerCase();
-        final description = (item['description'] as String? ?? '')
-            .toLowerCase();
+        final description =
+            (item['description'] as String? ?? '').toLowerCase();
         final searchLower = query.toLowerCase();
         return name.contains(searchLower) || description.contains(searchLower);
       }).toList();
     }
 
-    // Filter by wilayas (multiple selection)
     if (wilayas != null && wilayas.isNotEmpty) {
       filtered = filtered.where((item) {
         final itemLocation = (item['location'] as String? ?? '').toLowerCase();
-        // Check if location contains any of the selected wilayas
+
         return wilayas.any(
           (wilaya) => itemLocation.contains(wilaya.toLowerCase()),
         );
       }).toList();
     }
 
-    // Filter by rating range
     if (minRating != null || maxRating != null) {
       filtered = filtered.where((item) {
         final itemRating = (item['rating'] as num? ?? 0.0).toDouble();
@@ -293,14 +275,12 @@ class SearchCubit extends Cubit<SearchState> {
       }).toList();
     }
 
-    // Filter by price range
     if (minPrice != null || maxPrice != null) {
       filtered = filtered.where((item) {
-        // Extract price from hourly_rate or price field
         final priceStr = item['price'] as String? ?? '';
-        // Try to extract numeric value (e.g., "From 2500 DZD/hr" -> 2500)
+
         final priceMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(priceStr);
-        if (priceMatch == null) return true; // Include if can't parse
+        if (priceMatch == null) return true;
 
         final itemPrice = double.tryParse(priceMatch.group(1) ?? '');
         if (itemPrice == null) return true;
@@ -311,7 +291,6 @@ class SearchCubit extends Cubit<SearchState> {
       }).toList();
     }
 
-    // Filter by user type (already filtered in loadSearchResults, but double-check here)
     if (userType != null && userType.isNotEmpty) {
       filtered = filtered.where((item) {
         final itemUserType = item['userType'] as String?;
@@ -325,18 +304,14 @@ class SearchCubit extends Cubit<SearchState> {
   String _extractLocation(String? address) {
     if (address == null || address.isEmpty) return 'Unknown';
 
-    // Extract wilaya and baladiya from the address
     final wilaya = AlgerianAddresses.extractWilaya(address);
     if (wilaya == null) {
-      // If no wilaya found, return the original address or first part
       final parts = address.split(',');
       return parts.isNotEmpty ? parts.first.trim() : address;
     }
 
-    // Try to extract baladiya for the found wilaya
     final baladiya = AlgerianAddresses.extractBaladiya(address, wilaya);
 
-    // Format: "Wilaya, Baladiya" if baladiya exists, otherwise just "Wilaya"
     if (baladiya != null && baladiya.isNotEmpty) {
       return '$wilaya, $baladiya';
     } else {

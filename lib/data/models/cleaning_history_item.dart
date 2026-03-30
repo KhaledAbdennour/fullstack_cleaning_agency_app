@@ -76,18 +76,15 @@ extension CleaningHistoryTypeExtension on CleaningHistoryType {
       case CleaningHistoryType.house:
         return Icons.home_outlined;
       case CleaningHistoryType.commercial:
-        return Icons
-            .cleaning_services_outlined; // For industrial/commercial cleaning
+        return Icons.cleaning_services_outlined;
     }
   }
 
   Color get iconColor {
-    // All icons use the same color (blue)
     return Colors.blue;
   }
 
   Color get iconBackgroundColor {
-    // All icons use the same background color
     return Colors.blue.shade50;
   }
 }

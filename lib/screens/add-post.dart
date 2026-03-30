@@ -30,35 +30,35 @@ class _PostJobScreenState extends State<PostJobScreen> {
   List<XFile> selectedImages = [];
 
   List<Map<String, dynamic>> getServiceTypes(BuildContext context) => [
-    {
-      'title': AppLocalizations.of(context)!.homeCleaning,
-      'key': 'Home',
-      'image':
-          'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&auto=format&fit=crop', // Modern house exterior (switched from specialty)
-      'isAsset': false,
-    },
-    {
-      'title': AppLocalizations.of(context)!.officeCleaning,
-      'key': 'Office',
-      'image':
-          'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop', // Company/office building
-      'isAsset': false,
-    },
-    {
-      'title': AppLocalizations.of(context)!.industrialCleaning,
-      'key': 'Industrial',
-      'image':
-          'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&auto=format&fit=crop', // Factory
-      'isAsset': false,
-    },
-    {
-      'title': AppLocalizations.of(context)!.specialtyCleaning,
-      'key': 'Specialty',
-      'image':
-          'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop', // Mop/cleaning on wooden floor (switched from home)
-      'isAsset': false,
-    },
-  ];
+        {
+          'title': AppLocalizations.of(context)!.homeCleaning,
+          'key': 'Home',
+          'image':
+              'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&auto=format&fit=crop', // Modern house exterior (switched from specialty)
+          'isAsset': false,
+        },
+        {
+          'title': AppLocalizations.of(context)!.officeCleaning,
+          'key': 'Office',
+          'image':
+              'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&auto=format&fit=crop', // Company/office building
+          'isAsset': false,
+        },
+        {
+          'title': AppLocalizations.of(context)!.industrialCleaning,
+          'key': 'Industrial',
+          'image':
+              'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=600&auto=format&fit=crop', // Factory
+          'isAsset': false,
+        },
+        {
+          'title': AppLocalizations.of(context)!.specialtyCleaning,
+          'key': 'Specialty',
+          'image':
+              'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=600&auto=format&fit=crop', // Mop/cleaning on wooden floor (switched from home)
+          'isAsset': false,
+        },
+      ];
 
   final List<String> provinces = [
     'Adrar',
@@ -192,7 +192,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
       return;
     }
 
-    // Validate that max >= min
     final budgetMin = double.tryParse(budgetMinController.text.trim());
     final budgetMax = double.tryParse(budgetMaxController.text.trim());
 
@@ -233,10 +232,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
     try {
       final profilesCubit = context.read<ProfilesCubit>();
 
-      // Try to use existing state first
       var state = profilesCubit.state;
       if (state is! ProfilesLoaded || state.currentUser == null) {
-        // If not loaded, try loading
         await profilesCubit.loadCurrentUser();
         if (!mounted) return;
         state = profilesCubit.state;
@@ -269,7 +266,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
         return;
       }
 
-      // Parse budget values (already validated above)
       final budgetMin = double.parse(budgetMinController.text.trim());
       final budgetMax = double.parse(budgetMaxController.text.trim());
 
@@ -283,7 +279,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
         }
       }
 
-      // Convert all selected images to base64 data URLs
       String? coverImageDataUrl;
       List<String> jobImagesList = [];
 
@@ -294,10 +289,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
             final imageBytes = await imageFile.readAsBytes();
             final base64Image = base64Encode(imageBytes);
 
-            final extension = selectedImages[i].path
-                .split('.')
-                .last
-                .toLowerCase();
+            final extension =
+                selectedImages[i].path.split('.').last.toLowerCase();
             String mimeType = 'image/jpeg';
             if (extension == 'png') {
               mimeType = 'image/png';
@@ -310,13 +303,11 @@ class _PostJobScreenState extends State<PostJobScreen> {
             final imageDataUrl = 'data:$mimeType;base64,$base64Image';
             jobImagesList.add(imageDataUrl);
 
-            // First image is also stored as cover image (for backward compatibility)
             if (i == 0) {
               coverImageDataUrl = imageDataUrl;
             }
           } catch (e) {
             print('Error converting image ${i + 1} to base64: $e');
-            // Continue with other images even if one fails
           }
         }
       }
@@ -340,7 +331,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
       );
 
       final jobsRepo = AbstractJobsRepo.getInstance();
-      final createdJob = await jobsRepo.createJob(job);
+      await jobsRepo.createJob(job);
 
       if (!mounted) return;
 
@@ -352,7 +343,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
         durationController.clear();
         descriptionController.clear();
         selectedImages.clear();
-        selectedDurationUnit = null; // Will be re-initialized on next build
+        selectedDurationUnit = null;
       });
 
       if (mounted) {
@@ -399,7 +390,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
   }
 
   Widget _buildFormContent() {
-    // Initialize selectedDurationUnit if not set
     selectedDurationUnit ??= AppLocalizations.of(context)!.hours;
     return SingleChildScrollView(
       child: Padding(
@@ -461,7 +451,7 @@ class _PostJobScreenState extends State<PostJobScreen> {
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(
                                 13,
-                              ), // Account for border width
+                              ),
                               topRight: Radius.circular(13),
                             ),
                             child: service['isAsset'] == true
@@ -470,10 +460,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    cacheWidth:
-                                        600, // Limit to 600px width for memory efficiency
-                                    cacheHeight:
-                                        600, // Limit to 600px height for memory efficiency
+                                    cacheWidth: 600,
+                                    cacheHeight: 600,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
                                         color: Colors.grey[200],
@@ -505,24 +493,22 @@ class _PostJobScreenState extends State<PostJobScreen> {
                                     fit: BoxFit.cover,
                                     width: double.infinity,
                                     height: double.infinity,
-                                    cacheWidth:
-                                        600, // Limit to 600px width for memory efficiency
-                                    cacheHeight:
-                                        600, // Limit to 600px height for memory efficiency
-                                    loadingBuilder: (context, child, loadingProgress) {
+                                    cacheWidth: 600,
+                                    cacheHeight: 600,
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
                                       if (loadingProgress == null) return child;
                                       return Container(
                                         color: Colors.grey[200],
                                         child: Center(
                                           child: CircularProgressIndicator(
-                                            value:
-                                                loadingProgress
+                                            value: loadingProgress
                                                         .expectedTotalBytes !=
                                                     null
                                                 ? loadingProgress
-                                                          .cumulativeBytesLoaded /
-                                                      loadingProgress
-                                                          .expectedTotalBytes!
+                                                        .cumulativeBytesLoaded /
+                                                    loadingProgress
+                                                        .expectedTotalBytes!
                                                 : null,
                                           ),
                                         ),
@@ -575,7 +561,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               },
             ),
             const SizedBox(height: 24),
-
             Text(
               AppLocalizations.of(context)!.locationWilaya,
               style: const TextStyle(
@@ -619,7 +604,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             Text(
               AppLocalizations.of(context)!.yourBudgetDzd,
               style: const TextStyle(
@@ -629,7 +613,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // Minimum Budget Field
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -655,7 +638,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            // Maximum Budget Field
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -681,7 +663,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             Text(
               AppLocalizations.of(context)!.estimatedDuration,
               style: const TextStyle(
@@ -723,22 +704,20 @@ class _PostJobScreenState extends State<PostJobScreen> {
                   Expanded(
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        value:
-                            selectedDurationUnit ??
+                        value: selectedDurationUnit ??
                             AppLocalizations.of(context)!.hours,
                         isExpanded: true,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        items:
-                            [
-                              AppLocalizations.of(context)!.hours,
-                              AppLocalizations.of(context)!.days,
-                              AppLocalizations.of(context)!.weeks,
-                            ].map((String unit) {
-                              return DropdownMenuItem<String>(
-                                value: unit,
-                                child: Text(unit),
-                              );
-                            }).toList(),
+                        items: [
+                          AppLocalizations.of(context)!.hours,
+                          AppLocalizations.of(context)!.days,
+                          AppLocalizations.of(context)!.weeks,
+                        ].map((String unit) {
+                          return DropdownMenuItem<String>(
+                            value: unit,
+                            child: Text(unit),
+                          );
+                        }).toList(),
                         onChanged: (String? value) {
                           setState(() {
                             selectedDurationUnit = value!;
@@ -751,7 +730,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             Text(
               AppLocalizations.of(context)!.addPhotos,
               style: const TextStyle(
@@ -761,7 +739,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 12),
-
             if (selectedImages.isNotEmpty) ...[
               SizedBox(
                 height: 100,
@@ -814,7 +791,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
               const SizedBox(height: 12),
             ],
-
             GestureDetector(
               onTap: selectedImages.length < 5 ? _pickImages : null,
               child: Container(
@@ -850,7 +826,8 @@ class _PostJobScreenState extends State<PostJobScreen> {
                             text: selectedImages.length >= 5
                                 ? AppLocalizations.of(
                                     context,
-                                  )!.maximumPhotosReached
+                                  )!
+                                    .maximumPhotosReached
                                 : AppLocalizations.of(context)!.clickToUpload,
                             style: TextStyle(
                               color: selectedImages.length >= 5
@@ -890,7 +867,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
             Text(
               AppLocalizations.of(context)!.jobDescription,
               style: const TextStyle(
@@ -919,7 +895,6 @@ class _PostJobScreenState extends State<PostJobScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            // Add Post Button
             SizedBox(
               width: double.infinity,
               height: 50,
